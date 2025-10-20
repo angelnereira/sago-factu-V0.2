@@ -1,0 +1,31 @@
+# ========================================
+# SAGO-FACTU - Variables de Entorno para Vercel (Producción)
+# ========================================
+
+# Base de datos (Neon PostgreSQL)
+DATABASE_URL="postgresql://username:password@hostname/database?sslmode=require"
+
+# NextAuth.js
+NEXTAUTH_URL="https://sago-factu-v0-2.vercel.app"
+NEXTAUTH_SECRET="2KjMnkOzQCc/jOjSsr2VySk2MXLpidtsusbgWF29Aaw="
+
+# The Factory HKA - Demo Environment
+HKA_ENV="demo"
+HKA_DEMO_SOAP_URL="https://demoemision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc"
+HKA_DEMO_TOKEN_USER="walgofugiitj_ws_tfhka"
+HKA_DEMO_TOKEN_PASSWORD="Octopusp1oQs5"
+HKA_DEMO_REST_URL="https://demointegracion.thefactoryhka.com.pa"
+
+# App
+NEXT_PUBLIC_APP_NAME="SAGO-FACTU"
+NEXT_PUBLIC_APP_URL="https://sago-factu-v0-2.vercel.app"
+NODE_ENV="production"
+
+# Super Admin
+SUPER_ADMIN_EMAIL="admin@sagofactu.com"
+SUPER_ADMIN_PASSWORD="admin123"
+
+# Features
+ENABLE_EMAIL_NOTIFICATIONS="true"
+ENABLE_WEBHOOKS="false"
+ENABLE_API_KEYS="true"
