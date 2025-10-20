@@ -69,8 +69,10 @@ async function main() {
   console.log('✅ Usuario de prueba creado:', testUser.email)
 
   // Crear pool de folios
-  const folioPool = await prisma.folioPool.create({
-    data: {
+  const folioPool = await prisma.folioPool.upsert({
+    where: { batchNumber: 'BATCH-001' },
+    update: {},
+    create: {
       batchNumber: 'BATCH-001',
       provider: 'HKA',
       totalFolios: 1000,
@@ -92,8 +94,15 @@ async function main() {
   console.log('✅ Pool de folios creado:', folioPool.batchNumber)
 
   // Asignar folios a la organización
-  const folioAssignment = await prisma.folioAssignment.create({
-    data: {
+  const folioAssignment = await prisma.folioAssignment.upsert({
+    where: { 
+      folioPoolId_organizationId: {
+        folioPoolId: folioPool.id,
+        organizationId: organization.id
+      }
+    },
+    update: {},
+    create: {
       folioPoolId: folioPool.id,
       organizationId: organization.id,
       assignedAmount: 100,

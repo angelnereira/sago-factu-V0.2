@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && next build --no-lint",
+    "build": "prisma generate && prisma db push && next build --no-lint",
     "build:simple": "prisma generate && next build --no-lint",
     "start": "next start",
     "lint": "eslint",
@@ -23,6 +23,7 @@
     "@aws-sdk/lib-storage": "^3.911.0",
     "@aws-sdk/s3-request-presigner": "^3.911.0",
     "@hookform/resolvers": "^5.2.2",
+    "@neondatabase/serverless": "^1.0.2",
     "@prisma/client": "^6.17.1",
     "@prisma/extension-accelerate": "^2.0.2",
     "@radix-ui/react-avatar": "^1.1.10",

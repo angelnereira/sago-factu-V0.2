@@ -274,7 +274,7 @@ model Invoice {
   documentType  DocumentType @default(FACTURA)
   invoiceNumber String?      // Asignado por HKA
   cufe          String?      @unique
-  qrCode        String?
+  qrCode        String?      @db.Text
 
   // Montos
   subtotal              Float
@@ -289,25 +289,25 @@ model Invoice {
   dueDate   DateTime?
 
   // Notas
-  notes         String?
-  internalNotes String?
+  notes         String? @db.Text
+  internalNotes String? @db.Text
 
   // Estado
   status         InvoiceStatus @default(DRAFT)
   hkaStatus      String?
-  hkaMessage     String?
-  rejectionReason String?
+  hkaMessage     String?       @db.Text
+  rejectionReason String?      @db.Text
   hkaCode        String?       // Código de respuesta HKA
 
   // Storage
   xmlUrl String?
   pdfUrl String?
-  rawXml String?
+  rawXml String? @db.Text
 
   // Anulación
   isCancelled        Boolean   @default(false)
   cancelledAt        DateTime?
-  cancellationReason String?
+  cancellationReason String?   @db.Text
   cancellationCufe   String?
 
   // Retry logic
@@ -373,7 +373,7 @@ model InvoiceItem {
 
   // Product/Service
   code        String
-  description String
+  description String @db.Text
 
   // Quantities
   quantity  Float
@@ -409,7 +409,7 @@ model InvoiceLog {
 
   // Log
   action   LogAction
-  message  String
+  message  String @db.Text
   metadata String? // JSON como string para SQLite
 
   // User (opcional)
@@ -493,7 +493,7 @@ model Notification {
   // Content
   type    NotificationType
   title   String
-  message String
+  message String @db.Text
   link    String?
 
   // Metadata
