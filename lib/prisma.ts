@@ -1,12 +1,12 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { pagination } from 'prisma-extension-pagination'
 import { fieldEncryptionExtension } from 'prisma-field-encryption'
 
 // Configuración de logging según el ambiente
-const logConfig = process.env.NODE_ENV === 'development' 
-  ? ['query', 'error', 'warn'] as const
-  : ['error'] as const
+const logConfig: Prisma.LogLevel[] = process.env.NODE_ENV === 'development' 
+  ? ['query', 'error', 'warn']
+  : ['error']
 
 // Global para almacenar el cliente
 const globalForPrisma = globalThis as unknown as {
@@ -26,7 +26,7 @@ function createPrismaClient() {
   })
 
   // Aplicar extensiones en cadena
-  return baseClient
+  let client = baseClient
     // 1. Accelerate: Caching y connection pooling
     .$extends(withAccelerate())
     
@@ -39,13 +39,17 @@ function createPrismaClient() {
         },
       })
     )
-    
-    // 3. Encriptación de campos sensibles (opcional, configurable por modelo)
-    .$extends(
+  
+  // 3. Encriptación de campos sensibles (solo si hay clave configurada)
+  if (process.env.ENCRYPTION_KEY && process.env.ENCRYPTION_KEY.length >= 32) {
+    client = client.$extends(
       fieldEncryptionExtension({
-        encryptionKey: process.env.ENCRYPTION_KEY || 'default-dev-key-change-in-production',
+        encryptionKey: process.env.ENCRYPTION_KEY,
       })
-    )
+    ) as any
+  }
+  
+  return client
 }
 
 // Crear o reutilizar el cliente

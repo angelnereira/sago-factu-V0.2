@@ -156,14 +156,9 @@ export async function findWithRelations<T>(
 
 /**
  * Helper para transacciones optimizadas
+ * Nota: Usar directamente prisma.$transaction para mejor soporte de tipos
  */
-export async function transaction<T>(
-  operations: ((prisma: typeof prisma) => Promise<any>)[]
-): Promise<T[]> {
-  return await prisma.$transaction(
-    operations.map(op => op(prisma))
-  )
-}
+export const transactionHelper = prisma.$transaction.bind(prisma)
 
 /**
  * Helper para actualización masiva

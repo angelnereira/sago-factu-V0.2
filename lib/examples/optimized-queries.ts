@@ -12,7 +12,6 @@ import {
   batchCreate,
   fullTextSearch,
   findWithRelations,
-  transaction,
   cursorPaginate,
 } from '../prisma-utils'
 
@@ -241,28 +240,29 @@ export async function createCompleteInvoice(data: {
   invoice: any
   items: any[]
 }) {
-  return await transaction([
-    async (tx) => {
-      // 1. Crear factura
-      return await tx.invoice.create({
-        data: data.invoice,
-      })
-    },
-    async (tx) => {
-      // 2. Crear items de factura
-      return await batchCreate('invoiceItem', data.items)
-    },
-    async (tx) => {
-      // 3. Registrar log
-      return await tx.invoiceLog.create({
-        data: {
-          invoiceId: data.invoice.id,
-          action: 'CREATED',
-          message: 'Factura creada exitosamente',
-        },
-      })
-    },
-  ])
+  return await prisma.$transaction(async (tx) => {
+    // 1. Crear factura
+    const invoice = await tx.invoice.create({
+      data: data.invoice,
+    })
+
+    // 2. Crear items de factura
+    await tx.invoiceItem.createMany({
+      data: data.items,
+      skipDuplicates: true,
+    })
+
+    // 3. Registrar log
+    await tx.invoiceLog.create({
+      data: {
+        invoiceId: invoice.id,
+        action: 'CREATED',
+        message: 'Factura creada exitosamente',
+      },
+    })
+
+    return invoice
+  })
 }
 
 /**
@@ -315,11 +315,11 @@ export async function transferFolios(
         action: 'FOLIO_TRANSFER',
         entity: 'FolioAssignment',
         entityId: `${fromOrgId}-${toOrgId}`,
-        changes: {
+        changes: JSON.parse(JSON.stringify({
           from: fromOrgId,
           to: toOrgId,
           amount,
-        },
+        })),
       },
     })
 
