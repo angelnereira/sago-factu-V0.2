@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { prismaAuth } from "@/lib/prisma-auth"
+import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
 async function handleSignUp(formData: FormData) {
@@ -29,7 +29,7 @@ async function handleSignUp(formData: FormData) {
     }
 
     // Verificar si el usuario ya existe
-    const existingUser = await prismaAuth.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { email }
     })
 
@@ -39,13 +39,13 @@ async function handleSignUp(formData: FormData) {
     }
 
     // Buscar la organización demo (o crear una)
-    let organization = await prismaAuth.organization.findFirst({
+    let organization = await prisma.organization.findFirst({
       where: { slug: "empresa-demo" }
     })
 
     if (!organization) {
       // Crear organización demo si no existe
-      organization = await prismaAuth.organization.create({
+      organization = await prisma.organization.create({
         data: {
           slug: "empresa-demo",
           name: "Empresa Demo S.A.",
@@ -58,12 +58,12 @@ async function handleSignUp(formData: FormData) {
           maxUsers: 100,
           maxFolios: 10000,
           isActive: true,
-          metadata: JSON.stringify({
+          metadata: {
             theme: "light",
             timezone: "America/Panama",
             currency: "PAB",
             language: "es"
-          })
+          }
         }
       })
     }
@@ -72,7 +72,7 @@ async function handleSignUp(formData: FormData) {
     const hashedPassword = await bcrypt.hash(password, 12)
 
     // Crear el usuario
-    await prismaAuth.user.create({
+    await prisma.user.create({
       data: {
         email,
         name,
