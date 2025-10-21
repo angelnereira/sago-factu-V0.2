@@ -3,7 +3,11 @@
 # ========================================
 
 # Base de datos (Neon PostgreSQL)
-DATABASE_URL="postgresql://username:password@hostname/database?sslmode=require"
+# Reemplaza con tu URL de conexión de Neon
+DATABASE_URL="postgresql://neondb_owner:TU_PASSWORD@ep-xxxxx.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
+# Opcional: Si usas Prisma <5.10, descomenta la siguiente línea
+# DATABASE_URL_UNPOOLED="postgresql://neondb_owner:TU_PASSWORD@ep-xxxxx.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
 # NextAuth.js
 NEXTAUTH_URL="https://sago-factu-v0-2.vercel.app"

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -35,7 +35,7 @@ model Organization {
   suspendReason String?
 
   // Metadata
-  metadata Json? // JSON nativo para PostgreSQL
+  metadata String? // JSON como string para SQLite
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -158,7 +158,7 @@ model FolioPool {
 
   // Información de compra
   purchaseDate      DateTime @default(now())
-  purchaseAmount    Decimal
+  purchaseAmount    Float
   hkaInvoiceNumber String?
 
   // Rango de folios
@@ -170,7 +170,7 @@ model FolioPool {
   expiresAt DateTime?
 
   // Metadata
-  metadata Json?
+  metadata String? // JSON como string para SQLite
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -274,14 +274,14 @@ model Invoice {
   documentType  DocumentType @default(FACTURA)
   invoiceNumber String?      // Asignado por HKA
   cufe          String?      @unique
-  qrCode        String?      @db.Text
+  qrCode        String?      
 
   // Montos
-  subtotal              Decimal
-  discount              Decimal @default(0)
-  subtotalAfterDiscount Decimal
-  itbms                 Decimal // Impuesto
-  total                 Decimal
+  subtotal              Float
+  discount              Float @default(0)
+  subtotalAfterDiscount Float
+  itbms                 Float // Impuesto
+  total                 Float
   currency              String  @default("PAB")
 
   // Fechas
@@ -289,25 +289,25 @@ model Invoice {
   dueDate   DateTime?
 
   // Notas
-  notes         String? @db.Text
-  internalNotes String? @db.Text
+  notes         String? 
+  internalNotes String? 
 
   // Estado
   status         InvoiceStatus @default(DRAFT)
   hkaStatus      String?
-  hkaMessage     String?       @db.Text
-  rejectionReason String?      @db.Text
+  hkaMessage     String?       
+  rejectionReason String?      
   hkaCode        String?       // Código de respuesta HKA
 
   // Storage
   xmlUrl String?
   pdfUrl String?
-  rawXml String? @db.Text
+  rawXml String? 
 
   // Anulación
   isCancelled        Boolean   @default(false)
   cancelledAt        DateTime?
-  cancellationReason String?   @db.Text
+  cancellationReason String?   
   cancellationCufe   String?
 
   // Retry logic
@@ -373,25 +373,25 @@ model InvoiceItem {
 
   // Product/Service
   code        String
-  description String @db.Text
+  description String 
 
   // Quantities
-  quantity  Decimal
-  unitPrice Decimal
+  quantity  Float
+  unitPrice Float
   unit      String @default("UND")
 
   // Discount
-  discount     Decimal @default(0)
-  discountRate Decimal @default(0)
+  discount     Float @default(0)
+  discountRate Float @default(0)
 
   // Tax (ITBMS)
-  taxRate   Decimal @default(7)
+  taxRate   Float @default(7)
   taxCode   String  @default("01") // Código ITBMS
-  taxAmount Decimal
+  taxAmount Float
 
   // Totals
-  subtotal Decimal
-  total    Decimal
+  subtotal Float
+  total    Float
 
   // Additional info
   cpbsCode String? // Código CPBS (Clasificación)
@@ -409,8 +409,8 @@ model InvoiceLog {
 
   // Log
   action   LogAction
-  message  String @db.Text
-  metadata Json?
+  message  String 
+  metadata String? // JSON como string para SQLite
 
   // User (opcional)
   userId    String?
@@ -459,7 +459,7 @@ model ApiKey {
   prefix String // Primeros 8 caracteres
 
   // Permissions
-  permissions Json // Array de permisos
+  permissions String // JSON como string para SQLite
 
   // Rate limiting
   rateLimit      Int @default(100) // por minuto
@@ -493,11 +493,11 @@ model Notification {
   // Content
   type    NotificationType
   title   String
-  message String @db.Text
+  message String 
   link    String?
 
   // Metadata
-  metadata Json?
+  metadata String? // JSON como string para SQLite
 
   // Status
   read    Boolean   @default(false)
@@ -541,7 +541,7 @@ model AuditLog {
   entityId String
 
   // Details
-  changes Json?
+  changes String? // JSON como string para SQLite
 
   // Context
   ip        String?
@@ -564,7 +564,7 @@ model SystemConfig {
   id String @id @default(cuid())
 
   key         String @unique
-  value       Json
+  value       String // JSON como string para SQLite
   description String?
   updatedAt   DateTime @updatedAt
   updatedBy   String?
@@ -572,4 +572,3 @@ model SystemConfig {
   @@index([key])
   @@map("system_configs")
 }
-
