@@ -1,0 +1,46 @@
+# ========================================
+# SAGO-FACTU - Variables de Entorno para Vercel
+# ========================================
+# PLANTILLA DE EJEMPLO - Reemplaza con tus valores reales
+# NO COMPARTAS ESTE ARCHIVO CON CREDENCIALES REALES
+
+# Database (Neon PostgreSQL) - POOLED CONNECTION
+DATABASE_URL="postgresql://neondb_owner:YOUR_PASSWORD@YOUR_ENDPOINT.neon.tech/neondb?sslmode=require"
+
+# NextAuth.js
+NEXTAUTH_URL=https://your-app.vercel.app
+NEXTAUTH_SECRET=YOUR_GENERATED_SECRET_HERE
+
+# The Factory HKA - Demo Environment
+HKA_ENV=demo
+HKA_DEMO_SOAP_URL=https://demoemision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc
+HKA_DEMO_TOKEN_USER=YOUR_HKA_TOKEN_USER
+HKA_DEMO_TOKEN_PASSWORD=YOUR_HKA_TOKEN_PASSWORD
+HKA_DEMO_REST_URL=https://demointegracion.thefactoryhka.com.pa
+
+# App
+NEXT_PUBLIC_APP_NAME=SAGO-FACTU
+NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
+NODE_ENV=production
+
+# Super Admin
+SUPER_ADMIN_EMAIL=admin@yourdomain.com
+SUPER_ADMIN_PASSWORD=YOUR_SECURE_PASSWORD
+
+# Features
+ENABLE_EMAIL_NOTIFICATIONS=false
+ENABLE_WEBHOOKS=false
+ENABLE_API_KEYS=true
+
+# ========================================
+# INSTRUCCIONES:
+# ========================================
+# 1. Copia este archivo y renómbralo a "vercel-neon-env.txt" (no lo subas a git)
+# 2. Reemplaza TODOS los valores "YOUR_*" con tus credenciales reales
+# 3. Obtén DATABASE_URL de tu proyecto en Neon: https://console.neon.tech
+# 4. Genera NEXTAUTH_SECRET con: openssl rand -base64 32
+# 5. Configura TODAS estas variables en Vercel Dashboard:
+#    Settings → Environment Variables
+# 6. Marca los 3 ambientes: Production, Preview, Development
+# ========================================
+
