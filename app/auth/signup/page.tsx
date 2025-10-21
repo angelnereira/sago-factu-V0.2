@@ -15,27 +15,29 @@ async function handleSignUp(formData: FormData) {
   console.log("📧 Email:", email)
   console.log("👤 Nombre:", name)
 
+  // ⚠️ IMPORTANTE: Validaciones fuera del try/catch
+  // redirect() lanza un error NEXT_REDIRECT que debe propagarse
+  if (!name || !email || !password || !confirmPassword) {
+    console.log("❌ [SIGNUP] Campos faltantes")
+    redirect("/auth/signup?error=MissingFields")
+  }
+
+  if (password !== confirmPassword) {
+    console.log("❌ [SIGNUP] Contraseñas no coinciden")
+    redirect("/auth/signup?error=PasswordMismatch")
+  }
+
+  if (password.length < 6) {
+    console.log("❌ [SIGNUP] Contraseña muy corta")
+    redirect("/auth/signup?error=PasswordTooShort")
+  }
+
+  // Lógica de base de datos dentro de try/catch
+  let userId: string
+  
   try {
-    // Validaciones
-    if (!name || !email || !password || !confirmPassword) {
-      console.log("❌ [SIGNUP] Campos faltantes")
-      redirect("/auth/signup?error=MissingFields")
-      return
-    }
-
-    if (password !== confirmPassword) {
-      redirect("/auth/signup?error=PasswordMismatch")
-      return
-    }
-
-    if (password.length < 6) {
-      redirect("/auth/signup?error=PasswordTooShort")
-      return
-    }
-
     console.log("🔍 [SIGNUP] Verificando si usuario existe...")
     
-    // Verificar si el usuario ya existe
     const existingUser = await prisma.user.findUnique({
       where: { email }
     })
@@ -43,13 +45,11 @@ async function handleSignUp(formData: FormData) {
     if (existingUser) {
       console.log("❌ [SIGNUP] Usuario ya existe")
       redirect("/auth/signup?error=UserExists")
-      return
     }
 
     console.log("✅ [SIGNUP] Usuario no existe, continuando...")
     console.log("🏢 [SIGNUP] Buscando organización demo...")
     
-    // Buscar la organización demo (o crear una)
     let organization = await prisma.organization.findFirst({
       where: { slug: "empresa-demo" }
     })
@@ -57,7 +57,6 @@ async function handleSignUp(formData: FormData) {
     if (!organization) {
       console.log("⚠️  [SIGNUP] Organización no existe, creando...")
       
-      // Crear organización demo si no existe
       organization = await prisma.organization.create({
         data: {
           slug: "empresa-demo",
@@ -86,13 +85,9 @@ async function handleSignUp(formData: FormData) {
     }
 
     console.log("🔐 [SIGNUP] Hasheando contraseña...")
-    
-    // Hash de la contraseña
     const hashedPassword = await bcrypt.hash(password, 12)
 
     console.log("👤 [SIGNUP] Creando usuario...")
-    
-    // Crear el usuario
     const newUser = await prisma.user.create({
       data: {
         email,
@@ -104,15 +99,28 @@ async function handleSignUp(formData: FormData) {
       }
     })
 
-    console.log("✅ [SIGNUP] Usuario creado exitosamente:", newUser.id)
-    console.log("🔄 [SIGNUP] Redirigiendo a login...")
+    userId = newUser.id
+    console.log("✅ [SIGNUP] Usuario creado exitosamente:", userId)
 
-    // Redirigir al login con mensaje de éxito
-    redirect("/auth/signin?success=AccountCreated")
-  } catch (error) {
-    console.error("Error en registro:", error)
+  } catch (error: any) {
+    // ⚠️ IMPORTANTE: Re-lanzar errores de redirect de Next.js
+    if (error?.digest?.includes('NEXT_REDIRECT')) {
+      console.log("🔄 [SIGNUP] Redirect detectado, propagando...")
+      throw error
+    }
+    
+    // Error real de base de datos
+    console.error("❌ [SIGNUP] Error en base de datos:")
+    console.error("   Tipo:", error?.constructor?.name)
+    console.error("   Mensaje:", error?.message)
+    if (error?.stack) console.error("   Stack:", error.stack.substring(0, 200))
+    
     redirect("/auth/signup?error=ServerError")
   }
+
+  // ✅ Redirect SIEMPRE fuera del try/catch principal
+  console.log("🔄 [SIGNUP] Redirigiendo a login...")
+  redirect("/auth/signin?success=AccountCreated")
 }
 
 export default async function SignUpPage({
