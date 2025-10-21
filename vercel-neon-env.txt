@@ -3,11 +3,11 @@
 # ========================================
 # Copia estas variables en el dashboard de Vercel
 
-# Database (Neon PostgreSQL)
-DATABASE_URL=postgresql://username:password@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
+# Database (Neon PostgreSQL) - POOLED CONNECTION
+DATABASE_URL="postgresql://neondb_owner:npg_JR48yletDImP@ep-divine-field-ad26eaav-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
 # NextAuth.js
-NEXTAUTH_URL=https://sago-factu-v0-2.vercel.app
+NEXTAUTH_URL=https://tu-app.vercel.app
 NEXTAUTH_SECRET=CDNvPtB/3VqcQOIL//p9if3oGQxx0qm2taE9GfsGE3w=
 
 # The Factory HKA - Demo Environment
@@ -19,7 +19,7 @@ HKA_DEMO_REST_URL=https://demointegracion.thefactoryhka.com.pa
 
 # App
 NEXT_PUBLIC_APP_NAME=SAGO-FACTU
-NEXT_PUBLIC_APP_URL=https://sago-factu-v0-2.vercel.app
+NEXT_PUBLIC_APP_URL=https://tu-app.vercel.app
 NODE_ENV=production
 
 # Super Admin
@@ -31,3 +31,8 @@ ENABLE_EMAIL_NOTIFICATIONS=false
 ENABLE_WEBHOOKS=false
 ENABLE_API_KEYS=true
 
+# ========================================
+# NOTA: 
+# - Reemplaza "tu-app.vercel.app" con tu URL real de Vercel
+# - El DATABASE_URL ya está configurado con tu conexión pooled de Neon
+# ========================================
