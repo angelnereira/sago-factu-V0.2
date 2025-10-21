@@ -8,29 +8,51 @@ async function handleSignIn(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
   
+  console.log("🔐 [SIGNIN] Inicio del proceso de login")
+  console.log("📧 [SIGNIN] Email:", email)
+
+  // Validaciones fuera del try/catch
+  if (!email || !password) {
+    console.log("❌ [SIGNIN] Campos faltantes")
+    redirect("/auth/signin?error=InvalidCredentials")
+  }
+
+  // Lógica de autenticación dentro de try/catch
   try {
+    console.log("🔄 [SIGNIN] Llamando a signIn...")
+    
     const result = await signIn("credentials", {
       email,
       password,
       redirect: false
     })
     
+    console.log("📊 [SIGNIN] Resultado de signIn:", result ? "Con datos" : "null")
+    
     if (result?.error) {
-      console.error("Error en login:", result.error)
+      console.error("❌ [SIGNIN] Error en autenticación:", result.error)
       redirect("/auth/signin?error=InvalidCredentials")
-      return
     }
     
-    // Si no hay error, redirigir al dashboard
-    redirect("/dashboard")
-  } catch (error) {
-    // Solo capturar errores que no sean redirecciones
-    if (error instanceof Error && !error.message.includes("NEXT_REDIRECT")) {
-      console.error("Error en login:", error)
-      redirect("/auth/signin?error=InvalidCredentials")
+    console.log("✅ [SIGNIN] Login exitoso")
+  } catch (error: any) {
+    // Re-lanzar errores de redirect de Next.js
+    if (error?.digest?.includes('NEXT_REDIRECT')) {
+      console.log("🔄 [SIGNIN] Redirect detectado, propagando...")
+      throw error
     }
-    // Si es una redirección, dejarla pasar
+    
+    // Error real de autenticación
+    console.error("❌ [SIGNIN] Error inesperado:")
+    console.error("   Tipo:", error?.constructor?.name)
+    console.error("   Mensaje:", error?.message)
+    
+    redirect("/auth/signin?error=InvalidCredentials")
   }
+
+  // Redirect SIEMPRE fuera del try/catch principal
+  console.log("🔄 [SIGNIN] Redirigiendo a dashboard...")
+  redirect("/dashboard")
 }
 
 export default async function SignInPage({

@@ -1,42 +1,51 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+/**
+ * Middleware con NextAuth.js v5
+ * 
+ * Usa el helper auth() de NextAuth para autenticación en middleware.
+ * Compatible con Edge Runtime.
+ * 
+ * @see https://authjs.dev/reference/nextjs/middleware
+ */
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+import { auth } from '@/lib/auth'
+import { NextResponse } from 'next/server'
 
-  // Public routes that don't require authentication
+export default auth((req) => {
+  const isLoggedIn = !!req.auth
+  const { pathname } = req.nextUrl
+
+  // Rutas públicas que no requieren autenticación
   const publicRoutes = [
     '/auth/signin',
     '/auth/signup',
+    '/auth/error',
     '/auth/forgot-password',
-    '/api/auth',
     '/',
     '/about',
-    '/contact'
+    '/contact',
   ]
 
-  const isPublicRoute = publicRoutes.some(route => 
-    pathname.startsWith(route)
-  )
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
 
-  // Allow public routes and API routes
-  if (isPublicRoute || pathname.startsWith('/api/')) {
+  // Permitir acceso a rutas públicas y API de auth
+  if (isPublicRoute || pathname.startsWith('/api/auth')) {
     return NextResponse.next()
   }
 
-  // For protected routes, NextAuth will handle authentication
-  // This middleware just ensures proper routing
+  // Redirigir a login si no está autenticado
+  if (!isLoggedIn) {
+    const loginUrl = new URL('/auth/signin', req.url)
+    loginUrl.searchParams.set('callbackUrl', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // Usuario autenticado puede acceder
   return NextResponse.next()
-}
+})
 
 export const config = {
+  // Excluir archivos estáticos
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
