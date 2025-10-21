@@ -1,0 +1,108 @@
+"use client"
+
+import { 
+  LayoutDashboard, 
+  FileText, 
+  Receipt, 
+  Users, 
+  Settings,
+  BarChart3,
+  Folder
+} from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+
+interface SidebarItem {
+  name: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  roles?: string[] // Si se especifica, solo visible para estos roles
+}
+
+const sidebarItems: SidebarItem[] = [
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Folios",
+    href: "/dashboard/folios",
+    icon: Folder,
+  },
+  {
+    name: "Facturas",
+    href: "/dashboard/facturas",
+    icon: FileText,
+  },
+  {
+    name: "Clientes",
+    href: "/dashboard/clientes",
+    icon: Users,
+  },
+  {
+    name: "Reportes",
+    href: "/dashboard/reportes",
+    icon: BarChart3,
+  },
+  {
+    name: "Configuración",
+    href: "/dashboard/configuracion",
+    icon: Settings,
+    roles: ["SUPER_ADMIN", "ADMIN"],
+  },
+]
+
+interface DashboardSidebarProps {
+  userRole: string
+}
+
+export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
+  const pathname = usePathname()
+
+  // Filtrar items según rol
+  const visibleItems = sidebarItems.filter(item => {
+    if (!item.roles) return true
+    return item.roles.includes(userRole)
+  })
+
+  return (
+    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto">
+      <nav className="p-4 space-y-2">
+        {visibleItems.map((item) => {
+          const Icon = item.icon
+          const isActive = pathname === item.href
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+                isActive
+                  ? "bg-indigo-50 text-indigo-600 font-medium"
+                  : "text-gray-700 hover:bg-gray-50"
+              )}
+            >
+              <Icon className={cn(
+                "h-5 w-5",
+                isActive ? "text-indigo-600" : "text-gray-500"
+              )} />
+              <span>{item.name}</span>
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* Footer del sidebar */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
+        <div className="text-xs text-gray-500 text-center">
+          <p className="font-medium">SAGO-FACTU</p>
+          <p>v0.2.0</p>
+        </div>
+      </div>
+    </aside>
+  )
+}
+

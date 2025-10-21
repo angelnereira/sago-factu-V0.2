@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import Link from "next/link"
+import { DashboardSidebar } from "@/components/dashboard/sidebar"
+import { DashboardHeader } from "@/components/dashboard/header"
 
 export default async function DashboardLayout({
   children,
@@ -15,54 +16,20 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-900">SAGO-FACTU</h1>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link
-                  href="/dashboard"
-                  className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/dashboard/invoices"
-                  className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                >
-                  Facturas
-                </Link>
-                <Link
-                  href="/dashboard/folios"
-                  className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                >
-                  Folios
-                </Link>
-                <Link
-                  href="/dashboard/settings"
-                  className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                >
-                  Configuración
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <span className="text-sm text-gray-700">
-                {session.user?.name || session.user?.email}
-              </span>
-            </div>
+      {/* Header */}
+      <DashboardHeader user={session.user} />
+      
+      <div className="flex">
+        {/* Sidebar */}
+        <DashboardSidebar userRole={session.user.role} />
+        
+        {/* Main Content */}
+        <main className="flex-1 p-6 ml-64">
+          <div className="max-w-7xl mx-auto">
+            {children}
           </div>
-        </div>
-      </nav>
-
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {children}
-      </main>
+        </main>
+      </div>
     </div>
   )
 }
