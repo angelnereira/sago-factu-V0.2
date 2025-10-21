@@ -11,9 +11,14 @@ async function handleSignUp(formData: FormData) {
   const password = formData.get("password") as string
   const confirmPassword = formData.get("confirmPassword") as string
 
+  console.log("🔍 [SIGNUP] Inicio del registro")
+  console.log("📧 Email:", email)
+  console.log("👤 Nombre:", name)
+
   try {
     // Validaciones
     if (!name || !email || !password || !confirmPassword) {
+      console.log("❌ [SIGNUP] Campos faltantes")
       redirect("/auth/signup?error=MissingFields")
       return
     }
@@ -28,22 +33,30 @@ async function handleSignUp(formData: FormData) {
       return
     }
 
+    console.log("🔍 [SIGNUP] Verificando si usuario existe...")
+    
     // Verificar si el usuario ya existe
     const existingUser = await prisma.user.findUnique({
       where: { email }
     })
 
     if (existingUser) {
+      console.log("❌ [SIGNUP] Usuario ya existe")
       redirect("/auth/signup?error=UserExists")
       return
     }
 
+    console.log("✅ [SIGNUP] Usuario no existe, continuando...")
+    console.log("🏢 [SIGNUP] Buscando organización demo...")
+    
     // Buscar la organización demo (o crear una)
     let organization = await prisma.organization.findFirst({
       where: { slug: "empresa-demo" }
     })
 
     if (!organization) {
+      console.log("⚠️  [SIGNUP] Organización no existe, creando...")
+      
       // Crear organización demo si no existe
       organization = await prisma.organization.create({
         data: {
@@ -66,13 +79,21 @@ async function handleSignUp(formData: FormData) {
           }
         }
       })
+      
+      console.log("✅ [SIGNUP] Organización creada:", organization.id)
+    } else {
+      console.log("✅ [SIGNUP] Organización encontrada:", organization.id)
     }
 
+    console.log("🔐 [SIGNUP] Hasheando contraseña...")
+    
     // Hash de la contraseña
     const hashedPassword = await bcrypt.hash(password, 12)
 
+    console.log("👤 [SIGNUP] Creando usuario...")
+    
     // Crear el usuario
-    await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         email,
         name,
@@ -82,6 +103,9 @@ async function handleSignUp(formData: FormData) {
         isActive: true
       }
     })
+
+    console.log("✅ [SIGNUP] Usuario creado exitosamente:", newUser.id)
+    console.log("🔄 [SIGNUP] Redirigiendo a login...")
 
     // Redirigir al login con mensaje de éxito
     redirect("/auth/signin?success=AccountCreated")

@@ -1,0 +1,215 @@
+==============================================
+  ARCHIVOS CLAVE DEL PROYECTO SAGO-FACTU
+==============================================
+
+📍 UBICACIÓN: /home/angel-nereira/projects/UbicSystem/sago-factu
+
+═══════════════════════════════════════════════
+1. SCHEMA DE BASE DE DATOS
+═══════════════════════════════════════════════
+
+Archivo: prisma/schema.prisma
+Líneas: ~400
+Provider: PostgreSQL (Neon)
+
+Modelos principales:
+- Organization (multi-tenancy)
+- User (con roles)
+- FolioPool, FolioAssignment, FolioConsumption
+- Invoice, InvoiceItem, InvoiceLog
+- ApiKey, Notification, AuditLog, SystemConfig
+
+Total tablas: 14
+Total índices: 40+
+Total relaciones: 25+
+
+═══════════════════════════════════════════════
+2. CLIENTES PRISMA (CRÍTICO)
+═══════════════════════════════════════════════
+
+A) lib/prisma-server.ts (Para Server Actions)
+   - PrismaClient básico SIN extensiones
+   - Usado en: signup, signin, auth
+   - Estado: ✅ Correcto
+
+B) lib/prisma.ts (Para Queries)
+   - PrismaClient CON extensiones
+   - Extensiones: Accelerate, Pagination, Field Encryption
+   - Usado en: Dashboards, listados
+   - Estado: ⚠️  Puede causar conflictos
+
+═══════════════════════════════════════════════
+3. AUTENTICACIÓN
+═══════════════════════════════════════════════
+
+lib/auth.ts
+- NextAuth.js v5
+- Strategy: JWT
+- Provider: Credentials
+- Usa: prismaServer ✅
+
+app/api/auth/[...nextauth]/route.ts
+- Handlers de NextAuth
+- Export: GET, POST
+
+═══════════════════════════════════════════════
+4. PÁGINAS DE AUTH
+═══════════════════════════════════════════════
+
+A) app/auth/signup/page.tsx (PROBLEMÁTICO ❌)
+   - Server Action: handleSignUp
+   - Cliente Prisma: prismaServer ✅
+   - Error: Entra al catch y redirige con ServerError
+   - Logs agregados: Sí, detallados
+
+B) app/auth/signin/page.tsx (FUNCIONA ✅)
+   - Server Action: handleSignIn
+   - Cliente Prisma: No usa directamente
+   - Usa: signIn() de NextAuth
+
+C) app/test-signup/page.tsx (NUEVO, PARA DEBUG)
+   - Server Action: testSignUp
+   - Logging extremadamente detallado
+   - URL: /test-signup
+
+═══════════════════════════════════════════════
+5. SCRIPTS DE TESTING
+═══════════════════════════════════════════════
+
+A) scripts/test-signup-direct.js (FUNCIONA ✅)
+   - Usa: PrismaClient básico
+   - Crea usuario directamente en BD
+   - Resultado: Exitoso
+
+B) scripts/test-signup-form.js
+   - Envía HTTP POST a /auth/signup
+   - Simula form submission
+   - Resultado: Timeout (no response)
+
+C) scripts/diagnose-neon.js
+   - Verifica conexión a BD
+   - Lista usuarios, tablas
+   - Resultado: Todo OK ✅
+
+═══════════════════════════════════════════════
+6. VARIABLES DE ENTORNO
+═══════════════════════════════════════════════
+
+Archivo: .env
+
+DATABASE_URL="postgresql://neondb_owner:***@ep-divine-field-ad26eaav-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key-here"
+
+# Opcional
+ENCRYPTION_KEY="" (vacío, extension deshabilitada)
+
+═══════════════════════════════════════════════
+7. CONFIGURACIÓN NEXT.JS
+═══════════════════════════════════════════════
+
+next.config.js:
+- serverExternalPackages: ['@prisma/client', 'bcryptjs']
+- experimental: { serverActions: true }
+
+middleware.ts:
+- Rutas públicas: /auth/*, /api/auth/*
+- Tamaño: 33.8 KB ✅ (< 1MB límite)
+
+═══════════════════════════════════════════════
+8. DEPENDENCIAS CRÍTICAS
+═══════════════════════════════════════════════
+
+next: 15.5.6
+react: 19.1.0
+@prisma/client: 6.17.1
+@prisma/extension-accelerate: 2.0.2
+prisma-extension-pagination: 0.7.5
+prisma-field-encryption: 1.6.0
+next-auth: 5.0.0-beta.29
+bcryptjs: 3.0.2
+
+Node: v18.19.1
+npm: 9.2.0
+
+═══════════════════════════════════════════════
+9. ESTADO DE BUILD
+═══════════════════════════════════════════════
+
+npm run build: ✅ EXITOSO
+TypeScript: ✅ Sin errores
+Middleware: ✅ 33.8 KB (dentro del límite)
+Prisma Client: ✅ Generado
+
+═══════════════════════════════════════════════
+10. ESTADO DE BASE DE DATOS
+═══════════════════════════════════════════════
+
+Conexión: ✅ Exitosa
+Proveedor: PostgreSQL (Neon Serverless)
+Región: us-east-1
+Tipo: Pooled connection
+
+Usuarios en BD:
+1. admin@sagofactu.com (Super Admin) ✅
+2. usuario@empresa.com (Usuario Demo) ✅
+3. angelnereira15@gmail.com (Usuario) ✅
+4. test-1761078920899@ejemplo.com (Test) ✅
+
+Organizaciones:
+1. empresa-demo (Empresa Demo S.A.) ✅
+
+═══════════════════════════════════════════════
+11. LOGS DEL SERVIDOR
+═══════════════════════════════════════════════
+
+Ubicación: /tmp/sago-dev.log
+
+Última ejecución:
+✓ Starting...
+✓ Compiled middleware in 370ms
+✓ Ready in 2s
+○ Compiling /auth/signup ...
+✓ Compiled /auth/signup in 4.7s
+POST /auth/signup 200 in 5159ms
+
+⚠️  El POST retorna 200 pero no hay logs de la función
+
+═══════════════════════════════════════════════
+12. RUTAS DE LA APP
+═══════════════════════════════════════════════
+
+/ ........................ Home (estática)
+/auth/signin ............. Login ✅
+/auth/signup ............. Registro ❌
+/dashboard ............... Dashboard (protegido)
+/test-signup ............. Test de registro (debug)
+
+API Routes:
+/api/auth/[...nextauth] .. NextAuth handlers ✅
+
+═══════════════════════════════════════════════
+13. ÚLTIMOS COMMITS
+═══════════════════════════════════════════════
+
+a6a6f88 - fix: Separar clientes Prisma
+df1b7ab - docs: Resumen completo
+37a7ca8 - fix: Errores TypeScript
+7a535a1 - feat: Optimizaciones Prisma
+
+═══════════════════════════════════════════════
+14. URLs DEL PROYECTO
+═══════════════════════════════════════════════
+
+Desarrollo:  http://localhost:3000
+Producción:  https://sago-factu-v0-2.vercel.app
+Repositorio: https://github.com/angelnereira/sago-factu-V0.2
+Test:        http://localhost:3000/test-signup
+
+═══════════════════════════════════════════════
+
+GENERADO: 21 de Octubre, 2025
+PARA: Integrador Técnico
+POR: Equipo SAGO-FACTU
+
