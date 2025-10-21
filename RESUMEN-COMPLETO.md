@@ -337,7 +337,7 @@ Eliminaciones: -174
 
 3. **Probar login en producción:**
    - https://sago-factu-v0-2.vercel.app/auth/signin
-   - Usar: `admin@sagofactu.com` / `admin123`
+   - Usar credenciales de Super Admin configuradas
    - Verificar redirección a dashboard
 
 ### **Corto Plazo (esta semana):**

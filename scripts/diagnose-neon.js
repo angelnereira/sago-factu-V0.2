@@ -7,8 +7,14 @@
 
 const { PrismaClient } = require('@prisma/client')
 
-const DATABASE_URL = process.env.DATABASE_URL || 
-  'postgresql://neondb_owner:npg_JR48yletDImP@ep-divine-field-ad26eaav-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require'
+// Usar DATABASE_URL del ambiente (.env)
+const DATABASE_URL = process.env.DATABASE_URL
+
+if (!DATABASE_URL) {
+  console.error('❌ ERROR: DATABASE_URL no está configurada en .env')
+  console.error('   Por favor, configura DATABASE_URL en tu archivo .env')
+  process.exit(1)
+}
 
 async function diagnose() {
   console.log('🔍 Iniciando diagnóstico de Neon PostgreSQL...\n')

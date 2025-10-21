@@ -32,12 +32,19 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # archivos con credenciales sensibles
 vercel-env-*.txt
 vercel-neon-env.txt
 *-credentials.txt
 *.secret
+
+# archivos temporales de documentación con credenciales
+NEON-SETUP.md
+VERCEL-SETUP-COMPLETO.md
+VERCEL-DEPLOYMENT.md
+VERIFICACION-DEPLOYMENT.md
 
 # vercel
 .vercel

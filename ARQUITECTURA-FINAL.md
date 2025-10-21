@@ -208,11 +208,11 @@ scripts/
 ### **Desarrollo (.env):**
 
 ```bash
-DATABASE_URL="postgresql://neondb_owner:npg_JR48yletDImP@ep-divine-field-ad26eaav-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL="postgresql://neondb_owner:YOUR_PASSWORD@YOUR_ENDPOINT.neon.tech/neondb?sslmode=require"
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="CDNvPtB/3VqcQOIL//p9if3oGQxx0qm2taE9GfsGE3w="
+NEXTAUTH_SECRET="YOUR_NEXTAUTH_SECRET_HERE"
 SUPER_ADMIN_EMAIL="admin@sagofactu.com"
-SUPER_ADMIN_PASSWORD="admin123"
+SUPER_ADMIN_PASSWORD="YOUR_ADMIN_PASSWORD"
 HKA_ENV="demo"
 # ... más variables
 ```
@@ -220,13 +220,14 @@ HKA_ENV="demo"
 ### **Producción (Vercel):**
 
 ```bash
-DATABASE_URL="postgresql://neondb_owner:npg_JR48yletDImP@ep-divine-field-ad26eaav-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL="postgresql://neondb_owner:YOUR_PASSWORD@YOUR_ENDPOINT.neon.tech/neondb?sslmode=require"
 NEXTAUTH_URL="https://sago-factu-v0-2.vercel.app"
-NEXTAUTH_SECRET="CDNvPtB/3VqcQOIL//p9if3oGQxx0qm2taE9GfsGE3w="
+NEXTAUTH_SECRET="YOUR_NEXTAUTH_SECRET_HERE"
 # ... mismas variables que dev
 ```
 
 **Nota:** Mismo DATABASE_URL en dev y prod (Neon)
+**⚠️ IMPORTANTE:** Ver `vercel-env.example.txt` para configurar tus propias credenciales
 
 ---
 
