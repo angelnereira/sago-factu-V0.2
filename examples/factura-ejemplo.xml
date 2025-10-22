@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rFE xmlns="http://dgi-fep.mef.gob.pa" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0">
+  <!-- Datos del documento -->
+  <dDoc>
+    <dFechaEm>2025-10-21</dFechaEm>
+    <dNaturaleza>01</dNaturaleza>
+    <dTipoDoc>01</dTipoDoc>
+    <dNumDoc>0000001</dNumDoc>
+  </dDoc>
+  
+  <!-- Datos del emisor -->
+  <dEmi>
+    <dRuc>1234567890</dRuc>
+    <dNombre>Mi Empresa S.A.</dNombre>
+    <dNombreComercial>Mi Empresa</dNombreComercial>
+    <dDireccion>Calle 50, Edificio Principal</dDireccion>
+    <dCiudad>Panamá</dCiudad>
+    <dPais>PA</dPais>
+    <dTelefono>+507 123-4567</dTelefono>
+    <dCorreo>empresa@ejemplo.com</dCorreo>
+  </dEmi>
+  
+  <!-- Datos del receptor (cliente) -->
+  <dRec>
+    <dRuc>9876543210</dRuc>
+    <dNombre>Cliente Ejemplo S.A.</dNombre>
+    <dDireccion>Avenida Balboa, Torre 1</dDireccion>
+    <dCiudad>Panamá</dCiudad>
+    <dPais>PA</dPais>
+    <dTelefono>+507 987-6543</dTelefono>
+    <dCorreo>cliente@ejemplo.com</dCorreo>
+  </dRec>
+  
+  <!-- Items del documento -->
+  <dItems>
+    <dItem>
+      <dNumItem>1</dNumItem>
+      <dDescItem>Servicio de Consultoría Empresarial</dDescItem>
+      <dCantItem>10.00</dCantItem>
+      <dPrecioItem>150.00</dPrecioItem>
+      <dPrecioItemSinItbms>150.00</dPrecioItemSinItbms>
+      <dValorItem>1500.00</dValorItem>
+      <dTasaItbms>7.00</dTasaItbms>
+      <dValorItbms>105.00</dValorItbms>
+      <dValorTotalItem>1605.00</dValorTotalItem>
+    </dItem>
+    <dItem>
+      <dNumItem>2</dNumItem>
+      <dDescItem>Desarrollo de Software a Medida</dDescItem>
+      <dCantItem>5.00</dCantItem>
+      <dPrecioItem>200.00</dPrecioItem>
+      <dPrecioItemSinItbms>200.00</dPrecioItemSinItbms>
+      <dValorItem>1000.00</dValorItem>
+      <dTasaItbms>7.00</dTasaItbms>
+      <dValorItbms>70.00</dValorItbms>
+      <dValorTotalItem>1070.00</dValorTotalItem>
+    </dItem>
+    <dItem>
+      <dNumItem>3</dNumItem>
+      <dDescItem>Soporte Técnico Mensual</dDescItem>
+      <dCantItem>12.00</dCantItem>
+      <dPrecioItem>50.00</dPrecioItem>
+      <dPrecioItemSinItbms>50.00</dPrecioItemSinItbms>
+      <dValorItem>600.00</dValorItem>
+      <dTasaItbms>7.00</dTasaItbms>
+      <dValorItbms>42.00</dValorItbms>
+      <dValorTotalItem>642.00</dValorTotalItem>
+    </dItem>
+  </dItems>
+  
+  <!-- Totales -->
+  <dTot>
+    <dSubTotal>3100.00</dSubTotal>
+    <dTotalDescuento>0.00</dTotalDescuento>
+    <dTotalItbms>217.00</dTotalItbms>
+    <dTotalNeto>3317.00</dTotalNeto>
+    <dTotalAPagar>3317.00</dTotalAPagar>
+    <dFormaPago>03</dFormaPago>
+  </dTot>
+  
+  <!-- Información adicional -->
+  <dInfo>
+    <dTexto>Factura generada automáticamente. Gracias por su preferencia.</dTexto>
+  </dInfo>
+</rFE>
+

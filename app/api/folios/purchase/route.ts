@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Calcular monto de compra
-    const pricePerFolio = 0.15
+    const pricePerFolio = 0.06
     const purchaseAmount = quantity * pricePerFolio
 
     // Generar rango de folios

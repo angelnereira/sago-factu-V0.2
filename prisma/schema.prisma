@@ -15,11 +15,13 @@ model Organization {
   id      String  @id @default(cuid())
   slug    String  @unique
   name    String
-  ruc     String  @unique
-  dv      String // Dígito verificador
-  email   String
+  ruc     String? @unique
+  dv      String? // Dígito verificador
+  email   String?
   phone   String?
-  address String
+  address String?
+  website String?
+  logo    String?
 
   // HKA Configuration
   hkaEnabled   Boolean @default(true)
@@ -42,10 +44,11 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   // Relations
-  users    User[]
-  folios   FolioAssignment[]
-  invoices Invoice[]
-  apiKeys  ApiKey[]
+  users         User[]
+  folios        FolioAssignment[]
+  invoices      Invoice[]
+  apiKeys       ApiKey[]
+  systemConfigs SystemConfig[]
 
   @@index([slug])
   @@index([ruc])
@@ -563,12 +566,18 @@ model AuditLog {
 model SystemConfig {
   id String @id @default(cuid())
 
-  key         String @unique
-  value       String // JSON como string para SQLite
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  key         String
+  value       String @db.Text // JSON como string
   description String?
+  createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   updatedBy   String?
 
+  @@unique([organizationId, key])
   @@index([key])
+  @@index([organizationId])
   @@map("system_configs")
 }

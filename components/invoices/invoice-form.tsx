@@ -2,13 +2,15 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Trash2, Save, Send } from "lucide-react"
+import { Plus, Trash2, Save, Send, FileUp } from "lucide-react"
 import { 
   type InvoiceItem, 
   type Client,
   calculateItemTotals,
   calculateInvoiceTotals 
 } from "@/lib/validations/invoice"
+import { XMLUploader } from "./xml-uploader"
+import type { ParsedInvoiceData } from "@/lib/utils/xml-parser"
 
 interface InvoiceFormProps {
   organizationId: string
@@ -19,6 +21,7 @@ export function InvoiceForm({ organizationId, userId }: InvoiceFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showXMLUploader, setShowXMLUploader] = useState(false)
 
   // Estado del cliente
   const [client, setClient] = useState<Client>({
@@ -45,6 +48,34 @@ export function InvoiceForm({ organizationId, userId }: InvoiceFormProps) {
   // Estado adicional
   const [notes, setNotes] = useState("")
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "CARD" | "TRANSFER" | "CHECK" | "OTHER">("CASH")
+
+  // Función para aplicar datos del XML
+  const handleXMLDataExtracted = (data: ParsedInvoiceData) => {
+    // Aplicar datos del cliente
+    setClient({
+      name: data.client.name,
+      taxId: data.client.taxId,
+      email: data.client.email || "",
+      phone: data.client.phone || "",
+      address: data.client.address,
+      city: data.client.city || "Panamá",
+      country: data.client.country || "PA",
+    })
+
+    // Aplicar items
+    setItems(data.items)
+
+    // Aplicar información adicional
+    if (data.notes) {
+      setNotes(data.notes)
+    }
+    if (data.paymentMethod) {
+      setPaymentMethod(data.paymentMethod as any)
+    }
+
+    // Ocultar uploader
+    setShowXMLUploader(false)
+  }
 
   // Agregar item
   const addItem = () => {
@@ -115,6 +146,37 @@ export function InvoiceForm({ organizationId, userId }: InvoiceFormProps) {
 
   return (
     <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-8">
+      {/* Botón para mostrar/ocultar uploader XML */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <FileUp className="h-6 w-6 text-indigo-600" />
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">
+                ¿Tienes un archivo XML de factura?
+              </h3>
+              <p className="text-xs text-gray-600">
+                Sube tu XML y autocompletaremos el formulario por ti
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowXMLUploader(!showXMLUploader)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          >
+            {showXMLUploader ? "Ocultar" : "Subir XML"}
+          </button>
+        </div>
+      </div>
+
+      {/* Uploader de XML */}
+      {showXMLUploader && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <XMLUploader onDataExtracted={handleXMLDataExtracted} />
+        </div>
+      )}
+
       {/* Sección: Datos del Cliente */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Datos del Cliente</h2>
