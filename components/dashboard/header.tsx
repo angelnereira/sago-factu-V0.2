@@ -1,8 +1,9 @@
 "use client"
 
-import { Bell, LogOut, Settings, User } from "lucide-react"
+import { LogOut, Settings, User } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { useState } from "react"
+import { NotificationsCenter } from "./notifications-center"
 
 interface DashboardHeaderProps {
   user: {
@@ -36,10 +37,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           {/* Acciones del header */}
           <div className="flex items-center space-x-4">
             {/* Notificaciones */}
-            <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-            </button>
+            <NotificationsCenter />
 
             {/* Usuario */}
             <div className="relative">
