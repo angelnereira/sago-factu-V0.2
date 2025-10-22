@@ -15,7 +15,7 @@ export function FolioPurchaseModal({ isOpen, onClose }: FolioPurchaseModalProps)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const pricePerFolio = 0.50 // Precio por folio en USD
+  const pricePerFolio = 0.15 // Precio por folio en USD
   const totalPrice = quantity * pricePerFolio
 
   const handleSubmit = async (e: React.FormEvent) => {
