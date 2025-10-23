@@ -40,8 +40,12 @@ export class InvoiceXMLParser {
     this.parser = new XMLParser({
       ignoreAttributes: false,
       attributeNamePrefix: "@_",
-      parseAttributeValue: true,
+      parseAttributeValue: false, // Cambiar a false para más control
       trimValues: true,
+      parseTagValue: false, // No auto-convertir valores
+      stopNodes: [],
+      processEntities: true,
+      htmlEntities: false,
     })
   }
 
@@ -50,7 +54,23 @@ export class InvoiceXMLParser {
    */
   async parse(xmlContent: string): Promise<ParsedInvoiceData> {
     try {
-      const parsed = this.parser.parse(xmlContent)
+      // Validación previa
+      if (!xmlContent || xmlContent.trim().length === 0) {
+        throw new Error("El contenido XML está vacío")
+      }
+
+      // Intentar parsear
+      let parsed
+      try {
+        parsed = this.parser.parse(xmlContent)
+      } catch (parseError: any) {
+        throw new Error(`Error al parsear el XML: ${parseError.message}. Verifica que sea un archivo XML válido.`)
+      }
+
+      // Verificar que se parseó algo
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error("El XML no pudo ser parseado correctamente")
+      }
       
       // Detectar formato del XML
       if (parsed.rFE) {
@@ -63,10 +83,19 @@ export class InvoiceXMLParser {
         // Formato CFDI México
         return this.parseCFDI(parsed["cfdi:Comprobante"])
       } else {
-        throw new Error("Formato de XML no reconocido")
+        // Listar elementos raíz encontrados
+        const rootElements = Object.keys(parsed).join(", ")
+        throw new Error(
+          `Formato de XML no reconocido. Elementos raíz: ${rootElements}. ` +
+          `Formatos soportados: rFE, Invoice, cfdi:Comprobante`
+        )
       }
     } catch (error: any) {
-      throw new Error(`Error al parsear XML: ${error.message}`)
+      // Re-lanzar con mensaje más claro
+      if (error.message.includes("Error al parsear XML")) {
+        throw error
+      }
+      throw new Error(`Error al procesar XML: ${error.message}`)
     }
   }
 
@@ -195,12 +224,39 @@ export class InvoiceXMLParser {
     const errors: string[] = []
 
     try {
-      // Verificar que es XML válido
-      const parser = new XMLParser()
+      // Verificar que el contenido no esté vacío
+      if (!xmlContent || xmlContent.trim().length === 0) {
+        errors.push("El archivo está vacío")
+        return { valid: false, errors }
+      }
+
+      // Verificar que sea XML
+      if (!xmlContent.trim().startsWith('<')) {
+        errors.push("El archivo no parece ser XML válido")
+        return { valid: false, errors }
+      }
+
+      // Intentar parsear el XML
+      const parser = new XMLParser({
+        ignoreAttributes: false,
+        attributeNamePrefix: "@_",
+        parseAttributeValue: true,
+        trimValues: true,
+        stopNodes: [], // No detener en ningún nodo
+        parseTagValue: false, // No parsear valores como números automáticamente
+      })
+      
       const parsed = parser.parse(xmlContent)
 
-      if (!parsed || Object.keys(parsed).length === 0) {
-        errors.push("El XML está vacío o no es válido")
+      // Verificar que el parseo produjo algo
+      if (!parsed || typeof parsed !== 'object') {
+        errors.push("El XML no pudo ser parseado correctamente")
+        return { valid: false, errors }
+      }
+
+      if (Object.keys(parsed).length === 0) {
+        errors.push("El XML está vacío o no tiene estructura")
+        return { valid: false, errors }
       }
 
       // Verificar que tiene algún formato reconocible
@@ -211,7 +267,13 @@ export class InvoiceXMLParser {
         parsed["cfdi:Comprobante"]
 
       if (!hasKnownFormat) {
-        errors.push("Formato de XML no reconocido. Formatos soportados: FEL Panamá, CFDI México, XML genérico")
+        // Listar las raíces encontradas para ayudar al debug
+        const rootElements = Object.keys(parsed).join(", ")
+        errors.push(
+          `Formato de XML no reconocido. ` +
+          `Elementos raíz encontrados: ${rootElements}. ` +
+          `Formatos soportados: rFE (FEL Panamá), Invoice (XML genérico), cfdi:Comprobante (CFDI México)`
+        )
       }
 
       return {
@@ -219,7 +281,19 @@ export class InvoiceXMLParser {
         errors,
       }
     } catch (error: any) {
-      errors.push(`XML inválido: ${error.message}`)
+      // Mejorar el mensaje de error
+      let errorMessage = error.message || "Error desconocido"
+      
+      // Errores comunes
+      if (errorMessage.includes("tagName")) {
+        errorMessage = "El XML tiene una estructura inválida. Verifica que sea un archivo XML bien formado."
+      } else if (errorMessage.includes("Unexpected")) {
+        errorMessage = "El XML contiene caracteres o estructuras no válidas."
+      } else if (errorMessage.includes("Invalid")) {
+        errorMessage = "El formato del XML no es válido."
+      }
+      
+      errors.push(`XML inválido: ${errorMessage}`)
       return {
         valid: false,
         errors,

@@ -64,19 +64,30 @@ npm run setup
 # - Variables de entorno configuradas
 ```
 
-### 3. Configuración Manual de Variables
-Editar `.env` con tus credenciales específicas:
+### 3. Configuración de Variables de Entorno
 ```bash
-# Base de datos
-DATABASE_URL="postgresql://user:password@host:5432/sagofactu?schema=public"
+# Copiar template de variables de entorno
+cp env.template .env
 
-# AWS S3 (opcional)
-AWS_ACCESS_KEY_ID="tu-access-key"
-AWS_SECRET_ACCESS_KEY="tu-secret-key"
-
-# Email (opcional)
-RESEND_API_KEY="tu-resend-key"
+# Editar .env con tus credenciales reales
+# IMPORTANTE: NUNCA subir .env a Git
+nano .env
 ```
+
+Variables principales:
+```bash
+# Base de datos (Neon PostgreSQL)
+DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
+
+# NextAuth.js (generar con: openssl rand -base64 32)
+NEXTAUTH_SECRET="tu-secret-generado"
+
+# HKA Demo (solicitar credenciales a The Factory HKA)
+HKA_DEMO_TOKEN_USER="tu-token"
+HKA_DEMO_TOKEN_PASSWORD="tu-password"
+```
+
+Ver `env.template` para la lista completa de variables.
 
 ### 4. Configuración de Base de Datos
 ```bash
@@ -244,9 +255,39 @@ AWS_SECRET_ACCESS_KEY="..."
 RESEND_API_KEY="..."
 ```
 
+## 📚 Documentación
+
+Toda la documentación técnica está organizada en el directorio [`docs/`](docs/):
+
+### 📖 Documentos Clave
+- **[Índice de Documentación](docs/INDEX.md)** - Índice completo
+- **[Guía de Despliegue](docs/DESPLIEGUE-VERCEL.md)** - Deployment en Vercel
+- **[Resumen Ejecutivo](docs/RESUMEN-EJECUTIVO-FINAL.md)** - Estado del proyecto
+- **[Integración HKA](docs/INTEGRACION-HKA-COMPLETADA-FINAL.md)** - Integración completa
+- **[Quick Start](docs/QUICKSTART.md)** - Inicio rápido
+
+### 📁 Categorías
+```
+docs/
+├── 🚀 Inicio Rápido (QUICKSTART.md)
+├── 🎯 Resúmenes Ejecutivos
+├── 🔧 Documentación Técnica
+├── 🔌 Integración HKA
+├── 🚀 Deployment
+├── 🗄️ Base de Datos
+└── 🎨 Frontend
+```
+
+**Ver el índice completo**: [`docs/INDEX.md`](docs/INDEX.md)
+
+---
+
 ## 📞 Soporte
 
-Para soporte técnico o consultas sobre el proyecto, contactar al equipo de desarrollo.
+Para soporte técnico o consultas sobre el proyecto:
+- Revisar documentación en [`docs/`](docs/)
+- Ver guías de troubleshooting
+- Contactar al equipo de desarrollo
 
 ---
 

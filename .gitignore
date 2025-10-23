@@ -35,9 +35,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files - NUNCA SUBIR CREDENCIALES
 .env*
-!.env.example
+# Incluir .env.example también por seguridad (contiene datos sensibles)
+# Usar .env.template en su lugar
 
 # archivos con credenciales sensibles
 vercel-env-*.txt
