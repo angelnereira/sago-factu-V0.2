@@ -59,10 +59,16 @@ export class InvoiceXMLParser {
         throw new Error("El contenido XML está vacío")
       }
 
+      // Limpiar BOM (Byte Order Mark) si existe
+      let cleaned = xmlContent
+      if (cleaned.charCodeAt(0) === 0xFEFF) {
+        cleaned = cleaned.slice(1)
+      }
+
       // Intentar parsear
       let parsed
       try {
-        parsed = this.parser.parse(xmlContent)
+        parsed = this.parser.parse(cleaned)
       } catch (parseError: any) {
         throw new Error(`Error al parsear el XML: ${parseError.message}. Verifica que sea un archivo XML válido.`)
       }
@@ -230,9 +236,16 @@ export class InvoiceXMLParser {
         return { valid: false, errors }
       }
 
-      // Verificar que sea XML
-      if (!xmlContent.trim().startsWith('<')) {
-        errors.push("El archivo no parece ser XML válido")
+      // Limpiar BOM (Byte Order Mark) si existe
+      let cleaned = xmlContent
+      if (cleaned.charCodeAt(0) === 0xFEFF) {
+        cleaned = cleaned.slice(1)
+      }
+
+      // Verificar que sea XML (más tolerante con BOM y espacios)
+      const trimmed = cleaned.trim()
+      if (!trimmed.startsWith('<')) {
+        errors.push(`El archivo no parece ser XML válido. Primeros caracteres: "${trimmed.substring(0, 50)}"`)
         return { valid: false, errors }
       }
 
@@ -246,7 +259,7 @@ export class InvoiceXMLParser {
         parseTagValue: false, // No parsear valores como números automáticamente
       })
       
-      const parsed = parser.parse(xmlContent)
+      const parsed = parser.parse(cleaned)
 
       // Verificar que el parseo produjo algo
       if (!parsed || typeof parsed !== 'object') {
