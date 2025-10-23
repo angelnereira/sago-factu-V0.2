@@ -77,6 +77,12 @@ const adminItems: SidebarItem[] = [
     roles: ["SUPER_ADMIN"],
   },
   {
+    name: "Métricas",
+    href: "/dashboard/admin/metricas",
+    icon: BarChart3,
+    roles: ["SUPER_ADMIN"],
+  },
+  {
     name: "Auditoría",
     href: "/dashboard/admin/auditoria",
     icon: Activity,
