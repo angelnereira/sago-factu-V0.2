@@ -1,365 +1,318 @@
 # 🔐 CREDENCIALES DE ACCESO - SAGO-FACTU
 
-**Proyecto**: SAGO-FACTU  
-**Fecha**: 22 de octubre de 2025  
-**Estado**: Desarrollo  
+**Última actualización**: 22 de octubre de 2025
 
 ---
 
-## ⚠️ IMPORTANTE - SEGURIDAD
+## ✅ CREDENCIALES ACTUALES
 
-**🚨 ESTE ARCHIVO CONTIENE CREDENCIALES DE DESARROLLO**
+### Super Admin
 
-- ❌ **NO subir este archivo a GitHub**
-- ❌ **NO compartir estas credenciales públicamente**
-- ✅ Cambiar contraseñas en producción
-- ✅ Usar variables de entorno en Vercel
-
----
-
-## 👑 SUPER ADMINISTRADOR
-
-### Credenciales de Acceso
-
-**Email**: `admin@sagofactu.com`  
-**Contraseña**: `admin123`
+```
+Email: admin@sagofactu.com
+Contraseña: Admin123!
+```
 
 **Rol**: `SUPER_ADMIN`  
-**Permisos**: Acceso completo al sistema
+**Acceso**: Panel de administración completo  
+**URL**: http://localhost:3000/auth/signin
 
-### URLs de Acceso
+### Usuario Demo
 
-**Desarrollo Local**:
 ```
-http://localhost:3000/auth/signin
-```
-
-**Después del Login**:
-```
-http://localhost:3000/dashboard/admin
+Email: usuario@empresa.com
+Contraseña: usuario123
 ```
 
----
-
-## 🔑 OTRAS CUENTAS
-
-### Usuario de Prueba (Empresa)
-
-**Email**: `usuario@empresa.com`  
-**Contraseña**: `usuario123`  
 **Rol**: `USER`  
-**Acceso**: Dashboard normal (sin panel admin)
+**Acceso**: Dashboard estándar  
+**Organización**: Empresa Demo S.A.
 
 ---
 
-## 🚀 CÓMO INICIAR SESIÓN
+## 🔧 SCRIPTS DE UTILIDAD
 
-### Paso 1: Acceder a la Página de Login
+### Resetear Contraseña del Super Admin
 
-1. Abrir navegador
-2. Ir a: `http://localhost:3000/auth/signin`
-3. O click en "Iniciar Sesión" desde la homepage
+```bash
+# Con contraseña personalizada
+npm run admin:reset Admin123!
 
-### Paso 2: Ingresar Credenciales
+# O con contraseña por defecto desde .env
+npm run admin:reset
+```
 
-**Para Super Admin**:
-- Email: `admin@sagofactu.com`
-- Password: `admin123`
-- Click en "Iniciar Sesión"
+### Verificar Credenciales
 
-### Paso 3: Acceder al Panel
+```bash
+# Verificar que las credenciales funcionen
+npm run admin:check admin@sagofactu.com Admin123!
+```
 
-Después del login, serás redirigido a:
-- **Super Admin**: `/dashboard/admin` (Panel de administración)
-- **Usuario Normal**: `/dashboard` (Dashboard estándar)
+### Verificar Cualquier Usuario
 
----
-
-## 🎯 FUNCIONALIDADES DISPONIBLES
-
-### Como Super Admin (`admin@sagofactu.com`)
-
-✅ **Dashboard Admin** (`/dashboard/admin`)
-- Ver estadísticas del sistema
-- Métricas de usuarios, organizaciones, folios
-- Actividad reciente
-
-✅ **Gestión de Usuarios** (`/dashboard/admin/users`)
-- Crear nuevos usuarios
-- Editar usuarios existentes
-- Eliminar usuarios (excepto Super Admins)
-- Asignar folios a usuarios
-- Ver listado completo de usuarios
-
-✅ **Dashboard Normal** (`/dashboard`)
-- Acceso a todas las funcionalidades normales
-- Facturas
-- Folios
-- Reportes
-- Configuración
-
-### Como Usuario Normal (`usuario@empresa.com`)
-
-✅ **Dashboard** (`/dashboard`)
-- Ver facturas de su organización
-- Crear nuevas facturas
-- Gestionar clientes
-- Ver reportes
-- Configuración de perfil
-
-❌ **NO tiene acceso a:**
-- Panel de administración (`/dashboard/admin`)
-- Gestión de usuarios de otras organizaciones
-- Compra de folios desde HKA
+```bash
+npx tsx scripts/check-user.ts usuario@empresa.com usuario123
+```
 
 ---
 
-## 🔧 CONFIGURACIÓN DE CREDENCIALES
+## 🚨 PROBLEMAS COMUNES Y SOLUCIONES
 
-### Variables de Entorno (`.env`)
+### ❌ Error: "Contraseña incorrecta"
+
+**Posibles causas**:
+1. La contraseña no está hasheada correctamente
+2. Espacios o caracteres especiales en la contraseña
+3. Base de datos desactualizada
+
+**Solución**:
+
+```bash
+# 1. Verificar credenciales actuales
+npm run admin:check admin@sagofactu.com Admin123!
+
+# 2. Si falla, resetear contraseña
+npm run admin:reset Admin123!
+
+# 3. Verificar de nuevo
+npm run admin:check admin@sagofactu.com Admin123!
+```
+
+### ❌ Error: "Usuario no encontrado"
+
+**Solución**:
+
+```bash
+# Ejecutar seed para crear usuarios
+npm run db:seed
+
+# O resetear completamente la BD
+npm run db:reset
+```
+
+### ❌ Error: "Usuario inactivo"
+
+**Solución**:
+
+```bash
+# Activar usuario con Prisma Studio
+npm run db:studio
+
+# Luego en la tabla User:
+# - Buscar el usuario
+# - Cambiar isActive a true
+```
+
+---
+
+## 🔍 VERIFICACIÓN PASO A PASO
+
+### 1. Verificar que el usuario existe
+
+```bash
+npm run db:studio
+```
+
+En Prisma Studio:
+- Ir a la tabla `User`
+- Buscar `admin@sagofactu.com`
+- Verificar que:
+  - ✅ `email` = admin@sagofactu.com
+  - ✅ `role` = SUPER_ADMIN
+  - ✅ `isActive` = true
+  - ✅ `password` tiene un hash (empieza con `$2b$12$...`)
+
+### 2. Verificar hash de contraseña
+
+```bash
+npx tsx scripts/check-user.ts admin@sagofactu.com Admin123!
+```
+
+Debe mostrar:
+```
+✅ Usuario encontrado
+🔐 Verificación de contraseña: ✅ CORRECTA
+```
+
+### 3. Probar login en la aplicación
+
+1. Ir a: http://localhost:3000/auth/signin
+2. Ingresar:
+   - Email: `admin@sagofactu.com`
+   - Contraseña: `Admin123!`
+3. Click en "Iniciar sesión"
+4. Debe redirigir a `/dashboard`
+
+---
+
+## 🔐 SEGURIDAD
+
+### ⚠️ IMPORTANTE EN PRODUCCIÓN
+
+1. **NUNCA** usar contraseñas simples como `Admin123!`
+2. **SIEMPRE** cambiar las credenciales por defecto
+3. **Usar** contraseñas de al menos 12 caracteres
+4. **Incluir**: mayúsculas, minúsculas, números y símbolos
+
+### Ejemplo de contraseña segura:
+
+```bash
+npm run admin:reset "X9k#mP2$vL8@qW4!"
+```
+
+### Variables de entorno en producción:
 
 ```env
-# Super Admin
-SUPER_ADMIN_EMAIL="admin@sagofactu.com"
-SUPER_ADMIN_PASSWORD="admin123"
-```
-
-### Cambiar Credenciales
-
-#### Opción 1: Modificar `.env` y Re-seed
-
-```bash
-# 1. Editar .env
-nano .env
-
-# Cambiar:
-SUPER_ADMIN_EMAIL="tu-email@example.com"
-SUPER_ADMIN_PASSWORD="tu-password-seguro"
-
-# 2. Re-ejecutar seed
-npm run db:seed
-```
-
-#### Opción 2: Cambiar Directamente en la Base de Datos
-
-```bash
-# 1. Abrir Prisma Studio
-npm run db:studio
-
-# 2. Ir a tabla "User"
-# 3. Buscar usuario con role = "SUPER_ADMIN"
-# 4. Editar email y/o password (password debe ser hasheado)
-```
-
-#### Opción 3: Usar Script de Node.js
-
-```javascript
-// cambiar-password.js
-const bcrypt = require('bcryptjs');
-
-async function hashPassword(password) {
-  const hash = await bcrypt.hash(password, 12);
-  console.log('Password hasheado:', hash);
-}
-
-hashPassword('tu-nuevo-password');
+# .env
+SUPER_ADMIN_EMAIL=admin@tuempresa.com
+SUPER_ADMIN_PASSWORD=TuContraseñaSuperSegura123!#
 ```
 
 ---
 
-## 🛡️ SEGURIDAD EN PRODUCCIÓN
+## 📊 ROLES DEL SISTEMA
 
-### Recomendaciones
-
-1. **Cambiar contraseñas antes de deployment**
-   ```bash
-   # Generar password seguro
-   openssl rand -base64 32
-   ```
-
-2. **Usar variables de entorno en Vercel**
-   - Ir a Vercel Dashboard
-   - Settings > Environment Variables
-   - Agregar `SUPER_ADMIN_EMAIL` y `SUPER_ADMIN_PASSWORD`
-
-3. **Habilitar 2FA** (Futuro)
-   - Implementar autenticación de dos factores
-   - Usar Google Authenticator o similar
-
-4. **Rotar credenciales periódicamente**
-   - Cada 90 días en producción
-   - Después de cada incidente de seguridad
+| Rol | Descripción | Accesos |
+|-----|-------------|---------|
+| `SUPER_ADMIN` | Administrador global | Todo el sistema, panel admin |
+| `ORG_ADMIN` | Admin de organización | Gestión de su organización |
+| `USER` | Usuario estándar | Dashboard, facturas, reportes |
+| `API_USER` | Usuario API | Solo endpoints de API |
 
 ---
 
-## 🔐 ROLES Y PERMISOS
+## 🧪 TESTING DE AUTENTICACIÓN
 
-### SUPER_ADMIN
-
-**Puede**:
-- ✅ Acceder a panel de administración
-- ✅ Crear/editar/eliminar usuarios
-- ✅ Gestionar todas las organizaciones
-- ✅ Asignar folios
-- ✅ Ver logs de auditoría
-- ✅ Acceder a todas las funcionalidades del sistema
-
-**No puede**:
-- ❌ Ser eliminado del sistema
-- ❌ Cambiar su propio rol a uno inferior
-
-### ADMIN
-
-**Puede**:
-- ✅ Gestionar su organización
-- ✅ Crear/editar usuarios de su organización
-- ✅ Asignar folios dentro de su organización
-- ✅ Ver facturas de su organización
-
-**No puede**:
-- ❌ Acceder al panel de administración global
-- ❌ Gestionar otras organizaciones
-- ❌ Comprar folios de HKA
-
-### USER
-
-**Puede**:
-- ✅ Crear y gestionar facturas
-- ✅ Ver folios disponibles de su organización
-- ✅ Gestionar clientes
-- ✅ Generar reportes
-
-**No puede**:
-- ❌ Acceder al panel de administración
-- ❌ Gestionar usuarios
-- ❌ Asignar folios
-
----
-
-## 🧪 TESTING
-
-### Probar Login como Super Admin
+### Test manual completo:
 
 ```bash
-# 1. Asegurar que el servidor está corriendo
+# 1. Resetear contraseña
+npm run admin:reset Admin123!
+
+# 2. Verificar credenciales
+npm run admin:check admin@sagofactu.com Admin123!
+
+# 3. Iniciar servidor
 npm run dev
 
-# 2. Abrir navegador
-http://localhost:3000/auth/signin
+# 4. Abrir navegador
+# http://localhost:3000/auth/signin
 
-# 3. Ingresar:
-Email: admin@sagofactu.com
-Password: admin123
-
-# 4. Debe redirigir a:
-http://localhost:3000/dashboard/admin
-```
-
-### Probar Funcionalidades Admin
-
-1. **Ver Dashboard Admin**
-   - Verificar que se muestran estadísticas
-   - Confirmar métricas de usuarios, organizaciones, folios
-
-2. **Gestionar Usuarios**
-   - Ir a `/dashboard/admin/users`
-   - Crear un nuevo usuario de prueba
-   - Editar el usuario creado
-   - Asignar folios al usuario
-   - Eliminar el usuario (si no es Super Admin)
-
-3. **Verificar Protección de Rutas**
-   - Logout
-   - Login como usuario normal
-   - Intentar acceder a `/dashboard/admin`
-   - Debe redirigir a `/dashboard`
-
----
-
-## 🔄 RECUPERAR ACCESO
-
-### Si Olvidaste la Contraseña
-
-**Opción 1: Verificar `.env`**
-```bash
-cat .env | grep SUPER_ADMIN
-```
-
-**Opción 2: Re-ejecutar Seed**
-```bash
-npm run db:seed
-# Esto recreará el Super Admin con las credenciales del .env
-```
-
-**Opción 3: Actualizar Directamente en BD**
-```bash
-# Abrir Prisma Studio
-npm run db:studio
-
-# Ir a tabla User
-# Buscar email: admin@sagofactu.com
-# Copiar password hasheado de otro usuario
-# O generar nuevo hash con bcrypt
-```
-
-**Opción 4: Script SQL Directo**
-```sql
--- Generar hash de 'admin123' y actualizar
--- (Ejecutar en Prisma Studio o cliente SQL)
-UPDATE "User" 
-SET password = '$2a$12$...' -- Hash generado con bcrypt
-WHERE email = 'admin@sagofactu.com';
+# 5. Login con:
+# Email: admin@sagofactu.com
+# Password: Admin123!
 ```
 
 ---
 
-## 📊 RESUMEN DE CREDENCIALES
+## 🔄 RESETEAR TODO EL SISTEMA
 
-| Usuario | Email | Password | Rol | Acceso |
-|---------|-------|----------|-----|--------|
-| **Super Admin** | `admin@sagofactu.com` | `admin123` | SUPER_ADMIN | Panel admin + Todo |
-| Usuario Prueba | `usuario@empresa.com` | `usuario123` | USER | Dashboard normal |
-
----
-
-## 📞 SOPORTE
-
-### Si No Puedes Acceder
-
-1. Verificar que el servidor está corriendo
-2. Verificar credenciales en `.env`
-3. Re-ejecutar seed: `npm run db:seed`
-4. Revisar logs del servidor
-5. Verificar que la base de datos tiene datos
-
-### Logs de Debug
+Si nada funciona, resetear completamente:
 
 ```bash
-# Ver logs del servidor
-tail -f /tmp/sago-dev.log
+# 1. Parar servidor
+# Ctrl+C
 
-# Ver logs de Prisma
-npm run db:studio
+# 2. Resetear base de datos
+npm run db:reset
+
+# 3. Verificar credenciales
+npm run admin:check admin@sagofactu.com Admin123!
+
+# 4. Iniciar servidor
+npm run dev
+
+# 5. Intentar login
 ```
 
 ---
 
-## ⚠️ RECORDATORIOS DE SEGURIDAD
+## 📝 LOGS ÚTILES PARA DEBUGGING
 
-- 🔒 Cambiar contraseñas en producción
-- 🔒 No compartir credenciales
-- 🔒 Usar contraseñas fuertes
-- 🔒 Habilitar 2FA cuando esté disponible
-- 🔒 Rotar credenciales periódicamente
-- 🔒 No commitear este archivo a Git
+### Ver logs de autenticación:
+
+Los logs aparecen en la consola cuando haces login:
+
+```
+[AUTH CONFIG] Iniciando autorización
+[AUTH CONFIG] Validación fallida  <- Si falla validación
+[AUTH CONFIG] Usuario no encontrado  <- Si no existe
+[AUTH CONFIG] Password incorrecto  <- Si password no coincide
+[AUTH CONFIG] Autorización exitosa: admin@sagofactu.com  <- ✅ Success
+```
+
+### Activar modo debug:
+
+En `.env`:
+```env
+NODE_ENV=development
+```
+
+---
+
+## 🆘 SOPORTE
+
+Si después de seguir todos estos pasos aún tienes problemas:
+
+1. **Verificar versión de bcryptjs**:
+   ```bash
+   npm ls bcryptjs
+   ```
+
+2. **Reinstalar dependencias**:
+   ```bash
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+
+3. **Verificar que Prisma está actualizado**:
+   ```bash
+   npm run db:generate
+   ```
+
+4. **Ver logs completos del servidor**:
+   ```bash
+   npm run dev
+   # No cerrar esta terminal y ver los logs cuando hagas login
+   ```
+
+---
+
+## ✅ CHECKLIST DE VERIFICACIÓN
+
+Antes de hacer login, verifica:
+
+- [ ] El servidor está corriendo (`npm run dev`)
+- [ ] La base de datos está conectada
+- [ ] El usuario existe (`npm run admin:check`)
+- [ ] El hash de contraseña es correcto
+- [ ] El usuario está activo (`isActive: true`)
+- [ ] No hay errores en la consola del servidor
+- [ ] Estás usando el email correcto
+- [ ] Estás usando la contraseña correcta (sin espacios extras)
+
+---
+
+## 🎯 RESUMEN RÁPIDO
+
+```bash
+# Si el login falla, ejecuta esto:
+npm run admin:reset Admin123!
+npm run admin:check admin@sagofactu.com Admin123!
+
+# Credenciales actuales:
+# Email: admin@sagofactu.com
+# Password: Admin123!
+```
 
 ---
 
 **Última actualización**: 22 de octubre de 2025  
-**Versión**: 1.0-dev  
-**Ambiente**: Desarrollo  
+**Contraseña reseteada**: Sí ✅  
+**Hash verificado**: Sí ✅  
+**Login funcionando**: Sí ✅  
 
 ---
 
-🔐 **¡Mantén estas credenciales seguras!**
-
+🔐 **¡Las credenciales están listas para usar!**

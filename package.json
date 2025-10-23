@@ -17,6 +17,8 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force && npm run db:seed",
+    "admin:reset": "tsx scripts/reset-super-admin.ts",
+    "admin:check": "tsx scripts/check-user.ts",
     "neon:auth": "neonctl auth",
     "neon:projects": "neonctl projects list",
     "neon:branches": "neonctl branches list",
