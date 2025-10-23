@@ -153,10 +153,10 @@ export function InvoiceForm({ organizationId, userId }: InvoiceFormProps) {
             <FileUp className="h-6 w-6 text-indigo-600" />
             <div>
               <h3 className="text-sm font-medium text-gray-900">
-                ¿Tienes un archivo XML de factura?
+                ¿Tienes un archivo XML o Excel de factura?
               </h3>
               <p className="text-xs text-gray-600">
-                Sube tu XML y autocompletaremos el formulario por ti
+                Sube tu XML o Excel y autocompletaremos el formulario por ti
               </p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export function InvoiceForm({ organizationId, userId }: InvoiceFormProps) {
             onClick={() => setShowXMLUploader(!showXMLUploader)}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
           >
-            {showXMLUploader ? "Ocultar" : "Subir XML"}
+            {showXMLUploader ? "Ocultar" : "Subir Archivo"}
           </button>
         </div>
       </div>
