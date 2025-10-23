@@ -22,7 +22,7 @@ export default async function ClientsPage({
   if (!organizationId) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600">Usuario sin organización asignada</p>
+        <p className="text-red-600 dark:text-red-400">Usuario sin organización asignada</p>
       </div>
     )
   }
@@ -107,12 +107,12 @@ export default async function ClientsPage({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Clientes</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Clientes</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
             Gestiona la información de tus clientes
           </p>
         </div>
-        <button className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+        <button className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
           <UserPlus className="h-5 w-5" />
           <span>Nuevo Cliente</span>
         </button>
@@ -120,40 +120,40 @@ export default async function ClientsPage({
 
       {/* Estadísticas rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Clientes</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{totalClients}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Clientes</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">{totalClients}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <UserPlus className="h-8 w-8 text-blue-600" />
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+              <UserPlus className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Clientes Activos</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{totalClients}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Clientes Activos</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">{totalClients}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <UserPlus className="h-8 w-8 text-green-600" />
+            <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
+              <UserPlus className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Este Mes</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Este Mes</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {clientsMap.size}
               </p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-full">
-              <UserPlus className="h-8 w-8 text-purple-600" />
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+              <UserPlus className="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </div>

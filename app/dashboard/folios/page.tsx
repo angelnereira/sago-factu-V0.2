@@ -18,7 +18,7 @@ export default async function FoliosPage() {
   if (!organizationId) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600">Usuario sin organización asignada</p>
+        <p className="text-red-600 dark:text-red-400">Usuario sin organización asignada</p>
       </div>
     )
   }
@@ -82,8 +82,8 @@ export default async function FoliosPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Folios</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestión de Folios</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
             Administra y monitorea tus folios de facturación
           </p>
         </div>
