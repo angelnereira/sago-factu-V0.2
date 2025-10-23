@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Theme Toggle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+</head>
+<body class="p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            Test de Tema
+        </h1>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 mb-4">
+            <p class="text-gray-600 dark:text-gray-400">
+                Este es un contenedor de prueba. Debe cambiar de color cuando cambies el tema.
+            </p>
+        </div>
+
+        <button 
+            id="themeToggle"
+            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+        >
+            Cambiar Tema
+        </button>
+
+        <div class="mt-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Tema actual: <span id="currentTheme" class="font-bold"></span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const html = document.documentElement;
+        const themeToggle = document.getElementById('themeToggle');
+        const currentThemeSpan = document.getElementById('currentTheme');
+
+        function updateThemeDisplay() {
+            const isDark = html.classList.contains('dark');
+            currentThemeSpan.textContent = isDark ? 'Oscuro' : 'Claro';
+            console.log('Theme:', isDark ? 'dark' : 'light');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            updateThemeDisplay();
+        });
+
+        // Inicializar
+        updateThemeDisplay();
+    </script>
+</body>
+</html>
+
