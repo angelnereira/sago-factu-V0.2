@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   const session = await auth()
   
   if (!session) {
-    redirect("/auth/signin")
+    redirect("/")
   }
 
   // Obtener métricas desde la base de datos

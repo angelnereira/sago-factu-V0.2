@@ -10,7 +10,7 @@ export default async function FoliosPage() {
   const session = await auth()
   
   if (!session) {
-    redirect("/auth/signin")
+    redirect("/")
   }
 
   const organizationId = session.user.organizationId

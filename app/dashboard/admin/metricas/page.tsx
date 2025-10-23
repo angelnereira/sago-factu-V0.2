@@ -10,7 +10,7 @@ export default async function MetricsPage() {
   const session = await auth()
 
   if (!session || !session.user || !session.user.id) {
-    redirect("/auth/signin")
+    redirect("/")
   }
 
   // Solo SUPER_ADMIN puede ver métricas del sistema

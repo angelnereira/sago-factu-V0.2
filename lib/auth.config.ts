@@ -117,8 +117,9 @@ export default {
     }),
   ],
   pages: {
-    signIn: '/auth/signin',
-    error: '/auth/error',
+    signIn: '/',
+    error: '/',
+    signOut: '/',
   },
   callbacks: {
     async jwt({ token, user }) {

@@ -11,7 +11,7 @@ export default async function InvoiceDetailPage({
   const session = await auth()
   
   if (!session) {
-    redirect("/auth/signin")
+    redirect("/")
   }
 
   const { id } = await params

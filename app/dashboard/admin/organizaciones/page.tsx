@@ -8,7 +8,7 @@ export default async function OrganizationsPage() {
   const session = await auth()
 
   if (!session || !session.user || !session.user.id) {
-    redirect("/auth/signin")
+    redirect("/")
   }
 
   // Solo SUPER_ADMIN puede ver organizaciones

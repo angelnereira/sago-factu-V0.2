@@ -14,7 +14,7 @@ export default async function ClientsPage({
   const session = await auth()
   
   if (!session) {
-    redirect("/auth/signin")
+    redirect("/")
   }
 
   const organizationId = session.user.organizationId

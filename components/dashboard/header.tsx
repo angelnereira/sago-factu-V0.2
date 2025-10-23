@@ -17,7 +17,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/auth/signin" })
+    await signOut({ callbackUrl: "/" })
   }
 
   return (

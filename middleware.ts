@@ -23,11 +23,10 @@ export function middleware(request: NextRequest) {
 
   // Rutas públicas que NO requieren autenticación
   const publicRoutes = [
-    '/auth/signin',
+    '/',
     '/auth/signup',
     '/auth/error',
     '/auth/forgot-password',
-    '/',
     '/about',
     '/contact',
   ]
@@ -51,7 +50,7 @@ export function middleware(request: NextRequest) {
 
   // Si NO hay session token, redirigir a login
   if (!sessionToken) {
-    const loginUrl = new URL('/auth/signin', request.url)
+    const loginUrl = new URL('/', request.url)
     loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)
   }

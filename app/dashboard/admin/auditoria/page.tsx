@@ -19,7 +19,7 @@ export default async function AuditoriaPage({
   const session = await auth()
 
   if (!session || !session.user || !session.user.id) {
-    redirect("/auth/signin")
+    redirect("/")
   }
 
   // Solo SUPER_ADMIN puede ver logs de auditoría

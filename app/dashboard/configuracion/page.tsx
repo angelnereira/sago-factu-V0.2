@@ -7,7 +7,7 @@ export default async function ConfigurationPage() {
   const session = await auth()
 
   if (!session || !session.user || !session.user.id) {
-    redirect("/auth/signin")
+    redirect("/")
   }
 
   // Solo SUPER_ADMIN y ORG_ADMIN pueden acceder a configuración

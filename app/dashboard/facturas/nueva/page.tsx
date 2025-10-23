@@ -6,7 +6,7 @@ export default async function NewInvoicePage() {
   const session = await auth()
   
   if (!session) {
-    redirect("/auth/signin")
+    redirect("/")
   }
 
   const organizationId = session.user.organizationId

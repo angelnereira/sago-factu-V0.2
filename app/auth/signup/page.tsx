@@ -120,7 +120,7 @@ async function handleSignUp(formData: FormData) {
 
   // ✅ Redirect SIEMPRE fuera del try/catch principal
   console.log("🔄 [SIGNUP] Redirigiendo a login...")
-  redirect("/auth/signin?success=AccountCreated")
+  redirect("/?success=AccountCreated")
 }
 
 export default async function SignUpPage({
@@ -233,7 +233,7 @@ export default async function SignUpPage({
 
           <div className="text-center">
             <Link
-              href="/auth/signin"
+              href="/"
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               ¿Ya tienes cuenta? Inicia sesión
