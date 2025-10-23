@@ -119,12 +119,12 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
     <div className="space-y-4">
       {/* Header with Create Button */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Lista de Organizaciones
         </h2>
         <button
           onClick={handleCreate}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
         >
           <Plus className="h-4 w-4 mr-2" />
           Nueva Organización
@@ -133,7 +133,7 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
           {error}
         </div>
       )}
@@ -143,21 +143,21 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
         {organizations.map((org) => (
           <div
             key={org.id}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
           >
             {/* Card Header */}
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <Building2 className="h-5 w-5 text-indigo-600" />
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg">
+                    <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                       {org.name}
                     </h3>
                     {org.ruc && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         RUC: {org.ruc}{org.dv ? `-${org.dv}` : ""}
                       </p>
                     )}
@@ -165,12 +165,12 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
                 </div>
                 <div className="flex items-center space-x-2">
                   {org.isActive ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400">
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Activa
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400">
                       <XCircle className="h-3 w-3 mr-1" />
                       Inactiva
                     </span>
