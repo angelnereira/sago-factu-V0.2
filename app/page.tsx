@@ -16,11 +16,12 @@ export default function HomePage() {
             {/* Header */}
             <nav className="relative flex items-center justify-between px-4 py-6 sm:px-6 lg:px-8">
               <div className="flex items-center">
-                <div className="flex items-center space-x-2">
-                  <div className="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-xl">SF</span>
-                  </div>
-                  <span className="text-2xl font-bold text-gray-900">SAGO-FACTU</span>
+                <div className="flex items-center space-x-3">
+                  <img 
+                    src="/sago-factu-logo.png" 
+                    alt="SAGO-FACTU Logo" 
+                    className="h-12 w-auto"
+                  />
                 </div>
               </div>
               <div className="hidden md:flex items-center space-x-4">

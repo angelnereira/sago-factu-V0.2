@@ -26,9 +26,11 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
         <div className="flex items-center justify-between">
           {/* Logo y título */}
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-indigo-600">
-              SAGO-FACTU
-            </h1>
+            <img 
+              src="/sago-factu-logo.png" 
+              alt="SAGO-FACTU" 
+              className="h-10 w-auto"
+            />
             <span className="text-sm text-gray-500 hidden md:block">
               Sistema de Facturación Electrónica
             </span>
