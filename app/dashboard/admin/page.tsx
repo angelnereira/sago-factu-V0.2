@@ -1,10 +1,7 @@
 import { redirect } from "next/navigation"
-import { Users, Building2, Ticket, Activity, TrendingUp, AlertCircle } from "lucide-react"
+import { Users, Building2, Ticket, Activity } from "lucide-react"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { AdminDashboardStats } from "@/components/admin/admin-dashboard-stats"
-import { RecentActivityFeed } from "@/components/admin/recent-activity-feed"
-import { SystemHealthCard } from "@/components/admin/system-health-card"
 
 export default async function AdminDashboardPage() {
   const session = await auth()
@@ -33,8 +30,12 @@ export default async function AdminDashboardPage() {
     // Total de facturas
     prisma.invoice.count(),
     
-    // Total de folios
-    prisma.folio.count(),
+    // Total de folios en pools
+    prisma.folioPool.aggregate({
+      _sum: {
+        totalFolios: true,
+      },
+    }).then(result => result._sum.totalFolios || 0),
     
     // Usuarios recientes (últimos 5)
     prisma.user.findMany({
@@ -236,7 +237,7 @@ export default async function AdminDashboardPage() {
                       <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                         user.role === "SUPER_ADMIN" 
                           ? "bg-red-100 text-red-800"
-                          : user.role === "ADMIN"
+                          : user.role === "ORG_ADMIN"
                           ? "bg-purple-100 text-purple-800"
                           : "bg-gray-100 text-gray-800"
                       }`}>

@@ -50,21 +50,52 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Crear los folios
-    const folios = []
-    for (let i = 0; i < quantity; i++) {
-      folios.push({
-        organizationId,
-        userId: userId || null,
-        status: "AVAILABLE",
-        purchasePrice: price || 0.06,
-        purchasedAt: new Date(),
+    // Crear o actualizar FolioAssignment
+    // Primero buscar si existe un pool activo
+    let folioPool = await prisma.folioPool.findFirst({
+      where: {
+        provider: "HKA",
+        availableFolios: { gt: 0 },
+      },
+      orderBy: {
+        purchaseDate: "desc",
+      },
+    })
+
+    // Si no existe pool, crear uno nuevo
+    if (!folioPool) {
+      folioPool = await prisma.folioPool.create({
+        data: {
+          batchNumber: `BATCH-${Date.now()}`,
+          provider: "HKA",
+          totalFolios: quantity,
+          availableFolios: quantity,
+          assignedFolios: 0,
+          consumedFolios: 0,
+          purchaseAmount: (price || 0.06) * quantity,
+          purchaseDate: new Date(),
+        },
       })
     }
 
-    // Insertar en batch
-    await prisma.folio.createMany({
-      data: folios,
+    // Crear FolioAssignment para la organización
+    await prisma.folioAssignment.create({
+      data: {
+        folioPoolId: folioPool.id,
+        organizationId,
+        assignedAmount: quantity,
+        consumedAmount: 0,
+        alertThreshold: 10,
+      },
+    })
+
+    // Actualizar el pool
+    await prisma.folioPool.update({
+      where: { id: folioPool.id },
+      data: {
+        availableFolios: { decrement: quantity },
+        assignedFolios: { increment: quantity },
+      },
     })
 
     // TODO: Crear registro en AuditLog

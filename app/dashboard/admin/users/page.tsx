@@ -45,7 +45,7 @@ export default async function AdminUsersPage() {
   const totalUsers = users.length
   const activeUsers = users.filter(u => u.isActive).length
   const superAdmins = users.filter(u => u.role === "SUPER_ADMIN").length
-  const admins = users.filter(u => u.role === "ADMIN").length
+  const admins = users.filter(u => u.role === "ORG_ADMIN").length
   const normalUsers = users.filter(u => u.role === "USER").length
 
   return (

@@ -128,12 +128,12 @@ export function EditUserModal({ user, organizations, isOpen, onClose }: EditUser
               <select
                 id="role"
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={user.role === "SUPER_ADMIN"}
               >
                 <option value="USER">Usuario</option>
-                <option value="ADMIN">Administrador</option>
+                <option value="ORG_ADMIN">Administrador de Organización</option>
                 <option value="SUPER_ADMIN">Super Administrador</option>
               </select>
               {user.role === "SUPER_ADMIN" && (

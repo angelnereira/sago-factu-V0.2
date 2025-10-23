@@ -31,7 +31,7 @@ export function UsersTable({ users, organizations }: UsersTableProps) {
     switch (role) {
       case "SUPER_ADMIN":
         return "bg-red-100 text-red-800"
-      case "ADMIN":
+      case "ORG_ADMIN":
         return "bg-purple-100 text-purple-800"
       default:
         return "bg-gray-100 text-gray-800"
