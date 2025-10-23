@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Upload, FileText, X, CheckCircle, AlertTriangle, Loader2 } from "lucide-react"
+import { Upload, FileText, X, CheckCircle, AlertTriangle, Loader2, FileSpreadsheet } from "lucide-react"
 import { createInvoiceParser, InvoiceXMLParser, type ParsedInvoiceData } from "@/lib/utils/xml-parser"
+import { createExcelParser, InvoiceExcelParser } from "@/lib/utils/excel-parser"
 
 interface XMLUploaderProps {
   onDataExtracted: (data: ParsedInvoiceData) => void
