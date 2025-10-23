@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react"
 import { useState } from "react"
 import { NotificationsCenter } from "./notifications-center"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { InstallPWAButton } from "@/components/install-pwa"
 import { config } from "@/lib/config"
 
 interface DashboardHeaderProps {
@@ -43,6 +44,9 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 
           {/* Acciones del header */}
           <div className="flex items-center space-x-4">
+            {/* Botón de instalación PWA */}
+            <InstallPWAButton />
+            
             {/* Toggle de tema */}
             <ThemeToggle />
             

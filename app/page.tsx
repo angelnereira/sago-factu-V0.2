@@ -4,11 +4,16 @@ import Link from "next/link"
 import Image from "next/image"
 import { LoginFormWrapper } from "@/components/home/login-form-wrapper"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { InstallPWA } from "@/components/install-pwa"
 import { FileText, Users, Zap, BarChart3 } from "lucide-react"
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white/95 to-violet-50 dark:from-gray-950 dark:to-gray-900">
+    <>
+      {/* PWA Install Banner */}
+      <InstallPWA />
+      
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white/95 to-violet-50 dark:from-gray-950 dark:to-gray-900">
       <div className="container mx-auto px-6 lg:px-12 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left Side - Hero */}
@@ -129,5 +134,6 @@ export default function HomePage() {
         </div>
       </footer>
     </main>
+    </>
   )
 }
