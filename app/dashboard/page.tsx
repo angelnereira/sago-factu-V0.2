@@ -70,10 +70,10 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {/* Bienvenida */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
           ¡Bienvenido, {session.user.name}!
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
           Resumen de tu actividad en SAGO-FACTU
         </p>
       </div>

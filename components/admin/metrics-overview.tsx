@@ -82,15 +82,15 @@ export function MetricsOverview({ metrics }: MetricsOverviewProps) {
         return (
           <div
             key={index}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-all"
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500">{card.title}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{card.value}</p>
-                <p className="text-sm text-gray-600 mt-1">{card.subtitle}</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.title}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">{card.value}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{card.subtitle}</p>
               </div>
-              <div className={`p-3 ${card.bgColor} rounded-lg`}>
+              <div className={`p-3 ${card.bgColor} dark:bg-opacity-20 rounded-lg`}>
                 <Icon className={`h-6 w-6 ${card.textColor}`} />
               </div>
             </div>

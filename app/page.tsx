@@ -13,14 +13,14 @@ export default function HomePage() {
           {/* Left Side - Hero */}
           <section className="max-w-xl mx-auto lg:mx-0">
             {/* Logo */}
-            <div className="mb-8">
+            <div className="mb-8 flex justify-center lg:justify-start">
               <Image
                 src="/sago-factu-logo.png"
                 alt="SAGO FACTU - Sistema de Facturación Electrónica"
-                width={160}
-                height={160}
+                width={300}
+                height={300}
                 priority
-                className="w-32 h-auto sm:w-40"
+                className="w-48 h-auto sm:w-56 md:w-64 lg:w-72"
               />
             </div>
 

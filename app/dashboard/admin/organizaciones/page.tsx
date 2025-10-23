@@ -70,10 +70,10 @@ export default async function OrganizationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             Gestión de Organizaciones
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Administra las organizaciones registradas en el sistema
           </p>
         </div>
@@ -81,74 +81,74 @@ export default async function OrganizationsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Total Organizaciones
               </p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {stats.total}
               </p>
             </div>
-            <div className="p-3 bg-indigo-100 rounded-lg">
-              <Building2 className="h-6 w-6 text-indigo-600" />
+            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+              <Building2 className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
-            <span className="text-green-600 font-medium">{stats.active} activas</span>
-            <span className="text-gray-400 mx-2">•</span>
-            <span className="text-red-600 font-medium">{stats.inactive} inactivas</span>
+            <span className="text-green-600 dark:text-green-400 font-medium">{stats.active} activas</span>
+            <span className="text-gray-400 dark:text-gray-500 mx-2">•</span>
+            <span className="text-red-600 dark:text-red-400 font-medium">{stats.inactive} inactivas</span>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Usuarios</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Usuarios</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {stats.totalUsers}
               </p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Users className="h-6 w-6 text-blue-600" />
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
             En todas las organizaciones
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Folios</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Folios</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {folioStats.reduce((sum, stat) => sum + (stat._sum.assignedAmount || 0), 0).toLocaleString()}
               </p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Ticket className="h-6 w-6 text-purple-600" />
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <Ticket className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
             Folios asignados
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Facturas</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Facturas</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {stats.totalInvoices.toLocaleString()}
               </p>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <FileText className="h-6 w-6 text-green-600" />
+            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <FileText className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
             Facturas emitidas
           </p>
         </div>
