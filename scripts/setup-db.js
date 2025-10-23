@@ -40,15 +40,20 @@ async function setupDatabase() {
 
     // Crear Super Admin
     const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@sagofactu.com';
-    const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'admin123';
+    const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'SagoAdmin2025!';
+    
+    const hashedPassword = await bcrypt.hash(superAdminPassword, 12);
     
     const superAdmin = await prisma.user.upsert({
       where: { email: superAdminEmail },
-      update: {},
+      update: {
+        password: hashedPassword,
+        isActive: true,
+      },
       create: {
         email: superAdminEmail,
         name: 'Super Admin',
-        password: await bcrypt.hash(superAdminPassword, 12),
+        password: hashedPassword,
         role: 'SUPER_ADMIN',
         isActive: true,
         organizationId: organization.id,

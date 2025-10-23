@@ -41,7 +41,7 @@ export default {
 
         if (!validatedFields.success) {
           console.log('[AUTH CONFIG] ❌ Validación fallida')
-          console.log('[AUTH CONFIG] Errores:', validatedFields.error.errors)
+          console.log('[AUTH CONFIG] Errores:', validatedFields.error.issues)
           return null
         }
 
