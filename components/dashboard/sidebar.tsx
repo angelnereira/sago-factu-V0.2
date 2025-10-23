@@ -7,7 +7,10 @@ import {
   Users, 
   Settings,
   BarChart3,
-  Folder
+  Folder,
+  Building2,
+  ShieldCheck,
+  Activity
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -50,7 +53,34 @@ const sidebarItems: SidebarItem[] = [
     name: "Configuración",
     href: "/dashboard/configuracion",
     icon: Settings,
-    roles: ["SUPER_ADMIN", "ADMIN"],
+    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
+  },
+]
+
+const adminItems: SidebarItem[] = [
+  {
+    name: "Panel Admin",
+    href: "/dashboard/admin",
+    icon: ShieldCheck,
+    roles: ["SUPER_ADMIN"],
+  },
+  {
+    name: "Organizaciones",
+    href: "/dashboard/admin/organizaciones",
+    icon: Building2,
+    roles: ["SUPER_ADMIN"],
+  },
+  {
+    name: "Usuarios",
+    href: "/dashboard/admin/users",
+    icon: Users,
+    roles: ["SUPER_ADMIN"],
+  },
+  {
+    name: "Auditoría",
+    href: "/dashboard/admin/auditoria",
+    icon: Activity,
+    roles: ["SUPER_ADMIN"],
   },
 ]
 
@@ -63,6 +93,11 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
 
   // Filtrar items según rol
   const visibleItems = sidebarItems.filter(item => {
+    if (!item.roles) return true
+    return item.roles.includes(userRole)
+  })
+
+  const visibleAdminItems = adminItems.filter(item => {
     if (!item.roles) return true
     return item.roles.includes(userRole)
   })
@@ -93,6 +128,38 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
             </Link>
           )
         })}
+
+        {/* Sección de Administración (Solo SUPER_ADMIN) */}
+        {visibleAdminItems.length > 0 && (
+          <div className="pt-4 mt-4 border-t border-gray-200">
+            <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              Administración
+            </p>
+            {visibleAdminItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+                    isActive
+                      ? "bg-purple-50 text-purple-600 font-medium"
+                      : "text-gray-700 hover:bg-gray-50"
+                  )}
+                >
+                  <Icon className={cn(
+                    "h-5 w-5",
+                    isActive ? "text-purple-600" : "text-gray-500"
+                  )} />
+                  <span>{item.name}</span>
+                </Link>
+              )
+            })}
+          </div>
+        )}
       </nav>
 
       {/* Footer del sidebar */}
