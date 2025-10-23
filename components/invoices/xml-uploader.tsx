@@ -50,9 +50,13 @@ export function XMLUploader({ onDataExtracted }: XMLUploaderProps) {
     setSuccess("")
     setPreviewData(null)
 
+    const isXML = file.name.endsWith(".xml") || file.type.includes("xml")
+    const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls") || 
+                    file.type.includes("spreadsheet") || file.type.includes("excel")
+
     // Validar tipo de archivo
-    if (!file.name.endsWith(".xml") && !file.type.includes("xml")) {
-      setError("Por favor, sube un archivo XML válido")
+    if (!isXML && !isExcel) {
+      setError("Por favor, sube un archivo XML o Excel (.xlsx) válido")
       return
     }
 
@@ -66,27 +70,47 @@ export function XMLUploader({ onDataExtracted }: XMLUploaderProps) {
     setFileName(file.name)
 
     try {
-      // Leer contenido del archivo
-      const xmlContent = await file.text()
+      let parsedData: ParsedInvoiceData
 
-      // Validar XML
-      const validation = InvoiceXMLParser.validate(xmlContent)
-      if (!validation.valid) {
-        setError(`XML inválido: ${validation.errors.join(", ")}`)
-        setIsProcessing(false)
-        return
+      if (isExcel) {
+        // Procesar Excel
+        const arrayBuffer = await file.arrayBuffer()
+
+        // Validar Excel
+        const validation = InvoiceExcelParser.validate(arrayBuffer)
+        if (!validation.valid) {
+          setError(`Excel inválido: ${validation.errors.join(", ")}`)
+          setIsProcessing(false)
+          return
+        }
+
+        // Parsear Excel
+        const parser = createExcelParser()
+        parsedData = await parser.parse(arrayBuffer)
+        setSuccess(`✅ Excel procesado correctamente: ${parsedData.items.length} item(s) encontrado(s)`)
+      } else {
+        // Procesar XML
+        const xmlContent = await file.text()
+
+        // Validar XML
+        const validation = InvoiceXMLParser.validate(xmlContent)
+        if (!validation.valid) {
+          setError(`XML inválido: ${validation.errors.join(", ")}`)
+          setIsProcessing(false)
+          return
+        }
+
+        // Parsear XML
+        const parser = createInvoiceParser()
+        parsedData = await parser.parse(xmlContent)
+        setSuccess(`✅ XML procesado correctamente: ${parsedData.items.length} item(s) encontrado(s)`)
       }
-
-      // Parsear XML
-      const parser = createInvoiceParser()
-      const parsedData = await parser.parse(xmlContent)
 
       // Mostrar preview
       setPreviewData(parsedData)
-      setSuccess(`✅ XML procesado correctamente: ${parsedData.items.length} item(s) encontrado(s)`)
       
     } catch (err: any) {
-      setError(err.message || "Error al procesar el archivo XML")
+      setError(err.message || "Error al procesar el archivo")
     } finally {
       setIsProcessing(false)
     }
@@ -135,7 +159,7 @@ export function XMLUploader({ onDataExtracted }: XMLUploaderProps) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".xml,text/xml,application/xml"
+          accept=".xml,.xlsx,.xls,text/xml,application/xml,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
           onChange={handleFileSelect}
           className="hidden"
           id="xml-upload"
@@ -143,9 +167,12 @@ export function XMLUploader({ onDataExtracted }: XMLUploaderProps) {
 
         {!fileName && !isProcessing && (
           <>
-            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <div className="flex justify-center items-center gap-4 mb-4">
+              <FileText className="h-12 w-12 text-gray-400" />
+              <FileSpreadsheet className="h-12 w-12 text-green-500" />
+            </div>
             <p className="text-lg font-medium text-gray-900 mb-2">
-              Arrastra un archivo XML aquí
+              Arrastra un archivo XML o Excel aquí
             </p>
             <p className="text-sm text-gray-600 mb-4">
               o haz click para seleccionar
@@ -154,10 +181,11 @@ export function XMLUploader({ onDataExtracted }: XMLUploaderProps) {
               htmlFor="xml-upload"
               className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer transition-colors"
             >
-              Seleccionar XML
+              Seleccionar Archivo
             </label>
             <p className="text-xs text-gray-500 mt-4">
-              Formatos soportados: FEL Panamá, CFDI México, XML genérico
+              <strong>XML:</strong> FEL Panamá, CFDI México, genérico<br />
+              <strong>Excel:</strong> .xlsx, .xls con datos de cliente e items
             </p>
           </>
         )}
