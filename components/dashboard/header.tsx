@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react"
 import { useState } from "react"
 import { NotificationsCenter } from "./notifications-center"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { config } from "@/lib/config"
 
 interface DashboardHeaderProps {
   user: {
@@ -18,7 +19,8 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/" })
+    // Redirigir a la landing page de producción
+    await signOut({ callbackUrl: config.urls.signOut })
   }
 
   return (
