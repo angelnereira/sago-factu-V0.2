@@ -42,26 +42,38 @@ async function setupDatabase() {
     const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@sagofactu.com';
     const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'SagoAdmin2025!';
     
-    const hashedPassword = await bcrypt.hash(superAdminPassword, 12);
-    
-    const superAdmin = await prisma.user.upsert({
+    // Verificar si el usuario ya existe
+    const existingUser = await prisma.user.findUnique({
       where: { email: superAdminEmail },
-      update: {
-        password: hashedPassword,
-        isActive: true,
-      },
-      create: {
-        email: superAdminEmail,
-        name: 'Super Admin',
-        password: hashedPassword,
-        role: 'SUPER_ADMIN',
-        isActive: true,
-        organizationId: organization.id,
-      },
     });
-
-    console.log('✅ Super Admin creado:', superAdmin.email);
-    console.log('🔑 Contraseña:', superAdminPassword);
+    
+    let superAdmin;
+    if (existingUser) {
+      // Si ya existe, solo asegurar que esté activo, NO cambiar la contraseña
+      superAdmin = await prisma.user.update({
+        where: { email: superAdminEmail },
+        data: {
+          isActive: true,
+        },
+      });
+      console.log('✅ Super Admin ya existe:', superAdmin.email);
+      console.log('   (Contraseña NO modificada)');
+    } else {
+      // Solo crear si no existe
+      const hashedPassword = await bcrypt.hash(superAdminPassword, 12);
+      superAdmin = await prisma.user.create({
+        data: {
+          email: superAdminEmail,
+          name: 'Super Admin',
+          password: hashedPassword,
+          role: 'SUPER_ADMIN',
+          isActive: true,
+          organizationId: organization.id,
+        },
+      });
+      console.log('✅ Super Admin creado:', superAdmin.email);
+      console.log('🔑 Contraseña:', superAdminPassword);
+    }
 
     // Crear usuario de prueba
     const testUser = await prisma.user.upsert({
