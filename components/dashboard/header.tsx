@@ -19,8 +19,10 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleSignOut = async () => {
-    // Redirigir a la landing page de producción
-    await signOut({ callbackUrl: config.urls.signOut })
+    // Primero hacer signOut
+    await signOut({ redirect: false })
+    // Luego redirigir manualmente a la URL de producción
+    window.location.href = 'https://sago-factu-v0-2.vercel.app/'
   }
 
   return (
