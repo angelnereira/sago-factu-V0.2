@@ -109,7 +109,7 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
   })
 
   return (
-    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto">
+    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 overflow-y-auto transition-colors">
       <nav className="p-4 space-y-2">
         {visibleItems.map((item) => {
           const Icon = item.icon
@@ -122,13 +122,13 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
               className={cn(
                 "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
                 isActive
-                  ? "bg-indigo-50 text-indigo-600 font-medium"
-                  : "text-gray-700 hover:bg-gray-50"
+                  ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
               )}
             >
               <Icon className={cn(
                 "h-5 w-5",
-                isActive ? "text-indigo-600" : "text-gray-500"
+                isActive ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400"
               )} />
               <span>{item.name}</span>
             </Link>
@@ -137,8 +137,8 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
 
         {/* Sección de Administración (Solo SUPER_ADMIN) */}
         {visibleAdminItems.length > 0 && (
-          <div className="pt-4 mt-4 border-t border-gray-200">
-            <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+            <p className="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
               Administración
             </p>
             {visibleAdminItems.map((item) => {
@@ -152,13 +152,13 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
                   className={cn(
                     "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
                     isActive
-                      ? "bg-purple-50 text-purple-600 font-medium"
-                      : "text-gray-700 hover:bg-gray-50"
+                      ? "bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-medium"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                   )}
                 >
                   <Icon className={cn(
                     "h-5 w-5",
-                    isActive ? "text-purple-600" : "text-gray-500"
+                    isActive ? "text-purple-600 dark:text-purple-400" : "text-gray-500 dark:text-gray-400"
                   )} />
                   <span>{item.name}</span>
                 </Link>
@@ -169,8 +169,8 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
       </nav>
 
       {/* Footer del sidebar */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
-        <div className="text-xs text-gray-500 text-center">
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+        <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
           <p className="font-medium">SAGO-FACTU</p>
           <p>v0.2.0</p>
         </div>
