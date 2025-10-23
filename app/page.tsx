@@ -16,18 +16,16 @@ export default function HomePage() {
             {/* Header */}
             <nav className="relative flex items-center justify-between px-4 py-6 sm:px-6 lg:px-8">
               <div className="flex items-center">
-                <div className="flex items-center space-x-3">
-                  <img 
-                    src="/sago-factu-logo.png" 
-                    alt="SAGO-FACTU Logo" 
-                    className="h-12 w-auto"
-                  />
-                </div>
+                <img 
+                  src="/sago-factu-logo.png" 
+                  alt="SAGO-FACTU - Sistema de Facturación Electrónica" 
+                  className="h-16 w-auto sm:h-20"
+                />
               </div>
               <div className="hidden md:flex items-center space-x-4">
                 <Link
                   href="/auth/signup"
-                  className="bg-indigo-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
+                  className="bg-indigo-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm hover:shadow-md transition-all"
                 >
                   Registrarse
                 </Link>
@@ -39,14 +37,21 @@ export default function HomePage() {
               <div className="grid lg:grid-cols-2 gap-12 items-center">
                 {/* Left Side - Hero Text */}
                 <div className="text-center lg:text-left">
-                  <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                    <span className="block">SAGO-FACTU</span>
-                    <span className="block text-indigo-600 mt-2">
-                      Facturación Electrónica
-                    </span>
+                  {/* Logo principal grande */}
+                  <div className="flex justify-center lg:justify-start mb-6">
+                    <img 
+                      src="/sago-factu-logo.png" 
+                      alt="SAGO-FACTU" 
+                      className="h-32 w-auto sm:h-40 md:h-48 lg:h-56"
+                    />
+                  </div>
+                  
+                  <h1 className="text-3xl tracking-tight font-bold text-indigo-600 sm:text-4xl md:text-5xl">
+                    Sistema de Facturación Electrónica
                   </h1>
-                  <p className="mt-3 text-base text-gray-600 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                    Sistema Multi-Tenant de Facturación Electrónica para Panamá. 
+                  
+                  <p className="mt-4 text-base text-gray-600 sm:mt-6 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-6 md:text-xl lg:mx-0">
+                    Plataforma Multi-Tenant para Panamá. 
                     Gestiona, distribuye y monitorea folios de facturación electrónica 
                     de manera eficiente y segura.
                   </p>
