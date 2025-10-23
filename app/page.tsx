@@ -1,151 +1,128 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { LoginFormWrapper } from "@/components/home/login-form-wrapper"
+import { FileText, Users, Zap, BarChart3 } from "lucide-react"
 
 export default function HomePage() {
-  const [isLoginMode] = useState(true) // Siempre mostrar login
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      {/* Hero Section with Login */}
-      <div className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="relative z-10 pb-8 sm:pb-16 md:pb-20 lg:pb-28 xl:pb-32">
-            {/* Header */}
-            <nav className="relative flex items-center justify-between px-4 py-6 sm:px-6 lg:px-8">
-              <div className="flex items-center">
-                <img 
-                  src="/sago-factu-logo.png" 
-                  alt="SAGO-FACTU - Sistema de Facturación Electrónica" 
-                  className="h-16 w-auto sm:h-20"
-                />
-              </div>
-              <div className="hidden md:flex items-center space-x-4">
-                <Link
-                  href="/auth/signup"
-                  className="bg-indigo-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm hover:shadow-md transition-all"
-                >
-                  Registrarse
-                </Link>
-              </div>
-            </nav>
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white/95 to-violet-50">
+      <div className="container mx-auto px-6 lg:px-12 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left Side - Hero */}
+          <section className="max-w-xl mx-auto lg:mx-0">
+            {/* Logo */}
+            <div className="mb-8">
+              <Image
+                src="/sago-factu-logo.png"
+                alt="SAGO FACTU - Sistema de Facturación Electrónica"
+                width={160}
+                height={160}
+                priority
+                className="w-32 h-auto sm:w-40"
+              />
+            </div>
 
-            {/* Main Content */}
-            <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
-              <div className="grid lg:grid-cols-2 gap-12 items-center">
-                {/* Left Side - Hero Text */}
-                <div className="text-center lg:text-left">
-                  {/* Logo principal grande */}
-                  <div className="flex justify-center lg:justify-start mb-6">
-                    <img 
-                      src="/sago-factu-logo.png" 
-                      alt="SAGO-FACTU" 
-                      className="h-32 w-auto sm:h-40 md:h-48 lg:h-56"
-                    />
-                  </div>
-                  
-                  <h1 className="text-3xl tracking-tight font-bold text-indigo-600 sm:text-4xl md:text-5xl">
-                    Sistema de Facturación Electrónica
-                  </h1>
-                  
-                  <p className="mt-4 text-base text-gray-600 sm:mt-6 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-6 md:text-xl lg:mx-0">
-                    Plataforma Multi-Tenant para Panamá. 
-                    Gestiona, distribuye y monitorea folios de facturación electrónica 
-                    de manera eficiente y segura.
-                  </p>
+            {/* Título principal */}
+            <h1 className="text-[clamp(2rem,4vw,3rem)] font-extrabold leading-tight text-violet-700 mb-4">
+              Sistema de Facturación Electrónica
+            </h1>
 
-                  {/* Mobile CTA */}
-                  <div className="mt-5 sm:mt-8 lg:hidden">
-                    <div className="flex flex-col space-y-3">
-                      <Link
-                        href="/auth/signup"
-                        className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
-                      >
-                        Crear Cuenta
-                      </Link>
-                    </div>
-                  </div>
+            {/* Descripción */}
+            <p className="mt-4 text-gray-700 leading-relaxed text-lg">
+              Plataforma Multi-Tenant para Panamá. 
+              Gestiona, distribuye y monitorea folios de facturación electrónica 
+              de manera eficiente y segura.
+            </p>
 
-                  {/* Features Grid */}
-                  <div className="mt-10 grid grid-cols-2 gap-4 lg:gap-6">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="flex items-center justify-center h-10 w-10 rounded-md bg-indigo-500 text-white">
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Gestión de Folios</h3>
-                        <p className="text-xs text-gray-600">Administración eficiente</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="flex items-center justify-center h-10 w-10 rounded-md bg-indigo-500 text-white">
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Multi-Tenant</h3>
-                        <p className="text-xs text-gray-600">Espacios aislados</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="flex items-center justify-center h-10 w-10 rounded-md bg-indigo-500 text-white">
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Integración HKA</h3>
-                        <p className="text-xs text-gray-600">Certificación directa</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="flex items-center justify-center h-10 w-10 rounded-md bg-indigo-500 text-white">
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Analytics</h3>
-                        <p className="text-xs text-gray-600">Reportes detallados</p>
-                      </div>
-                    </div>
-                  </div>
+            {/* Features Grid */}
+            <ul className="mt-8 space-y-4">
+              <li className="flex items-start gap-4 group">
+                <div className="p-3 rounded-lg bg-violet-100 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200 flex-shrink-0">
+                  <FileText className="h-5 w-5" />
                 </div>
-
-                {/* Right Side - Login Form */}
-                <div className="hidden lg:block">
-                  <LoginFormWrapper />
+                <div>
+                  <strong className="block text-gray-800 font-semibold">Gestión de Folios</strong>
+                  <span className="text-sm text-gray-600 leading-relaxed">
+                    Administración eficiente de folios electrónicos
+                  </span>
                 </div>
-              </div>
-            </main>
-          </div>
+              </li>
+
+              <li className="flex items-start gap-4 group">
+                <div className="p-3 rounded-lg bg-violet-100 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200 flex-shrink-0">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <strong className="block text-gray-800 font-semibold">Multi-Tenant</strong>
+                  <span className="text-sm text-gray-600 leading-relaxed">
+                    Espacios aislados y seguros para cada organización
+                  </span>
+                </div>
+              </li>
+
+              <li className="flex items-start gap-4 group">
+                <div className="p-3 rounded-lg bg-violet-100 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200 flex-shrink-0">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <div>
+                  <strong className="block text-gray-800 font-semibold">Integración HKA</strong>
+                  <span className="text-sm text-gray-600 leading-relaxed">
+                    Conexión directa con The Factory HKA para certificación
+                  </span>
+                </div>
+              </li>
+
+              <li className="flex items-start gap-4 group">
+                <div className="p-3 rounded-lg bg-violet-100 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200 flex-shrink-0">
+                  <BarChart3 className="h-5 w-5" />
+                </div>
+                <div>
+                  <strong className="block text-gray-800 font-semibold">Reportes y Analytics</strong>
+                  <span className="text-sm text-gray-600 leading-relaxed">
+                    Monitoreo en tiempo real y reportes detallados
+                  </span>
+                </div>
+              </li>
+            </ul>
+
+            {/* CTA Mobile */}
+            <div className="mt-8 lg:hidden">
+              <Link
+                href="/auth/signup"
+                className="inline-flex items-center justify-center w-full px-6 py-3 text-base font-medium text-violet-700 bg-violet-100 border-2 border-violet-300 rounded-lg hover:bg-violet-200 hover:border-violet-400 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2"
+              >
+                Crear Cuenta Nueva
+              </Link>
+            </div>
+          </section>
+
+          {/* Right Side - Login Form */}
+          <section className="w-full">
+            <LoginFormWrapper />
+          </section>
+        </div>
+
+        {/* Botón Registrarse Desktop - Fixed Top Right */}
+        <div className="hidden lg:block fixed top-6 right-6">
+          <Link
+            href="/auth/signup"
+            className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-violet-600 rounded-lg shadow-sm hover:bg-violet-700 hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2"
+          >
+            Crear Cuenta
+          </Link>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200 mt-20">
-        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-gray-500">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200">
+        <div className="container mx-auto py-4 px-6 lg:px-12">
+          <p className="text-center text-sm text-gray-600">
             © 2025 SAGO-FACTU. Sistema de Facturación Electrónica para Panamá.
           </p>
         </div>
       </footer>
-    </div>
+    </main>
   )
 }
