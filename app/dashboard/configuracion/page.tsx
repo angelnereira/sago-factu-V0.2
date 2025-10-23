@@ -10,14 +10,18 @@ export default async function ConfigurationPage() {
     redirect("/auth/signin")
   }
 
-  // Solo SUPER_ADMIN y ADMIN pueden acceder a configuración
-  if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ADMIN") {
+  // Solo SUPER_ADMIN y ORG_ADMIN pueden acceder a configuración
+  const isSuperAdmin = session.user.role === "SUPER_ADMIN"
+  const isOrgAdmin = session.user.role === "ORG_ADMIN"
+
+  if (!isSuperAdmin && !isOrgAdmin) {
     redirect("/dashboard")
   }
 
   const organizationId = session.user.organizationId
 
-  if (!organizationId) {
+  // Si no es SUPER_ADMIN, necesita tener organización asignada
+  if (!isSuperAdmin && !organizationId) {
     return (
       <div className="text-center py-12">
         <p className="text-red-600">Usuario sin organización asignada</p>
@@ -25,10 +29,17 @@ export default async function ConfigurationPage() {
     )
   }
 
-  // Obtener datos de la organización
-  const organization = await prisma.organization.findUnique({
-    where: { id: organizationId },
-  })
+  // Obtener datos de la organización (o la primera si es SUPER_ADMIN sin org)
+  let organization = null
+  if (organizationId) {
+    organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+    })
+  } else if (isSuperAdmin) {
+    organization = await prisma.organization.findFirst({
+      orderBy: { createdAt: "desc" },
+    })
+  }
 
   if (!organization) {
     return (
@@ -38,9 +49,30 @@ export default async function ConfigurationPage() {
     )
   }
 
-  // Obtener usuarios de la organización
+  // Obtener todas las organizaciones (solo para SUPER_ADMIN)
+  const organizations = isSuperAdmin
+    ? await prisma.organization.findMany({
+        select: {
+          id: true,
+          name: true,
+          ruc: true,
+        },
+        orderBy: { name: "asc" },
+      })
+    : []
+
+  // Obtener usuarios de la organización (o todos si es SUPER_ADMIN)
   const users = await prisma.user.findMany({
-    where: { organizationId },
+    where: isSuperAdmin ? {} : { organizationId: organization.id },
+    include: {
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          ruc: true,
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
   })
 
@@ -79,6 +111,7 @@ export default async function ConfigurationPage() {
       <ConfigurationTabs
         organization={organization}
         users={users}
+        organizations={organizations}
         systemConfig={systemConfig}
         folioStats={{
           totalAssigned: folioStats._sum.assignedAmount || 0,
@@ -86,6 +119,7 @@ export default async function ConfigurationPage() {
         }}
         userRole={session.user.role as string}
         userId={session.user.id}
+        isSuperAdmin={isSuperAdmin}
       />
     </div>
   )

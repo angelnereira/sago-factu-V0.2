@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Users as UsersIcon, Plus, Edit, Trash2, Mail, Shield, CheckCircle, XCircle } from "lucide-react"
+import { Users as UsersIcon, Plus, Trash2, Mail, Shield, CheckCircle, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { UserDetailModal } from "./user-detail-modal"
 
 interface User {
   id: string
@@ -13,14 +14,22 @@ interface User {
   role: string
   isActive: boolean
   createdAt: Date
+  organizationId?: string
+  organization?: {
+    id: string
+    name: string
+    ruc: string | null
+  } | null
 }
 
 interface UsersManagementProps {
   users: User[]
   organizationId: string
+  organizations?: { id: string; name: string; ruc: string | null }[]
+  isSuperAdmin?: boolean
 }
 
-export function UsersManagement({ users, organizationId }: UsersManagementProps) {
+export function UsersManagement({ users, organizationId, organizations = [], isSuperAdmin = false }: UsersManagementProps) {
   const router = useRouter()
   const [showModal, setShowModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
@@ -32,7 +41,7 @@ export function UsersManagement({ users, organizationId }: UsersManagementProps)
     setShowModal(true)
   }
 
-  const handleEditUser = (user: User) => {
+  const handleUserClick = (user: User) => {
     setSelectedUser(user)
     setShowModal(true)
   }
@@ -142,7 +151,11 @@ export function UsersManagement({ users, organizationId }: UsersManagementProps)
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
+              <tr 
+                key={user.id} 
+                onClick={() => handleUserClick(user)}
+                className="hover:bg-indigo-50 cursor-pointer transition-colors"
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center">
@@ -194,23 +207,13 @@ export function UsersManagement({ users, organizationId }: UsersManagementProps)
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end space-x-2">
                     <button
-                      onClick={() => handleToggleStatus(user.id, user.isActive)}
-                      className="text-indigo-600 hover:text-indigo-900"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteUser(user.id)
+                      }}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
                       disabled={isLoading}
-                    >
-                      {user.isActive ? "Desactivar" : "Activar"}
-                    </button>
-                    <button
-                      onClick={() => handleEditUser(user)}
-                      className="text-blue-600 hover:text-blue-900"
-                      disabled={isLoading}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      className="text-red-600 hover:text-red-900"
-                      disabled={isLoading}
+                      title="Eliminar usuario"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -257,20 +260,17 @@ export function UsersManagement({ users, organizationId }: UsersManagementProps)
         </div>
       </div>
 
-      {/* Modal - TODO: Implementar UserModal component */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
-          <div className="relative p-8 border w-96 shadow-lg rounded-md bg-white">
-            <p className="text-center">Modal de Usuario (por implementar)</p>
-            <button
-              onClick={() => setShowModal(false)}
-              className="mt-4 w-full px-4 py-2 bg-indigo-600 text-white rounded-md"
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
+      {/* User Detail Modal */}
+      <UserDetailModal
+        user={selectedUser}
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setSelectedUser(null)
+        }}
+        organizations={organizations}
+        isSuperAdmin={isSuperAdmin}
+      />
     </div>
   )
 }

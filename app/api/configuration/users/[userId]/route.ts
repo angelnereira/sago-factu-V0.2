@@ -2,6 +2,135 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prismaServer as prisma } from "@/lib/prisma-server"
 
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  try {
+    const session = await auth()
+
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json(
+        { error: "No autorizado" },
+        { status: 401 }
+      )
+    }
+
+    // Solo SUPER_ADMIN y ORG_ADMIN pueden actualizar usuarios
+    const isSuperAdmin = session.user.role === "SUPER_ADMIN"
+    const isOrgAdmin = session.user.role === "ORG_ADMIN"
+
+    if (!isSuperAdmin && !isOrgAdmin) {
+      return NextResponse.json(
+        { error: "No tienes permisos para realizar esta acción" },
+        { status: 403 }
+      )
+    }
+
+    const { userId } = await params
+    const body = await request.json()
+    const { name, email, role, organizationId, isActive } = body
+
+    // Verificar que el usuario existe
+    const userToUpdate = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!userToUpdate) {
+      return NextResponse.json(
+        { error: "Usuario no encontrado" },
+        { status: 404 }
+      )
+    }
+
+    // ORG_ADMIN solo puede actualizar usuarios de su organización
+    if (isOrgAdmin && userToUpdate.organizationId !== session.user.organizationId) {
+      return NextResponse.json(
+        { error: "No puedes actualizar usuarios de otra organización" },
+        { status: 403 }
+      )
+    }
+
+    // ORG_ADMIN no puede cambiar roles
+    if (isOrgAdmin && role && role !== userToUpdate.role) {
+      return NextResponse.json(
+        { error: "No tienes permisos para cambiar roles de usuario" },
+        { status: 403 }
+      )
+    }
+
+    // ORG_ADMIN no puede cambiar organización
+    if (isOrgAdmin && organizationId && organizationId !== userToUpdate.organizationId) {
+      return NextResponse.json(
+        { error: "No tienes permisos para cambiar la organización de un usuario" },
+        { status: 403 }
+      )
+    }
+
+    // Preparar datos de actualización
+    const updateData: any = {}
+    if (name !== undefined) updateData.name = name
+    if (email !== undefined) updateData.email = email
+    if (isActive !== undefined) updateData.isActive = isActive
+    
+    // Solo SUPER_ADMIN puede cambiar rol y organización
+    if (isSuperAdmin) {
+      if (role !== undefined) updateData.role = role
+      if (organizationId !== undefined) updateData.organizationId = organizationId
+    }
+
+    // Actualizar usuario
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            ruc: true,
+          },
+        },
+      },
+    })
+
+    // Registrar en audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: session.user.id,
+        userEmail: session.user.email || undefined,
+        action: "USER_UPDATE",
+        entity: "User",
+        entityId: userId,
+        changes: JSON.stringify({
+          before: {
+            name: userToUpdate.name,
+            email: userToUpdate.email,
+            role: userToUpdate.role,
+            organizationId: userToUpdate.organizationId,
+            isActive: userToUpdate.isActive,
+          },
+          after: updateData,
+        }),
+        ip: request.headers.get("x-forwarded-for") || undefined,
+        userAgent: request.headers.get("user-agent") || undefined,
+      },
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: "Usuario actualizado correctamente",
+      user: updatedUser,
+    })
+  } catch (error) {
+    console.error("[API] Error al actualizar usuario:", error)
+    return NextResponse.json(
+      { error: "Error al actualizar usuario" },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ userId: string }> }
@@ -16,8 +145,11 @@ export async function DELETE(
       )
     }
 
-    // Solo SUPER_ADMIN y ADMIN pueden eliminar usuarios
-    if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ADMIN") {
+    // Solo SUPER_ADMIN y ORG_ADMIN pueden eliminar usuarios
+    const isSuperAdmin = session.user.role === "SUPER_ADMIN"
+    const isOrgAdmin = session.user.role === "ORG_ADMIN"
+
+    if (!isSuperAdmin && !isOrgAdmin) {
       return NextResponse.json(
         { error: "No tienes permisos para realizar esta acción" },
         { status: 403 }
@@ -34,7 +166,7 @@ export async function DELETE(
       )
     }
 
-    // Verificar que el usuario existe y pertenece a la misma organización
+    // Verificar que el usuario existe
     const userToDelete = await prisma.user.findUnique({
       where: { id: userId },
     })
@@ -46,7 +178,8 @@ export async function DELETE(
       )
     }
 
-    if (userToDelete.organizationId !== session.user.organizationId) {
+    // ORG_ADMIN solo puede eliminar usuarios de su organización
+    if (isOrgAdmin && userToDelete.organizationId !== session.user.organizationId) {
       return NextResponse.json(
         { error: "No puedes eliminar usuarios de otra organización" },
         { status: 403 }

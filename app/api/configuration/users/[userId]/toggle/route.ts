@@ -16,8 +16,11 @@ export async function PUT(
       )
     }
 
-    // Solo SUPER_ADMIN y ADMIN pueden cambiar el estado de usuarios
-    if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ADMIN") {
+    // Solo SUPER_ADMIN y ORG_ADMIN pueden cambiar el estado de usuarios
+    const isSuperAdmin = session.user.role === "SUPER_ADMIN"
+    const isOrgAdmin = session.user.role === "ORG_ADMIN"
+
+    if (!isSuperAdmin && !isOrgAdmin) {
       return NextResponse.json(
         { error: "No tienes permisos para realizar esta acción" },
         { status: 403 }
@@ -36,7 +39,7 @@ export async function PUT(
       )
     }
 
-    // Verificar que el usuario existe y pertenece a la misma organización
+    // Verificar que el usuario existe
     const userToUpdate = await prisma.user.findUnique({
       where: { id: userId },
     })
@@ -48,7 +51,8 @@ export async function PUT(
       )
     }
 
-    if (userToUpdate.organizationId !== session.user.organizationId) {
+    // ORG_ADMIN solo puede modificar usuarios de su organización
+    if (isOrgAdmin && userToUpdate.organizationId !== session.user.organizationId) {
       return NextResponse.json(
         { error: "No puedes modificar usuarios de otra organización" },
         { status: 403 }

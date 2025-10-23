@@ -32,6 +32,12 @@ interface User {
   role: string
   isActive: boolean
   createdAt: Date
+  organizationId?: string
+  organization?: {
+    id: string
+    name: string
+    ruc: string | null
+  } | null
 }
 
 interface SystemConfig {
@@ -51,10 +57,12 @@ interface FolioStats {
 interface ConfigurationTabsProps {
   organization: Organization
   users: User[]
+  organizations?: { id: string; name: string; ruc: string | null }[]
   systemConfig: SystemConfig | null
   folioStats: FolioStats
   userRole: string
   userId: string
+  isSuperAdmin?: boolean
 }
 
 type TabId = "organization" | "users" | "invoicing" | "integration" | "notifications" | "security"
@@ -105,10 +113,12 @@ const tabs: Tab[] = [
 export function ConfigurationTabs({
   organization,
   users,
+  organizations = [],
   systemConfig,
   folioStats,
   userRole,
   userId,
+  isSuperAdmin = false,
 }: ConfigurationTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("organization")
 
@@ -154,7 +164,12 @@ export function ConfigurationTabs({
           <OrganizationSettings organization={organization} />
         )}
         {activeTab === "users" && (
-          <UsersManagement users={users} organizationId={organization.id} />
+          <UsersManagement 
+            users={users} 
+            organizationId={organization.id}
+            organizations={organizations}
+            isSuperAdmin={isSuperAdmin}
+          />
         )}
         {activeTab === "invoicing" && (
           <InvoiceSettings
