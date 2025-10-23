@@ -22,13 +22,13 @@ export function ActivityChart({ data }: ActivityChartProps) {
   })
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Actividad de Facturación</h3>
-          <p className="text-sm text-gray-500 mt-1">Facturas emitidas en los últimos 6 meses</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Actividad de Facturación</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Facturas emitidas en los últimos 6 meses</p>
         </div>
-        <BarChart3 className="h-5 w-5 text-gray-400" />
+        <BarChart3 className="h-5 w-5 text-gray-400 dark:text-gray-500" />
       </div>
 
       <div className="h-80">
