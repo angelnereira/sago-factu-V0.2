@@ -184,78 +184,78 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
               {/* Contact Info */}
               <div className="space-y-2">
                 {org.email && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <Mail className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                     {org.email}
                   </div>
                 )}
                 {org.phone && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <Phone className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                     {org.phone}
                   </div>
                 )}
                 {org.website && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Globe className="h-4 w-4 mr-2 text-gray-400" />
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <Globe className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                     <a
                       href={org.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-indigo-600 hover:text-indigo-700"
+                      className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
                     >
                       {org.website}
                     </a>
                   </div>
                 )}
                 {org.address && (
-                  <div className="flex items-start text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mr-2 mt-0.5 text-gray-400 flex-shrink-0" />
+                  <div className="flex items-start text-sm text-gray-600 dark:text-gray-400">
+                    <MapPin className="h-4 w-4 mr-2 mt-0.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                     <span>{org.address}</span>
                   </div>
                 )}
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
-                    <Users className="h-4 w-4 text-blue-600" />
+                    <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {org._count.users}
                   </p>
-                  <p className="text-xs text-gray-500">Usuarios</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Usuarios</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
-                    <Ticket className="h-4 w-4 text-purple-600" />
+                    <Ticket className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {org.folios.available}
                   </p>
-                  <p className="text-xs text-gray-500">Folios Disp.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Folios Disp.</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
-                    <FileText className="h-4 w-4 text-green-600" />
+                    <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {org._count.invoices}
                   </p>
-                  <p className="text-xs text-gray-500">Facturas</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Facturas</p>
                 </div>
               </div>
 
               {/* Folio Progress */}
-              <div className="pt-4 border-t border-gray-200">
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-gray-600">Consumo de Folios</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="text-gray-600 dark:text-gray-400">Consumo de Folios</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
                     {org.folios.consumed} / {org.folios.assigned}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
                     className={`h-2 rounded-full transition-all ${
                       org.folios.assigned > 0
@@ -278,24 +278,24 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
               </div>
 
               {/* Metadata */}
-              <div className="text-xs text-gray-500 pt-2">
+              <div className="text-xs text-gray-500 dark:text-gray-400 pt-2">
                 Registrada: {format(new Date(org.createdAt), "dd MMM yyyy", { locale: es })}
               </div>
             </div>
 
             {/* Card Footer */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end space-x-2">
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/30 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-2">
               <button
                 onClick={() => handleToggleStatus(org.id, org.isActive)}
                 disabled={isLoading}
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium disabled:opacity-50"
               >
                 {org.isActive ? "Desactivar" : "Activar"}
               </button>
               <button
                 onClick={() => handleEdit(org)}
                 disabled={isLoading}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors disabled:opacity-50"
                 title="Editar"
               >
                 <Edit className="h-4 w-4" />
@@ -303,7 +303,7 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
               <button
                 onClick={() => handleDelete(org.id)}
                 disabled={isLoading}
-                className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50"
                 title="Eliminar"
               >
                 <Trash2 className="h-4 w-4" />
@@ -315,17 +315,17 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
 
       {/* Empty State */}
       {organizations.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <Building2 className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
             No hay organizaciones registradas
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
             Comienza creando tu primera organización
           </p>
           <button
             onClick={handleCreate}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600"
           >
             <Plus className="h-4 w-4 mr-2" />
             Nueva Organización
