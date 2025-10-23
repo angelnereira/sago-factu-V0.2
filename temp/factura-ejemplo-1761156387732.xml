@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rFE xmlns="http://dgi-fep.mef.gob.pa">
+  <dVerForm>1.00</dVerForm>
+  <dId>FE0120000155610034-2-2015-2700202510220000000040001404215067</dId>
+  <gDGen>
+    <iAmb>2</iAmb>
+    <iTpEmis>01</iTpEmis>
+    <dFechaCont>2025-10-22T13:06:27-05:00</dFechaCont>
+    <iDoc>01</iDoc>
+    <dNroDF>0000000040</dNroDF>
+    <dPtoFacDF>001</dPtoFacDF>
+    <dSeg>404215067</dSeg>
+    <dFechaEm>2025-10-22T13:06:27-05:00</dFechaEm>
+    <dFechaSalida>2025-10-22T13:06:27-05:00</dFechaSalida>
+    <iNatOp>01</iNatOp>
+    <iTipoOp>1</iTipoOp>
+    <iDest>1</iDest>
+    <iFormCAFE>1</iFormCAFE>
+    <iEntCAFE>2</iEntCAFE>
+    <dEnvFE>1</dEnvFE>
+    <iProGen>1</iProGen>
+    <iTipoTranVenta>1</iTipoTranVenta>
+    <iTipoSuc>1</iTipoSuc>
+    <gEmis>
+      <gRucEmi>
+        <dTipoRuc>2</dTipoRuc>
+        <dRuc>155610034-2-2015</dRuc>
+        <dDV>27</dDV>
+      </gRucEmi>
+      <dNombEm>LA PAZ DUTY FREE S.A.</dNombEm>
+      <dSucEm>0000</dSucEm>
+      <dCoordEm/>
+      <dDirecEm>PANAMA</dDirecEm>
+      <gUbiEmi>
+        <dCodUbi>1-1-1</dCodUbi>
+        <dCorreg>BASTIMENTOS</dCorreg>
+        <dDistr>BOCAS DEL TORO</dDistr>
+        <dProv>BOCAS DEL TORO</dProv>
+      </gUbiEmi>
+    </gEmis>
+    <gDatRec>
+      <iTipoRec>01</iTipoRec>
+      <gRucRec>
+        <dTipoRuc>2</dTipoRuc>
+        <dRuc>155610034-2-2015</dRuc>
+        <dDV>27</dDV>
+      </gRucRec>
+      <dNombRec>CLIENTE EJEMPLO S.A.</dNombRec>
+      <dDirecRec>PANAMA</dDirecRec>
+      <cPaisRec>PA</cPaisRec>
+    </gDatRec>
+  </gDGen>
+  <gItem>
+    <dSecItem>1</dSecItem>
+    <dDescProd>LATTAFA MAYAR EDP/D 100ML</dDescProd>
+    <dCodProd>732496</dCodProd>
+    <cUnidad>und</cUnidad>
+    <dCantCodInt>96.00</dCantCodInt>
+    <gPrecios>
+      <dPrUnit>26.00</dPrUnit>
+      <dPrUnitDesc>24.70</dPrUnitDesc>
+      <dPrItem>2371.20</dPrItem>
+      <dValTotItem>2371.20</dValTotItem>
+    </gPrecios>
+    <gITBMSItem>
+      <dTasaITBMS>00</dTasaITBMS>
+      <dValITBMS>0.00</dValITBMS>
+    </gITBMSItem>
+    <gISCItem>
+      <dTasaISC>0.00</dTasaISC>
+      <dValISC>0.00</dValISC>
+    </gISCItem>
+  </gItem>
+  <gTot>
+    <dTotNeto>2371.20</dTotNeto>
+    <dTotITBMS>0.00</dTotITBMS>
+    <dTotISC>0.00</dTotISC>
+    <dTotGravado>0.00</dTotGravado>
+    <dTotDesc>124.80</dTotDesc>
+    <dVTot>2371.20</dVTot>
+    <dTotRec>2371.20</dTotRec>
+    <iPzPag>1</iPzPag>
+    <dNroItems>1</dNroItems>
+  </gTot>
+</rFE>

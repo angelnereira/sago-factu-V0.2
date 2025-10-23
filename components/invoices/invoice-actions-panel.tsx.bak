@@ -1,0 +1,457 @@
+/**
+ * PANEL DE ACCIONES DE FACTURA
+ * 
+ * Componente que muestra las acciones disponibles para una factura
+ * según su estado actual:
+ * - CERTIFIED: Descargar PDF, Descargar XML, Anular (si < 7 días)
+ * - PROCESSING: Cancelar
+ * - ERROR/REJECTED: Reintentar
+ * - DRAFT/QUEUED: Procesar, Eliminar
+ */
+
+'use client';
+
+import { useState } from 'react';
+import { InvoiceStatus } from '@prisma/client';
+import { 
+  Download, 
+  FileText, 
+  FileX, 
+  RefreshCw,
+  Send,
+  Trash2,
+  AlertCircle,
+  Loader2,
+  CheckCircle2
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+
+interface InvoiceActionsPanelProps {
+  invoiceId: string;
+  status: InvoiceStatus;
+  cufe?: string | null;
+  certifiedAt?: Date | null;
+  onActionComplete?: () => void;
+}
+
+export function InvoiceActionsPanel({
+  invoiceId,
+  status,
+  cufe,
+  certifiedAt,
+  onActionComplete,
+}: InvoiceActionsPanelProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    description: string;
+    action: () => void;
+  } | null>(null);
+  const { toast } = useToast();
+
+  // Calcular si puede anularse (< 7 días)
+  const canCancel = certifiedAt && 
+    new Date().getTime() - new Date(certifiedAt).getTime() < 7 * 24 * 60 * 60 * 1000;
+
+  // ============================================
+  // ACCIONES
+  // ============================================
+
+  const handleDownloadXML = async () => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}/xml`);
+      if (!response.ok) throw new Error('Error al descargar XML');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `factura-${invoiceId}.xml`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: 'XML descargado',
+        description: 'El archivo XML se ha descargado correctamente.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo descargar el XML.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}/pdf`);
+      if (!response.ok) throw new Error('Error al descargar PDF');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `factura-${invoiceId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: 'PDF descargado',
+        description: 'El archivo PDF se ha descargado correctamente.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo descargar el PDF.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleProcessInvoice = async () => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}/process`, {
+        method: 'POST',
+      });
+      
+      if (!response.ok) throw new Error('Error al procesar factura');
+      
+      toast({
+        title: 'Factura en proceso',
+        description: 'La factura está siendo procesada y enviada a HKA.',
+      });
+      
+      onActionComplete?.();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo procesar la factura.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRetry = async () => {
+    setConfirmAction({
+      title: '¿Reintentar procesamiento?',
+      description: 'Esto volverá a generar el XML y enviar la factura a HKA.',
+      action: async () => {
+        setIsProcessing(true);
+        try {
+          const response = await fetch(`/api/invoices/${invoiceId}/retry`, {
+            method: 'POST',
+          });
+          
+          if (!response.ok) throw new Error('Error al reintentar');
+          
+          toast({
+            title: 'Reintentando',
+            description: 'La factura está siendo procesada nuevamente.',
+          });
+          
+          onActionComplete?.();
+        } catch (error) {
+          toast({
+            title: 'Error',
+            description: 'No se pudo reintentar el procesamiento.',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+    });
+    setShowConfirmDialog(true);
+  };
+
+  const handleCancelInvoice = async () => {
+    setConfirmAction({
+      title: '¿Anular factura?',
+      description: 'Esta acción es irreversible. La factura será anulada en HKA y DGI.',
+      action: async () => {
+        setIsProcessing(true);
+        try {
+          const response = await fetch(`/api/invoices/${invoiceId}/cancel`, {
+            method: 'POST',
+          });
+          
+          if (!response.ok) throw new Error('Error al anular factura');
+          
+          toast({
+            title: 'Factura anulada',
+            description: 'La factura ha sido anulada correctamente.',
+          });
+          
+          onActionComplete?.();
+        } catch (error) {
+          toast({
+            title: 'Error',
+            description: 'No se pudo anular la factura.',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+    });
+    setShowConfirmDialog(true);
+  };
+
+  const handleDelete = async () => {
+    setConfirmAction({
+      title: '¿Eliminar factura?',
+      description: 'Esta acción es irreversible. La factura será eliminada permanentemente.',
+      action: async () => {
+        setIsProcessing(true);
+        try {
+          const response = await fetch(`/api/invoices/${invoiceId}`, {
+            method: 'DELETE',
+          });
+          
+          if (!response.ok) throw new Error('Error al eliminar factura');
+          
+          toast({
+            title: 'Factura eliminada',
+            description: 'La factura ha sido eliminada correctamente.',
+          });
+          
+          onActionComplete?.();
+        } catch (error) {
+          toast({
+            title: 'Error',
+            description: 'No se pudo eliminar la factura.',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+    });
+    setShowConfirmDialog(true);
+  };
+
+  // ============================================
+  // RENDERIZADO SEGÚN ESTADO
+  // ============================================
+
+  // CERTIFIED: Descargas + Anular
+  if (status === 'CERTIFIED') {
+    return (
+      <>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleDownloadPDF}
+            disabled={isProcessing}
+          >
+            {isProcessing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            <span className="ml-2">PDF</span>
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleDownloadXML}
+            disabled={isProcessing}
+          >
+            <FileText className="w-4 h-4" />
+            <span className="ml-2">XML</span>
+          </Button>
+
+          {canCancel && (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={handleCancelInvoice}
+              disabled={isProcessing}
+            >
+              <FileX className="w-4 h-4" />
+              <span className="ml-2">Anular</span>
+            </Button>
+          )}
+        </div>
+
+        <ConfirmDialog
+          open={showConfirmDialog}
+          onOpenChange={setShowConfirmDialog}
+          title={confirmAction?.title || ''}
+          description={confirmAction?.description || ''}
+          onConfirm={() => {
+            confirmAction?.action();
+            setShowConfirmDialog(false);
+          }}
+        />
+      </>
+    );
+  }
+
+  // ERROR/REJECTED: Reintentar
+  if (status === 'ERROR' || status === 'REJECTED') {
+    return (
+      <>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleRetry}
+          disabled={isProcessing}
+        >
+          {isProcessing ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4" />
+          )}
+          <span className="ml-2">Reintentar</span>
+        </Button>
+
+        <ConfirmDialog
+          open={showConfirmDialog}
+          onOpenChange={setShowConfirmDialog}
+          title={confirmAction?.title || ''}
+          description={confirmAction?.description || ''}
+          onConfirm={() => {
+            confirmAction?.action();
+            setShowConfirmDialog(false);
+          }}
+        />
+      </>
+    );
+  }
+
+  // DRAFT/QUEUED: Procesar + Eliminar
+  if (status === 'DRAFT' || status === 'QUEUED') {
+    return (
+      <>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={handleProcessInvoice}
+            disabled={isProcessing}
+          >
+            {isProcessing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+            <span className="ml-2">Procesar</span>
+          </Button>
+
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isProcessing}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+
+        <ConfirmDialog
+          open={showConfirmDialog}
+          onOpenChange={setShowConfirmDialog}
+          title={confirmAction?.title || ''}
+          description={confirmAction?.description || ''}
+          onConfirm={() => {
+            confirmAction?.action();
+            setShowConfirmDialog(false);
+          }}
+        />
+      </>
+    );
+  }
+
+  // PROCESSING: Solo mostrar estado
+  if (status === 'PROCESSING') {
+    return (
+      <div className="flex items-center gap-2 text-sm text-gray-500">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span>Procesando...</span>
+      </div>
+    );
+  }
+
+  // CANCELLED: Sin acciones
+  if (status === 'CANCELLED') {
+    return (
+      <div className="flex items-center gap-2 text-sm text-gray-500">
+        <FileX className="w-4 h-4" />
+        <span>Anulada</span>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+/**
+ * Diálogo de confirmación reutilizable
+ */
+function ConfirmDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            Confirmar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+

@@ -1,0 +1,228 @@
+/**
+ * BOTÓN DE SINCRONIZACIÓN CON HKA
+ * 
+ * Componente que permite sincronizar folios y estado
+ * de facturas con The Factory HKA.
+ * 
+ * Funcionalidades:
+ * - Consultar folios restantes
+ * - Sincronizar estado de facturas
+ * - Actualizar información desde HKA
+ */
+
+'use client';
+
+import { useState } from 'react';
+import { RefreshCw, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
+
+interface SyncHKAButtonProps {
+  variant?: 'default' | 'outline' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  onSyncComplete?: (data: { foliosRestantes?: number }) => void;
+  showLabel?: boolean;
+}
+
+type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
+
+export function SyncHKAButton({
+  variant = 'outline',
+  size = 'md',
+  onSyncComplete,
+  showLabel = true,
+}: SyncHKAButtonProps) {
+  const [status, setStatus] = useState<SyncStatus>('idle');
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+  const { toast } = useToast();
+
+  const handleSync = async () => {
+    setStatus('syncing');
+
+    try {
+      // Sincronizar folios
+      const foliosResponse = await fetch('/api/folios/sincronizar', {
+        method: 'POST',
+      });
+
+      if (!foliosResponse.ok) {
+        throw new Error('Error al sincronizar folios');
+      }
+
+      const foliosData = await foliosResponse.json();
+
+      setStatus('success');
+      setLastSync(new Date());
+
+      toast({
+        title: 'Sincronización exitosa',
+        description: `Folios restantes: ${foliosData.foliosRestantes || 0}`,
+        duration: 3000,
+      });
+
+      onSyncComplete?.({ foliosRestantes: foliosData.foliosRestantes });
+
+      // Reset status after 2 seconds
+      setTimeout(() => {
+        setStatus('idle');
+      }, 2000);
+    } catch (error) {
+      setStatus('error');
+
+      toast({
+        title: 'Error de sincronización',
+        description: error instanceof Error ? error.message : 'Error desconocido',
+        variant: 'destructive',
+        duration: 5000,
+      });
+
+      // Reset status after 3 seconds
+      setTimeout(() => {
+        setStatus('idle');
+      }, 3000);
+    }
+  };
+
+  const getIcon = () => {
+    switch (status) {
+      case 'syncing':
+        return <Loader2 className="w-4 h-4 animate-spin" />;
+      case 'success':
+        return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+      case 'error':
+        return <AlertCircle className="w-4 h-4 text-red-600" />;
+      default:
+        return <RefreshCw className="w-4 h-4" />;
+    }
+  };
+
+  const getTooltipText = () => {
+    if (status === 'syncing') return 'Sincronizando con HKA...';
+    if (status === 'success') return 'Sincronización exitosa';
+    if (status === 'error') return 'Error en sincronización';
+    if (lastSync) {
+      const minutes = Math.floor((new Date().getTime() - lastSync.getTime()) / 60000);
+      if (minutes === 0) return 'Sincronizado hace un momento';
+      if (minutes < 60) return `Sincronizado hace ${minutes}m`;
+      const hours = Math.floor(minutes / 60);
+      return `Sincronizado hace ${hours}h`;
+    }
+    return 'Sincronizar con HKA';
+  };
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={variant}
+            size={size}
+            onClick={handleSync}
+            disabled={status === 'syncing'}
+            className="gap-2"
+          >
+            {getIcon()}
+            {showLabel && <span>Sincronizar</span>}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{getTooltipText()}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+/**
+ * Versión compacta (solo icono)
+ */
+export function SyncHKAIconButton(props: Omit<SyncHKAButtonProps, 'showLabel'>) {
+  return <SyncHKAButton {...props} showLabel={false} />;
+}
+
+/**
+ * Panel de sincronización con información detallada
+ */
+export function SyncHKAPanel({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [foliosData, setFoliosData] = useState<{
+    foliosRestantes?: number;
+    foliosUsados?: number;
+    foliosTotal?: number;
+  }>({});
+
+  const handleSyncComplete = (data: { foliosRestantes?: number }) => {
+    setFoliosData(data);
+  };
+
+  return (
+    <div className="bg-white rounded-lg border p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-lg">Sincronización HKA</h3>
+          <p className="text-sm text-gray-500">
+            Consulta el estado de tus folios y facturas
+          </p>
+        </div>
+        <SyncHKAButton onSyncComplete={handleSyncComplete} />
+      </div>
+
+      {foliosData.foliosRestantes !== undefined && (
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-blue-50 rounded-lg p-3">
+            <div className="text-sm text-blue-600 font-medium">
+              Folios Disponibles
+            </div>
+            <div className="text-2xl font-bold text-blue-700">
+              {foliosData.foliosRestantes || 0}
+            </div>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="text-sm text-gray-600 font-medium">
+              Folios Usados
+            </div>
+            <div className="text-2xl font-bold text-gray-700">
+              {foliosData.foliosUsados || 0}
+            </div>
+          </div>
+
+          <div className="bg-green-50 rounded-lg p-3">
+            <div className="text-sm text-green-600 font-medium">
+              Folios Totales
+            </div>
+            <div className="text-2xl font-bold text-green-700">
+              {foliosData.foliosTotal || 0}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {foliosData.foliosRestantes !== undefined && 
+       foliosData.foliosRestantes < 10 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
+          <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <div className="font-medium text-yellow-800">
+              Folios bajos
+            </div>
+            <div className="text-sm text-yellow-700">
+              Te quedan pocos folios disponibles. Considera adquirir más para evitar interrupciones.
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

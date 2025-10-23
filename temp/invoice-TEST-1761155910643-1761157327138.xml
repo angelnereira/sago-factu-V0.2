@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rFE xmlns="http://dgi-fep.mef.gob.pa">
+  <dVerForm>1.00</dVerForm>
+  <dId>FE0120000123456789-1-2023-450020251022TEST-1761155910643001294480738</dId>
+  <gDGen>
+    <iAmb>2</iAmb>
+    <iTpEmis>01</iTpEmis>
+    <dFechaCont>2025-10-22T12:58:30-05:00</dFechaCont>
+    <iDoc>01</iDoc>
+    <dNroDF>TEST-1761155910643</dNroDF>
+    <dPtoFacDF>001</dPtoFacDF>
+    <dSeg>294480738</dSeg>
+    <dFechaEm>2025-10-22T12:58:30-05:00</dFechaEm>
+    <dFechaSalida>2025-10-23T12:58:30-05:00</dFechaSalida>
+    <iNatOp>01</iNatOp>
+    <iTipoOp>1</iTipoOp>
+    <iDest>1</iDest>
+    <iFormCAFE>1</iFormCAFE>
+    <iEntCAFE>2</iEntCAFE>
+    <dEnvFE>1</dEnvFE>
+    <iProGen>1</iProGen>
+    <iTipoTranVenta>1</iTipoTranVenta>
+    <iTipoSuc>1</iTipoSuc>
+    <gEmis>
+      <gRucEmi>
+        <dTipoRuc>2</dTipoRuc>
+        <dRuc>123456789-1-2023</dRuc>
+        <dDV>45</dDV>
+      </gRucEmi>
+      <dNombEm>Test HKA Organization</dNombEm>
+      <dNombComer>COMERCIAL TEST HKA</dNombComer>
+      <dSucEm>0001</dSucEm>
+      <dCoordEm/>
+      <dDirecEm>Calle 50, Ciudad de Panamá</dDirecEm>
+      <gUbiEmi>
+        <dCodUbi>8-1-1</dCodUbi>
+        <dCorreg>SAN FELIPE</dCorreg>
+        <dDistr>PANAMA</dDistr>
+        <dProv>PANAMA</dProv>
+      </gUbiEmi>
+      <dCorreoEm>test-hka@example.com</dCorreoEm>
+      <dTfnEm>+507 6000-0000</dTfnEm>
+    </gEmis>
+    <gDatRec>
+      <iTipoRec>01</iTipoRec>
+      <gRucRec>
+        <dTipoRuc>2</dTipoRuc>
+        <dRuc>19265242-1-2024</dRuc>
+        <dDV>67</dDV>
+      </gRucRec>
+      <dNombRec>CLIENTE DE PRUEBA S.A.</dNombRec>
+      <dDirecRec>Avenida Balboa, Ciudad de Panamá</dDirecRec>
+      <gUbiRec>
+        <dCodUbi>8-1-2</dCodUbi>
+        <dCorreg>BELLA VISTA</dCorreg>
+        <dDistr>PANAMA</dDistr>
+        <dProv>PANAMA</dProv>
+      </gUbiRec>
+      <dTfnRec>+507 6111-1111</dTfnRec>
+      <dCorElectRec>cliente@prueba.com</dCorElectRec>
+      <cPaisRec>PA</cPaisRec>
+    </gDatRec>
+  </gDGen>
+  <gItem>
+    <dSecItem>1</dSecItem>
+    <dDescProd>Producto de Prueba 1</dDescProd>
+    <dCodProd>PROD-001</dCodProd>
+    <cUnidad>UND</cUnidad>
+    <dCantCodInt>2.00</dCantCodInt>
+    <gPrecios>
+      <dPrUnit>50.00</dPrUnit>
+      <dPrUnitDesc>45.00</dPrUnitDesc>
+      <dPrItem>90.00</dPrItem>
+      <dValTotItem>96.30</dValTotItem>
+    </gPrecios>
+    <gITBMSItem>
+      <dTasaITBMS>00</dTasaITBMS>
+      <dValITBMS>6.30</dValITBMS>
+    </gITBMSItem>
+    <gISCItem>
+      <dTasaISC>0.00</dTasaISC>
+      <dValISC>0.00</dValISC>
+    </gISCItem>
+  </gItem>
+  <gItem>
+    <dSecItem>2</dSecItem>
+    <dDescProd>Producto de Prueba 2</dDescProd>
+    <dCodProd>PROD-002</dCodProd>
+    <cUnidad>UND</cUnidad>
+    <dCantCodInt>1.00</dCantCodInt>
+    <gPrecios>
+      <dPrUnit>10.00</dPrUnit>
+      <dPrUnitDesc>10.00</dPrUnitDesc>
+      <dPrItem>10.00</dPrItem>
+      <dValTotItem>10.70</dValTotItem>
+    </gPrecios>
+    <gITBMSItem>
+      <dTasaITBMS>00</dTasaITBMS>
+      <dValITBMS>0.70</dValITBMS>
+    </gITBMSItem>
+    <gISCItem>
+      <dTasaISC>0.00</dTasaISC>
+      <dValISC>0.00</dValISC>
+    </gISCItem>
+  </gItem>
+  <gTot>
+    <dTotNeto>100.00</dTotNeto>
+    <dTotITBMS>7.00</dTotITBMS>
+    <dTotISC>0.00</dTotISC>
+    <dTotGravado>7.00</dTotGravado>
+    <dTotDesc>10.00</dTotDesc>
+    <dVTot>107.00</dVTot>
+    <dTotRec>107.00</dTotRec>
+    <iPzPag>1</iPzPag>
+    <dNroItems>2</dNroItems>
+  </gTot>
+</rFE>
