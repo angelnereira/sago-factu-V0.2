@@ -1,9 +1,10 @@
 /**
  * Parser de Excel para importar facturas
  * Soporta archivos .xlsx con diferentes formatos
+ * ACTUALIZADO: Usa exceljs en lugar de xlsx (más seguro)
  */
 
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import type { ParsedInvoiceData } from './xml-parser'
 
 export interface ExcelInvoiceData extends ParsedInvoiceData {
@@ -16,18 +17,25 @@ export class InvoiceExcelParser {
    */
   async parse(fileBuffer: ArrayBuffer): Promise<ExcelInvoiceData> {
     try {
-      // Leer el archivo Excel
-      const workbook = XLSX.read(fileBuffer, { type: 'array' })
+      // Crear workbook desde buffer
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.load(fileBuffer)
       
       // Obtener la primera hoja
-      const firstSheetName = workbook.SheetNames[0]
-      const worksheet = workbook.Sheets[firstSheetName]
+      const worksheet = workbook.worksheets[0]
       
-      // Convertir a JSON
-      const data: any[] = XLSX.utils.sheet_to_json(worksheet, { 
-        header: 1,
-        defval: '',
-        blankrows: false,
+      if (!worksheet) {
+        throw new Error("El archivo Excel está vacío")
+      }
+      
+      // Convertir worksheet a array de arrays
+      const data: any[][] = []
+      worksheet.eachRow((row, rowNumber) => {
+        const rowValues: any[] = []
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          rowValues.push(cell.value)
+        })
+        data.push(rowValues)
       })
       
       if (!data || data.length === 0) {
@@ -45,17 +53,37 @@ export class InvoiceExcelParser {
   /**
    * Detectar formato y parsear
    */
-  private detectAndParse(data: any[], worksheet: XLSX.WorkSheet): ExcelInvoiceData {
-    // Convertir también a JSON con headers para análisis
-    const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, {
-      defval: '',
-      blankrows: false,
-    })
+  private detectAndParse(data: any[][], worksheet: ExcelJS.Worksheet): ExcelInvoiceData {
+    // Convertir a JSON con headers para análisis
+    const jsonData: any[] = []
+    let headerRow: any[] = []
+    
+    // Buscar fila de headers (primera fila con strings)
+    for (let i = 0; i < Math.min(5, data.length); i++) {
+      const row = data[i]
+      if (row && row.some(cell => typeof cell === 'string' && cell.trim().length > 0)) {
+        headerRow = row.map(cell => String(cell || '').trim())
+        
+        // Convertir filas restantes a objetos JSON
+        for (let j = i + 1; j < data.length; j++) {
+          const dataRow = data[j]
+          const obj: any = {}
+          headerRow.forEach((header, idx) => {
+            if (header) {
+              obj[header] = dataRow[idx]
+            }
+          })
+          if (Object.keys(obj).length > 0) {
+            jsonData.push(obj)
+          }
+        }
+        break
+      }
+    }
     
     // Intentar detectar formato basado en columnas
-    const firstRow = jsonData[0]
-    
-    if (firstRow) {
+    if (jsonData.length > 0) {
+      const firstRow = jsonData[0]
       const keys = Object.keys(firstRow).map(k => k.toLowerCase())
       
       // Formato con headers conocidos
@@ -108,7 +136,7 @@ export class InvoiceExcelParser {
   /**
    * Parsear sin headers (formato simple)
    */
-  private parseWithoutHeaders(data: any[]): ExcelInvoiceData {
+  private parseWithoutHeaders(data: any[][]): ExcelInvoiceData {
     // Formato esperado:
     // Fila 1: Cliente
     // Fila 2: Datos del cliente
@@ -291,7 +319,7 @@ export class InvoiceExcelParser {
   /**
    * Extraer items sin headers
    */
-  private extractItemsWithoutHeaders(data: any[]): ExcelInvoiceData['items'] {
+  private extractItemsWithoutHeaders(data: any[][]): ExcelInvoiceData['items'] {
     const items: ExcelInvoiceData['items'] = []
     
     // Buscar fila de headers de items
@@ -372,29 +400,27 @@ export class InvoiceExcelParser {
   /**
    * Validar que el archivo Excel tiene la estructura mínima requerida
    */
-  static validate(fileBuffer: ArrayBuffer): { valid: boolean; errors: string[] } {
+  static async validate(fileBuffer: ArrayBuffer): Promise<{ valid: boolean; errors: string[] }> {
     const errors: string[] = []
 
     try {
       // Intentar leer el archivo
-      const workbook = XLSX.read(fileBuffer, { type: 'array' })
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.load(fileBuffer)
       
-      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+      if (!workbook.worksheets || workbook.worksheets.length === 0) {
         errors.push("El archivo Excel no tiene hojas")
         return { valid: false, errors }
       }
       
-      const firstSheetName = workbook.SheetNames[0]
-      const worksheet = workbook.Sheets[firstSheetName]
+      const worksheet = workbook.worksheets[0]
       
-      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
-      
-      if (!data || data.length === 0) {
+      if (!worksheet || worksheet.rowCount === 0) {
         errors.push("La hoja de Excel está vacía")
         return { valid: false, errors }
       }
       
-      if (data.length < 2) {
+      if (worksheet.rowCount < 2) {
         errors.push("El archivo Excel debe tener al menos 2 filas de datos")
         return { valid: false, errors }
       }
@@ -419,4 +445,3 @@ export class InvoiceExcelParser {
 export function createExcelParser() {
   return new InvoiceExcelParser()
 }
-
