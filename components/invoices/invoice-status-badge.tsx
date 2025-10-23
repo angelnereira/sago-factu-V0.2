@@ -36,49 +36,49 @@ interface InvoiceStatusBadgeProps {
 const statusConfig = {
   DRAFT: {
     label: 'Borrador',
-    color: 'bg-gray-100 text-gray-700 border-gray-300',
+    color: 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600',
     icon: FileText,
     description: 'Factura en borrador',
     animated: false,
   },
   QUEUED: {
     label: 'En Cola',
-    color: 'bg-blue-100 text-blue-700 border-blue-300',
+    color: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700',
     icon: Clock,
     description: 'En cola para procesamiento',
     animated: false,
   },
   PROCESSING: {
     label: 'Procesando',
-    color: 'bg-yellow-100 text-yellow-700 border-yellow-300 animate-pulse',
+    color: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700 animate-pulse',
     icon: Loader2,
     description: 'Procesando en HKA',
     animated: true,
   },
   CERTIFIED: {
     label: 'Certificado',
-    color: 'bg-green-100 text-green-700 border-green-300',
+    color: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700',
     icon: CheckCircle2,
     description: 'Certificado por DGI',
     animated: false,
   },
   REJECTED: {
     label: 'Rechazado',
-    color: 'bg-red-100 text-red-700 border-red-300',
+    color: 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700',
     icon: XCircle,
     description: 'Rechazado por HKA',
     animated: false,
   },
   CANCELLED: {
     label: 'Anulado',
-    color: 'bg-gray-200 text-gray-600 border-gray-400',
+    color: 'bg-gray-200 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 border-gray-400 dark:border-gray-600',
     icon: FileX,
     description: 'Factura anulada',
     animated: false,
   },
   ERROR: {
     label: 'Error',
-    color: 'bg-red-200 text-red-800 border-red-400',
+    color: 'bg-red-200 dark:bg-red-900/30 text-red-800 dark:text-red-400 border-red-400 dark:border-red-700',
     icon: AlertCircle,
     description: 'Error en procesamiento',
     animated: false,
@@ -154,25 +154,25 @@ export function InvoiceStatusBadgeWithTooltip({
       
       {/* Tooltip */}
       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
-        <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
+        <div className="bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg border border-gray-700">
           <div className="font-semibold">{config.label}</div>
-          <div className="text-gray-300">{config.description}</div>
+          <div className="text-gray-300 dark:text-gray-400">{config.description}</div>
           
           {hkaMessage && (
-            <div className="mt-1 text-gray-400 max-w-xs whitespace-normal">
+            <div className="mt-1 text-gray-400 dark:text-gray-500 max-w-xs whitespace-normal">
               {hkaMessage}
             </div>
           )}
           
           {certifiedAt && status === 'CERTIFIED' && (
-            <div className="mt-1 text-gray-400">
+            <div className="mt-1 text-gray-400 dark:text-gray-500">
               {new Date(certifiedAt).toLocaleString('es-PA')}
             </div>
           )}
           
           {/* Flecha del tooltip */}
           <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1">
-            <div className="border-4 border-transparent border-t-gray-900" />
+            <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-800" />
           </div>
         </div>
       </div>
