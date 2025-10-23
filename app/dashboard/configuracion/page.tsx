@@ -72,9 +72,47 @@ export default async function ConfigurationPage() {
           ruc: true,
         },
       },
+      invoices: {
+        select: {
+          id: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   })
+
+  // Obtener estadísticas de folios por usuario
+  const userIds = users.map(u => u.id)
+  const folioAssignmentsByUser = await prisma.folioAssignment.groupBy({
+    by: ['organizationId'],
+    where: {
+      organizationId: {
+        in: users.map(u => u.organizationId).filter(Boolean) as string[],
+      },
+    },
+    _sum: {
+      assignedAmount: true,
+      consumedAmount: true,
+    },
+  })
+
+  // Crear un mapa de folios por organización
+  const foliosByOrg = new Map(
+    folioAssignmentsByUser.map(item => [
+      item.organizationId,
+      {
+        assigned: item._sum.assignedAmount || 0,
+        consumed: item._sum.consumedAmount || 0,
+      }
+    ])
+  )
+
+  // Agregar estadísticas de folios a cada usuario
+  const usersWithFolios = users.map(user => ({
+    ...user,
+    folioStats: user.organizationId ? foliosByOrg.get(user.organizationId) || { assigned: 0, consumed: 0 } : { assigned: 0, consumed: 0 },
+    invoiceCount: user.invoices.length,
+  }))
 
   // Obtener configuraciones del sistema (si existen)
   const systemConfig = await prisma.systemConfig.findFirst({
@@ -110,7 +148,7 @@ export default async function ConfigurationPage() {
       {/* Tabs de Configuración */}
       <ConfigurationTabs
         organization={organization}
-        users={users}
+        users={usersWithFolios}
         organizations={organizations}
         systemConfig={systemConfig}
         folioStats={{

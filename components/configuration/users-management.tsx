@@ -20,6 +20,11 @@ interface User {
     name: string
     ruc: string | null
   } | null
+  folioStats?: {
+    assigned: number
+    consumed: number
+  }
+  invoiceCount?: number
 }
 
 interface UsersManagementProps {
@@ -139,10 +144,13 @@ export function UsersManagement({ users, organizationId, organizations = [], isS
                 Rol
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Estado
+                Folios
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Registro
+                Facturas
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Estado
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
@@ -179,7 +187,7 @@ export function UsersManagement({ users, organizationId, organizations = [], isS
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       user.role === "SUPER_ADMIN"
                         ? "bg-purple-100 text-purple-800"
-                        : user.role === "ADMIN"
+                        : user.role === "ORG_ADMIN"
                         ? "bg-indigo-100 text-indigo-800"
                         : "bg-gray-100 text-gray-800"
                     }`}
@@ -187,6 +195,23 @@ export function UsersManagement({ users, organizationId, organizations = [], isS
                     <Shield className="h-3 w-3 mr-1" />
                     {user.role}
                   </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {user.folioStats ? (
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-900">
+                        {(user.folioStats.assigned - user.folioStats.consumed).toLocaleString()} disponibles
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {user.folioStats.consumed.toLocaleString()} consumidos de {user.folioStats.assigned.toLocaleString()}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400">Sin datos</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-sm text-gray-900">{user.invoiceCount || 0}</span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {user.isActive ? (
@@ -200,9 +225,6 @@ export function UsersManagement({ users, organizationId, organizations = [], isS
                       Inactivo
                     </span>
                   )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {format(new Date(user.createdAt), "dd MMM yyyy", { locale: es })}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end space-x-2">

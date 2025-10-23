@@ -38,6 +38,11 @@ interface User {
     name: string
     ruc: string | null
   } | null
+  folioStats?: {
+    assigned: number
+    consumed: number
+  }
+  invoiceCount?: number
 }
 
 interface SystemConfig {

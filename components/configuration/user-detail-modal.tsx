@@ -17,6 +17,11 @@ interface User {
     name: string
     ruc: string | null
   } | null
+  folioStats?: {
+    assigned: number
+    consumed: number
+  }
+  invoiceCount?: number
 }
 
 interface UserDetailModalProps {
@@ -29,10 +34,12 @@ interface UserDetailModalProps {
 
 export function UserDetailModal({ user, isOpen, onClose, organizations = [], isSuperAdmin = false }: UserDetailModalProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'info' | 'folios'>('info')
+  const [activeTab, setActiveTab] = useState<'info' | 'folios' | 'historial'>('info')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [folioHistory, setFolioHistory] = useState<any[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   // Form data for user info
   const [userForm, setUserForm] = useState({
@@ -51,6 +58,31 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
   })
 
   if (!isOpen || !user) return null
+
+  // Cargar historial de folios cuando se abre la pestaña
+  const loadFolioHistory = async () => {
+    if (!user.organizationId) return
+    
+    setLoadingHistory(true)
+    try {
+      const response = await fetch(`/api/configuration/users/${user.id}/folio-history`)
+      if (response.ok) {
+        const data = await response.json()
+        setFolioHistory(data.history || [])
+      }
+    } catch (err) {
+      console.error("Error loading folio history:", err)
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  const handleTabChange = (tab: 'info' | 'folios' | 'historial') => {
+    setActiveTab(tab)
+    if (tab === 'historial' && folioHistory.length === 0) {
+      loadFolioHistory()
+    }
+  }
 
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -157,7 +189,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
               <button
-                onClick={() => setActiveTab('info')}
+                onClick={() => handleTabChange('info')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'info'
                     ? 'border-indigo-500 text-indigo-600'
@@ -167,9 +199,22 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                 <UserIcon className="h-4 w-4 inline mr-2" />
                 Información
               </button>
+              <button
+                onClick={() => handleTabChange('historial')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'historial'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <svg className="h-4 w-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Historial de Folios
+              </button>
               {isSuperAdmin && (
                 <button
-                  onClick={() => setActiveTab('folios')}
+                  onClick={() => handleTabChange('folios')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === 'folios'
                       ? 'border-indigo-500 text-indigo-600'
@@ -435,6 +480,122 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* Tab: Historial de Folios */}
+            {activeTab === 'historial' && (
+              <div className="space-y-4">
+                {/* Estadísticas Generales */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <p className="text-xs text-blue-600 font-medium uppercase">Total Comprado</p>
+                    <p className="text-2xl font-bold text-blue-900 mt-1">
+                      {user.folioStats?.assigned.toLocaleString() || 0}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">folios</p>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <p className="text-xs text-green-600 font-medium uppercase">Disponibles</p>
+                    <p className="text-2xl font-bold text-green-900 mt-1">
+                      {((user.folioStats?.assigned || 0) - (user.folioStats?.consumed || 0)).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-green-600 mt-1">folios</p>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-4">
+                    <p className="text-xs text-red-600 font-medium uppercase">Consumidos</p>
+                    <p className="text-2xl font-bold text-red-900 mt-1">
+                      {user.folioStats?.consumed.toLocaleString() || 0}
+                    </p>
+                    <p className="text-xs text-red-600 mt-1">folios</p>
+                  </div>
+                </div>
+
+                {/* Gasto Total */}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-purple-600 font-medium">Gasto Total en Folios</p>
+                      <p className="text-xs text-purple-500 mt-1">Basado en precio promedio de $0.06 por folio</p>
+                    </div>
+                    <p className="text-3xl font-bold text-purple-900">
+                      ${((user.folioStats?.assigned || 0) * 0.06).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Historial de Asignaciones */}
+                <div className="border-t border-gray-200 pt-4">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Historial de Asignaciones</h4>
+                  
+                  {loadingHistory ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+                      <span className="ml-2 text-sm text-gray-600">Cargando historial...</span>
+                    </div>
+                  ) : folioHistory.length > 0 ? (
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {folioHistory.map((item: any, index: number) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {item.assignedAmount.toLocaleString()} folios asignados
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(item.assignedAt).toLocaleDateString('es-ES', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                              {item.notes && (
+                                <p className="text-xs text-gray-600 mt-1 italic">"{item.notes}"</p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500">Consumidos</p>
+                              <p className="text-sm font-medium text-gray-900">
+                                {item.consumedAmount.toLocaleString()} / {item.assignedAmount.toLocaleString()}
+                              </p>
+                              <div className="w-20 bg-gray-200 rounded-full h-1.5 mt-1">
+                                <div
+                                  className="bg-indigo-600 h-1.5 rounded-full"
+                                  style={{
+                                    width: `${Math.min((item.consumedAmount / item.assignedAmount) * 100, 100)}%`
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Ticket className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm">No hay historial de asignaciones</p>
+                      <p className="text-xs mt-1">Este usuario aún no tiene folios asignados</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Estadística de Facturas */}
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Facturas Emitidas</p>
+                        <p className="text-xs text-gray-500 mt-1">Total de facturas creadas por este usuario</p>
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {user.invoiceCount || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>
