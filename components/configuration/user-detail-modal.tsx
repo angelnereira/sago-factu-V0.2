@@ -163,37 +163,37 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
 
-        <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-indigo-100 rounded-lg">
                 <UserIcon className="h-5 w-5 text-indigo-600" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                   {user.name || "Usuario"}
                 </h2>
-                <p className="text-sm text-gray-500">{user.email}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 dark:bg-gray-700 rounded-full transition-colors"
             >
               <X className="h-5 w-5 text-gray-400" />
             </button>
           </div>
 
           {/* Tabs */}
-          <div className="border-b border-gray-200">
+          <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
               <button
                 onClick={() => handleTabChange('info')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'info'
                     ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:border-gray-600'
                 }`}
               >
                 <UserIcon className="h-4 w-4 inline mr-2" />
@@ -204,7 +204,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'historial'
                     ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:border-gray-600'
                 }`}
               >
                 <svg className="h-4 w-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,7 +218,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                   className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === 'folios'
                       ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:border-gray-600'
                   }`}
                 >
                   <Ticket className="h-4 w-4 inline mr-2" />
@@ -246,7 +246,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
             {activeTab === 'info' && (
               <form onSubmit={handleUpdateUser} className="space-y-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Nombre Completo
                   </label>
                   <div className="relative">
@@ -256,14 +256,14 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                       id="name"
                       value={userForm.name}
                       onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       placeholder="Juan Pérez"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Email
                   </label>
                   <div className="relative">
@@ -273,7 +273,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                       id="email"
                       value={userForm.email}
                       onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       placeholder="usuario@email.com"
                     />
                   </div>
@@ -281,7 +281,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
 
                 {isSuperAdmin && organizations.length > 0 && (
                   <div>
-                    <label htmlFor="organizationId" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="organizationId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Organización
                     </label>
                     <div className="relative">
@@ -290,7 +290,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                         id="organizationId"
                         value={userForm.organizationId}
                         onChange={(e) => setUserForm({ ...userForm, organizationId: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       >
                         <option value="">Seleccionar organización</option>
                         {organizations.map((org) => (
@@ -305,7 +305,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
 
                 {isSuperAdmin && (
                   <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Rol
                     </label>
                     <div className="relative">
@@ -314,7 +314,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                         id="role"
                         value={userForm.role}
                         onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       >
                         <option value="USER">Usuario</option>
                         <option value="ORG_ADMIN">Administrador de Organización</option>
@@ -330,18 +330,18 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                     id="isActive"
                     checked={userForm.isActive}
                     onChange={(e) => setUserForm({ ...userForm, isActive: e.target.checked })}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded"
                   />
-                  <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                  <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900 dark:text-gray-100">
                     Usuario activo
                   </label>
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-900/30 transition-colors"
                     disabled={isLoading}
                   >
                     Cancelar
@@ -370,11 +370,11 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
             {/* Tab: Asignar Folios */}
             {activeTab === 'folios' && isSuperAdmin && (
               <form onSubmit={handleAssignFolios} className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600">Asignar folios a:</p>
-                  <p className="font-medium text-gray-900">{user.name || user.email}</p>
+                <div className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Asignar folios a:</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{user.name || user.email}</p>
                   {user.organization && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Organización: {user.organization.name}
                     </p>
                   )}
@@ -386,7 +386,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                 </div>
 
                 <div>
-                  <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Cantidad de Folios
                   </label>
                   <input
@@ -397,19 +397,19 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                     max={10000}
                     value={foliosForm.quantity}
                     onChange={(e) => setFoliosForm({ ...foliosForm, quantity: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Mínimo 1, máximo 10,000 folios
                   </p>
                 </div>
 
                 <div>
-                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Precio por Folio (USD)
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                    <span className="absolute left-3 top-2.5 text-gray-500 dark:text-gray-400">$</span>
                     <input
                       type="number"
                       id="price"
@@ -418,16 +418,16 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                       step={0.01}
                       value={foliosForm.price}
                       onChange={(e) => setFoliosForm({ ...foliosForm, price: parseFloat(e.target.value) || 0 })}
-                      className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Precio actual: $0.06 (6 centavos)
                   </p>
                 </div>
 
                 <div>
-                  <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Notas (Opcional)
                   </label>
                   <textarea
@@ -435,28 +435,28 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                     rows={3}
                     value={foliosForm.notes}
                     onChange={(e) => setFoliosForm({ ...foliosForm, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                     placeholder="Ej: Asignación mensual de diciembre"
                   />
                 </div>
 
                 <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Costo Total:</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Costo Total:</span>
                     <span className="text-2xl font-bold text-indigo-600">
                       ${totalCost.toFixed(2)}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     {foliosForm.quantity} folios × ${foliosForm.price.toFixed(2)} = ${totalCost.toFixed(2)}
                   </p>
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-900/30 transition-colors"
                     disabled={isLoading}
                   >
                     Cancelar
@@ -524,24 +524,24 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                 </div>
 
                 {/* Historial de Asignaciones */}
-                <div className="border-t border-gray-200 pt-4">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Historial de Asignaciones</h4>
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Historial de Asignaciones</h4>
                   
                   {loadingHistory ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-                      <span className="ml-2 text-sm text-gray-600">Cargando historial...</span>
+                      <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Cargando historial...</span>
                     </div>
                   ) : folioHistory.length > 0 ? (
                     <div className="space-y-3 max-h-64 overflow-y-auto">
                       {folioHistory.map((item: any, index: number) => (
-                        <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                        <div key={index} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {item.assignedAmount.toLocaleString()} folios asignados
                               </p>
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 {new Date(item.assignedAt).toLocaleDateString('es-ES', {
                                   year: 'numeric',
                                   month: 'long',
@@ -551,12 +551,12 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                                 })}
                               </p>
                               {item.notes && (
-                                <p className="text-xs text-gray-600 mt-1 italic">"{item.notes}"</p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 italic">"{item.notes}"</p>
                               )}
                             </div>
                             <div className="text-right">
-                              <p className="text-xs text-gray-500">Consumidos</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Consumidos</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {item.consumedAmount.toLocaleString()} / {item.assignedAmount.toLocaleString()}
                               </p>
                               <div className="w-20 bg-gray-200 rounded-full h-1.5 mt-1">
@@ -573,7 +573,7 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                       <Ticket className="h-12 w-12 mx-auto mb-2 text-gray-400" />
                       <p className="text-sm">No hay historial de asignaciones</p>
                       <p className="text-xs mt-1">Este usuario aún no tiene folios asignados</p>
@@ -582,14 +582,14 @@ export function UserDetailModal({ user, isOpen, onClose, organizations = [], isS
                 </div>
 
                 {/* Estadística de Facturas */}
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <div className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-700">Facturas Emitidas</p>
-                        <p className="text-xs text-gray-500 mt-1">Total de facturas creadas por este usuario</p>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Facturas Emitidas</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Total de facturas creadas por este usuario</p>
                       </div>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         {user.invoiceCount || 0}
                       </p>
                     </div>

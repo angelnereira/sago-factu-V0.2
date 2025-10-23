@@ -47,23 +47,23 @@ export function DeleteUserModal({ user, isOpen, onClose }: DeleteUserModalProps)
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
 
-        <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
           <div className="p-6">
-            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full">
+              <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
             </div>
 
-            <h2 className="mt-4 text-xl font-semibold text-gray-900 text-center">
+            <h2 className="mt-4 text-xl font-semibold text-gray-900 dark:text-gray-100 text-center">
               Eliminar Usuario
             </h2>
 
-            <p className="mt-2 text-sm text-gray-600 text-center">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 text-center">
               ¿Estás seguro de que deseas eliminar a{" "}
               <strong>{user.name}</strong>? Esta acción no se puede deshacer.
             </p>
 
             {error && (
-              <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
                 {error}
               </div>
             )}
@@ -72,7 +72,7 @@ export function DeleteUserModal({ user, isOpen, onClose }: DeleteUserModalProps)
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-900/30 transition-colors"
                 disabled={isLoading}
               >
                 Cancelar
