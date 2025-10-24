@@ -48,17 +48,17 @@ export function AuditFilters({ currentFilters, actionStats, entityStats }: Audit
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Filter className="h-5 w-5 text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-900">Filtros</h3>
+          <Filter className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filtros</h3>
         </div>
         {hasFilters && (
           <button
             onClick={clearFilters}
-            className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center"
+            className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center transition-colors"
           >
             <X className="h-4 w-4 mr-1" />
             Limpiar
@@ -68,7 +68,7 @@ export function AuditFilters({ currentFilters, actionStats, entityStats }: Audit
 
       {/* User Search */}
       <div>
-        <label htmlFor="userSearch" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="userSearch" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Buscar Usuario
         </label>
         <input
@@ -80,25 +80,25 @@ export function AuditFilters({ currentFilters, actionStats, entityStats }: Audit
             const value = e.target.value
             setTimeout(() => applyFilter("user", value), 500) // Debounce
           }}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent text-sm transition-colors"
         />
       </div>
 
       {/* Action Filter */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Acción</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de Acción</label>
         <div className="space-y-2 max-h-64 overflow-y-auto">
           <button
             onClick={() => applyFilter("action", "")}
             className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
               !currentFilters.action
-                ? "bg-indigo-50 text-indigo-700 font-medium"
-                : "hover:bg-gray-50 text-gray-700"
+                ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium"
+                : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
             }`}
           >
             <div className="flex items-center justify-between">
               <span>Todos</span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {actionStats.reduce((sum, stat) => sum + stat.count, 0)}
               </span>
             </div>
@@ -109,13 +109,13 @@ export function AuditFilters({ currentFilters, actionStats, entityStats }: Audit
               onClick={() => applyFilter("action", stat.action)}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                 currentFilters.action === stat.action
-                  ? "bg-indigo-50 text-indigo-700 font-medium"
-                  : "hover:bg-gray-50 text-gray-700"
+                  ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium"
+                  : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span>{formatAction(stat.action)}</span>
-                <span className="text-xs text-gray-500">{stat.count}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{stat.count}</span>
               </div>
             </button>
           ))}
@@ -124,19 +124,19 @@ export function AuditFilters({ currentFilters, actionStats, entityStats }: Audit
 
       {/* Entity Filter */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Entidad</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Entidad</label>
         <div className="space-y-2 max-h-48 overflow-y-auto">
           <button
             onClick={() => applyFilter("entity", "")}
             className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
               !currentFilters.entity
-                ? "bg-indigo-50 text-indigo-700 font-medium"
-                : "hover:bg-gray-50 text-gray-700"
+                ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium"
+                : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
             }`}
           >
             <div className="flex items-center justify-between">
               <span>Todas</span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {entityStats.reduce((sum, stat) => sum + stat.count, 0)}
               </span>
             </div>
@@ -147,13 +147,13 @@ export function AuditFilters({ currentFilters, actionStats, entityStats }: Audit
               onClick={() => applyFilter("entity", stat.entity)}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                 currentFilters.entity === stat.entity
-                  ? "bg-indigo-50 text-indigo-700 font-medium"
-                  : "hover:bg-gray-50 text-gray-700"
+                  ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium"
+                  : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span>{stat.entity}</span>
-                <span className="text-xs text-gray-500">{stat.count}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{stat.count}</span>
               </div>
             </button>
           ))}
