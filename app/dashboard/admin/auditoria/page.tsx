@@ -98,8 +98,8 @@ export default async function AuditoriaPage({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Logs de Auditoría</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Logs de Auditoría</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Registro completo de acciones realizadas en el sistema
           </p>
         </div>
@@ -107,17 +107,17 @@ export default async function AuditoriaPage({
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total de Eventos</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total de Eventos</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {totalCount.toLocaleString()}
               </p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
               <svg
-                className="h-6 w-6 text-blue-600"
+                className="h-6 w-6 text-blue-600 dark:text-blue-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -131,20 +131,20 @@ export default async function AuditoriaPage({
               </svg>
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-4">Registros totales</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">Registros totales</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Últimas 24 horas</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Últimas 24 horas</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {recentCount.toLocaleString()}
               </p>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
+            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
               <svg
-                className="h-6 w-6 text-green-600"
+                className="h-6 w-6 text-green-600 dark:text-green-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -158,20 +158,20 @@ export default async function AuditoriaPage({
               </svg>
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-4">Eventos recientes</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">Eventos recientes</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Tipos de Acción</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Tipos de Acción</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {actionStats.length}
               </p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
               <svg
-                className="h-6 w-6 text-purple-600"
+                className="h-6 w-6 text-purple-600 dark:text-purple-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -185,7 +185,7 @@ export default async function AuditoriaPage({
               </svg>
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-4">Acciones distintas</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">Acciones distintas</p>
         </div>
       </div>
 
