@@ -132,7 +132,7 @@ export default async function MetricsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Estadísticas del Sistema</h1>
+        <h1 className="text-3xl font-bold text-white">Estadísticas del Sistema</h1>
         <p className="text-gray-600 mt-1">
           Vista general del rendimiento y uso de la plataforma
         </p>
