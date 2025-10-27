@@ -7,16 +7,24 @@ import { anularDocumento } from '@/lib/hka/methods/anular-documento';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { cufe, motivo, invoiceId } = await request.json();
-
-    if (!cufe || !motivo || !invoiceId) {
+    const body = await request.json();
+    const { cufe, motivo, invoiceId, documentId, environment } = body;
+    
+    // Acceptar cufe o documentId
+    const cufeFinal = cufe || documentId;
+    
+    if (!cufeFinal || !motivo) {
       return NextResponse.json(
-        { error: 'cufe, motivo e invoiceId son requeridos' },
+        { error: 'cufe (o documentId) y motivo son requeridos' },
         { status: 400 }
       );
     }
+    
+    // invoiceId opcional, environment opcional
+    const invoiceIdFinal = invoiceId || 'temp-' + Date.now();
+    const env = environment || 'demo';
 
-    const response = await anularDocumento(cufe, motivo, invoiceId);
+    const response = await anularDocumento(cufeFinal, motivo, invoiceIdFinal);
 
     return NextResponse.json({
       success: true,
@@ -39,4 +47,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

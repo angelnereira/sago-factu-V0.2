@@ -8,7 +8,16 @@ import { sql } from '@/lib/db';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { organizationId } = await request.json();
+    // Permitir body vacío o con organizationId
+    let body: any = {};
+    try {
+      const text = await request.text();
+      body = text ? JSON.parse(text) : {};
+    } catch {
+      // Si PubMed falla parsear, body vacío
+    }
+    
+    const { organizationId } = body;
 
     if (!organizationId) {
       return NextResponse.json(
