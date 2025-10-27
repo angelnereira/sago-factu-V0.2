@@ -329,6 +329,16 @@ model Invoice {
   rejectionReason String?       @db.Text
   hkaCode         String? // Código de respuesta HKA
 
+  // HKA Integration - Campos adicionales
+  hkaProtocol        String?   @unique // Número de protocolo HKA
+  hkaProtocolDate    DateTime?
+  pdfBase64          String?   @db.Text // PDF firmado en base64
+  hkaResponseCode    String? // Código numérico de respuesta HKA
+  hkaResponseMessage String?   @db.Text // Mensaje de respuesta detallado
+  hkaResponseData    Json? // Datos adicionales en JSON
+  hkaLastAttempt     DateTime?
+  hkaAttempts        Int       @default(0)
+
   // Storage
   xmlUrl String?
   pdfUrl String?
@@ -661,32 +671,32 @@ model ApiLog {
   id String @id @default(cuid())
 
   // Request Details
-  method  String // GET, POST, PUT, DELETE, etc.
-  path    String
+  method   String // GET, POST, PUT, DELETE, etc.
+  path     String
   endpoint String // Full endpoint
-  userId  String?
-  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
+  userId   String?
+  user     User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
   // Request Data
-  requestHeaders Json?  // Headers como JSON
+  requestHeaders Json? // Headers como JSON
   requestBody    String? @db.Text // Body como string (puede ser grande)
-  requestQuery   Json?  // Query params
+  requestQuery   Json? // Query params
 
   // Response Data
-  statusCode   Int
-  responseBody String? @db.Text // Response como string
+  statusCode      Int
+  responseBody    String? @db.Text // Response como string
   responseHeaders Json? // Response headers
-  success     Boolean
-  errorMessage String? @db.Text
+  success         Boolean
+  errorMessage    String? @db.Text
 
   // Technical Details
   ip           String?
   userAgent    String?
-  duration     Int?     // Duración en ms
-  responseSize Int?     // Tamaño de respuesta en bytes
+  duration     Int? // Duración en ms
+  responseSize Int? // Tamaño de respuesta en bytes
 
   // Context
   apiName   String? // HKA, Internal, External
@@ -694,7 +704,7 @@ model ApiLog {
 
   // Timestamp
   createdAt DateTime @default(now())
-  
+
   @@index([userId])
   @@index([organizationId])
   @@index([endpoint])
