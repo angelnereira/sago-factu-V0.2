@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prismaServer as prisma } from '@/lib/prisma-server';
-import { enviarDocumento } from '@/lib/hka/methods/enviar-documento';
-import { generateXMLFromInvoice } from '@/lib/hka/transformers/invoice-to-xml';
+import { getInvoiceQueue } from '@/lib/queue/invoice-queue';
 
 /**
  * POST /api/documentos/enviar
  * Envía un documento electrónico a HKA
+ * 
+ * Actualizado para usar BullMQ queue:
+ * 1. Encola la factura para procesamiento asíncrono
+ * 2. El worker se encarga de generar XML, enviar a HKA y actualizar BD
  */
 
 export async function POST(request: NextRequest) {
@@ -36,59 +39,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No tiene acceso a esta factura' }, { status: 403 });
     }
 
-    const customer = await prisma.customer.findUnique({
-      where: { id: invoice.receiverRuc || '' },
-    });
-
-    if (!customer) {
-      return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
+    // Verificar que la factura está en estado DRAFT
+    if (invoice.status !== 'DRAFT') {
+      return NextResponse.json(
+        { error: `No se puede procesar una factura en estado: ${invoice.status}` },
+        { status: 400 }
+      );
     }
 
-    const { xml, cufe, errores } = await generateXMLFromInvoice({ ...invoice, customer } as any, customer);
-
-    if (errores.length > 0) {
-      return NextResponse.json({ error: 'Errores en la factura', details: errores }, { status: 400 });
-    }
-
-    await prisma.invoice.update({
-      where: { id: invoiceId },
-      data: { xmlContent: xml, cufe },
+    // Obtener la cola y agregar el trabajo
+    const queue = getInvoiceQueue();
+    
+    const job = await queue.add('process-invoice', {
+      invoiceId: invoiceId,
+      sendToHKA: invoice.organization.autoSendToHKA ?? true,
+      sendEmail: invoice.organization.emailOnCertification ?? true,
+    }, {
+      jobId: `invoice-${invoiceId}`,
+      priority: 5,
     });
 
-    const response = await enviarDocumento(xml, invoiceId);
-
+    // Actualizar estado a PROCESSING
     await prisma.invoice.update({
       where: { id: invoiceId },
-      data: {
-        status: response.success ? 'CERTIFIED' : 'REJECTED',
-        hkaProtocol: response.dProtocolo,
-        hkaProtocolDate: new Date(),
-        hkaResponseCode: response.dCodRes,
-        hkaResponseMessage: response.dMsgRes,
-        hkaCode: response.dCodRes,
-        pdfBase64: response.xContPDF,
-        qrCode: response.dQr,
-        certifiedAt: response.success ? new Date() : null,
-        hkaResponseData: {
-          dCufe: response.dCufe,
-          dProtocolo: response.dProtocolo,
-          dQr: response.dQr,
-          dCodRes: response.dCodRes,
-          dMsgRes: response.dMsgRes,
-        },
+      data: { 
+        status: 'PROCESSING',
+        hkaLastAttempt: new Date(),
+        hkaAttempts: { increment: 1 },
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: response.success ? 'Documento certificado exitosamente' : 'Documento rechazado',
-      data: {
-        cufe: response.dCufe,
-        protocolo: response.dProtocolo,
-        qr: response.dQr,
-        codigo: response.dCodRes,
-        mensaje: response.dMsgRes,
-      },
+      message: 'Factura encolada para procesamiento',
+      jobId: job.id,
+      status: 'PROCESSING',
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
