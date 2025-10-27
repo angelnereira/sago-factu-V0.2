@@ -10,19 +10,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prismaServer as prisma } from '@/lib/prisma-server';
 import { processInvoiceDirectly } from '@/lib/workers/invoice-processor';
+import { requireAuth, requireInvoiceAccess, handleApiError } from '@/lib/auth/api-helpers';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // TODO: Agregar autenticación con NextAuth v5
-    // const session = await auth();
-    // if (!session?.user) {
-    //   return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-    // }
+    // Autenticación
+    const session = await requireAuth(request);
 
     const { id: invoiceId } = await params;
 
@@ -40,6 +38,9 @@ export async function POST(
         { status: 404 }
       );
     }
+
+    // Validar acceso a la factura
+    await requireInvoiceAccess(invoiceId, session.user.id, session.user.role);
 
     // Verificar que la factura puede procesarse
     if (invoice.status === 'CERTIFIED') {
@@ -104,14 +105,7 @@ export async function POST(
       }, { status: 500 });
     }
   } catch (error) {
-    console.error('Error en /api/invoices/[id]/process:', error);
-    return NextResponse.json(
-      { 
-        error: 'Error interno del servidor',
-        details: error instanceof Error ? error.message : 'Error desconocido',
-      },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
