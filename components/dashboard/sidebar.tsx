@@ -88,6 +88,12 @@ const adminItems: SidebarItem[] = [
     icon: Activity,
     roles: ["SUPER_ADMIN"],
   },
+  {
+    name: "Logs API",
+    href: "/dashboard/admin/api-logs",
+    icon: Activity,
+    roles: ["SUPER_ADMIN"],
+  },
 ]
 
 interface DashboardSidebarProps {

@@ -66,6 +66,7 @@ model Organization {
   apiKeys       ApiKey[]
   systemConfigs SystemConfig[]
   customers     Customer[]
+  apiLogs       ApiLog[]
 
   @@index([slug])
   @@index([ruc])
@@ -113,6 +114,7 @@ model User {
   accounts      Account[]
   notifications Notification[]
   auditLogs     AuditLog[]
+  apiLogs       ApiLog[]
 
   @@index([organizationId])
   @@index([email])
@@ -649,4 +651,56 @@ model SystemConfig {
   @@index([key])
   @@index([organizationId])
   @@map("system_configs")
+}
+
+// ============================================
+// API CALL LOGS
+// ============================================
+
+model ApiLog {
+  id String @id @default(cuid())
+
+  // Request Details
+  method  String // GET, POST, PUT, DELETE, etc.
+  path    String
+  endpoint String // Full endpoint
+  userId  String?
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  // Request Data
+  requestHeaders Json?  // Headers como JSON
+  requestBody    String? @db.Text // Body como string (puede ser grande)
+  requestQuery   Json?  // Query params
+
+  // Response Data
+  statusCode   Int
+  responseBody String? @db.Text // Response como string
+  responseHeaders Json? // Response headers
+  success     Boolean
+  errorMessage String? @db.Text
+
+  // Technical Details
+  ip           String?
+  userAgent    String?
+  duration     Int?     // Duración en ms
+  responseSize Int?     // Tamaño de respuesta en bytes
+
+  // Context
+  apiName   String? // HKA, Internal, External
+  apiMethod String? // Método específico del API (ConsultarFolios, etc.)
+
+  // Timestamp
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([organizationId])
+  @@index([endpoint])
+  @@index([statusCode])
+  @@index([success])
+  @@index([apiName])
+  @@index([createdAt])
+  @@map("api_logs")
 }
