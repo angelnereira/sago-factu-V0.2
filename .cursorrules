@@ -1,0 +1,237 @@
+# Reglas del Agente de Código - Cursor
+
+## PRINCIPIOS FUNDAMENTALES
+
+### 1. Nunca Romper el Código Existente
+- SIEMPRE analiza el código existente antes de modificar
+- Mantén la compatibilidad hacia atrás cuando sea posible
+- Verifica las dependencias antes de cambiar interfaces públicas
+- Haz cambios incrementales y testeables
+
+### 2. Seguridad Primero
+- NUNCA expongas secretos, API keys o credenciales en el código
+- Usa variables de entorno para configuración sensible
+- Valida y sanitiza TODAS las entradas de usuario
+- Implementa autenticación y autorización apropiadas
+- Previene inyección SQL, XSS, CSRF y otras vulnerabilidades comunes
+- Usa HTTPS para todas las comunicaciones externas
+- Actualiza dependencias regularmente para parches de seguridad
+
+### 3. Calidad del Código
+- Sigue los principios SOLID
+- Mantén funciones pequeñas y con una sola responsabilidad
+- Usa nombres descriptivos y significativos
+- Evita código duplicado (DRY - Don't Repeat Yourself)
+- Escribe código auto-documentado
+- Mantén la complejidad ciclomática baja (<10)
+
+## ARQUITECTURA Y DISEÑO
+
+### Patrones de Diseño
+- Usa patrones apropiados: Singleton, Factory, Observer, Strategy, etc.
+- Prefiere composición sobre herencia
+- Implementa interfaces para abstracciones
+- Aplica el principio de inversión de dependencias
+
+### Estructura de Proyecto
+- Organiza código por funcionalidad, no por tipo de archivo
+- Separa lógica de negocio de la presentación
+- Mantén una arquitectura en capas clara
+- Usa módulos cohesivos y de bajo acoplamiento
+
+## MANEJO DE ERRORES
+
+### Excepciones
+- Captura excepciones específicas, no genéricas
+- Proporciona mensajes de error descriptivos
+- Loggea errores con contexto suficiente
+- No ocultes errores silenciosamente
+- Implementa recuperación graceful cuando sea posible
+- Usa try-catch-finally apropiadamente
+
+### Validación
+- Valida entradas en los límites del sistema
+- Falla rápido con errores claros
+- Proporciona mensajes de validación útiles para usuarios
+
+## TESTING
+
+### Cobertura de Tests
+- Escribe tests unitarios para toda lógica de negocio
+- Incluye tests de integración para flujos críticos
+- Alcanza mínimo 80% de cobertura de código
+- Usa TDD cuando sea apropiado
+
+### Calidad de Tests
+- Tests deben ser independientes y repetibles
+- Usa nombres descriptivos: `test_should_return_error_when_user_not_found`
+- Sigue patrón Arrange-Act-Assert (AAA)
+- Mock dependencias externas
+- Incluye tests de casos límite y negativos
+
+## RENDIMIENTO Y OPTIMIZACIÓN
+
+### Eficiencia
+- Optimiza solo después de medir (no optimización prematura)
+- Usa estructuras de datos apropiadas (O(1) vs O(n))
+- Implementa paginación para grandes conjuntos de datos
+- Cachea resultados costosos cuando sea apropiado
+- Usa lazy loading cuando tenga sentido
+
+### Base de Datos
+- Usa índices apropiadamente
+- Evita queries N+1
+- Optimiza consultas complejas
+- Usa transacciones cuando sea necesario
+- Implementa connection pooling
+
+### Recursos
+- Cierra recursos apropiadamente (archivos, conexiones, streams)
+- Evita memory leaks
+- Maneja recursos con context managers o try-finally
+
+## DOCUMENTACIÓN
+
+### Código
+- Documenta el "por qué", no el "qué"
+- Usa docstrings para funciones públicas
+- Comenta lógica compleja o no obvia
+- Mantén comentarios actualizados con el código
+
+### Proyecto
+- Mantén README actualizado con setup y uso
+- Documenta APIs con especificaciones (OpenAPI/Swagger)
+- Include ejemplos de uso
+- Documenta decisiones arquitectónicas importantes
+
+## CONTROL DE VERSIONES
+
+### Commits
+- Commits atómicos y con propósito único
+- Mensajes descriptivos: `feat: add user authentication`
+- Usa conventional commits: feat, fix, docs, refactor, test, chore
+- No commitees código comentado o console.logs de debug
+
+### Branches
+- Usa feature branches para nuevo desarrollo
+- Mantén main/master siempre deployable
+- Merge mediante Pull Requests con revisión
+- Resuelve conflictos cuidadosamente
+
+## ESTÁNDARES DE CÓDIGO
+
+### Formateo
+- Usa un formateador automático (Prettier, Black, etc.)
+- Mantén consistencia en indentación y estilo
+- Límite de 80-120 caracteres por línea
+- Usa linter y corrige warnings
+
+### Convenciones de Nombres
+- camelCase para variables y funciones (JavaScript/TypeScript)
+- PascalCase para clases y componentes
+- UPPER_SNAKE_CASE para constantes
+- snake_case para archivos y carpetas (Python)
+- Nombres en inglés preferiblemente
+
+## DEPENDENCIAS
+
+### Gestión
+- Mantén dependencias actualizadas
+- Revisa seguridad con npm audit / pip-audit
+- Usa versiones específicas o rangos seguros
+- Minimiza dependencias externas
+- Evalúa tamaño y mantenimiento de librerías
+
+## CONFIGURACIÓN
+
+### Entornos
+- Usa archivos de configuración por entorno (.env)
+- NUNCA commitees .env files
+- Documenta variables requeridas en .env.example
+- Valida configuración al inicio de la aplicación
+
+## LOGGING Y MONITOREO
+
+### Logs
+- Usa niveles apropiados: DEBUG, INFO, WARN, ERROR
+- Include contexto útil en logs
+- No loggees información sensible
+- Implementa log rotation
+- Usa structured logging cuando sea posible
+
+## APIS Y SERVICIOS
+
+### Diseño de API
+- Sigue principios RESTful
+- Usa versionado de API (/api/v1/)
+- Implementa rate limiting
+- Proporciona documentación clara
+- Usa códigos de estado HTTP apropiados
+- Implementa CORS correctamente
+
+### Comunicación
+- Maneja timeouts apropiadamente
+- Implementa retry con exponential backoff
+- Usa circuit breakers para servicios externos
+- Valida respuestas de APIs externas
+
+## ACCESIBILIDAD Y UX (Frontend)
+
+### Accesibilidad
+- Usa semantic HTML
+- Incluye atributos ARIA cuando sea necesario
+- Asegura contraste de colores adecuado
+- Soporte para navegación por teclado
+- Prueba con screen readers
+
+### Performance Frontend
+- Optimiza imágenes y assets
+- Implementa lazy loading de componentes
+- Minimiza y bundlea archivos
+- Usa CDN para assets estáticos
+- Implementa service workers para PWA
+
+## ANTES DE CADA CAMBIO
+
+1. ¿Este cambio rompe algo existente?
+2. ¿Está bien testeado?
+3. ¿Es seguro?
+4. ¿Está documentado?
+5. ¿Sigue las convenciones del proyecto?
+6. ¿Es el approach más simple que funciona?
+7. ¿Está optimizado razonablemente?
+
+## CHECKLIST DE REVISIÓN
+
+- [ ] Código compila sin errores
+- [ ] Tests pasan
+- [ ] No hay vulnerabilidades de seguridad
+- [ ] Documentación actualizada
+- [ ] Sin console.logs o código debug
+- [ ] Código formateado correctamente
+- [ ] Sin warnings del linter
+- [ ] Manejo de errores implementado
+- [ ] Performance aceptable
+- [ ] Compatible con diferentes navegadores/plataformas (si aplica)
+
+## PRINCIPIOS DE COMUNICACIÓN
+
+### Al Sugerir Código
+- Explica el "por qué" detrás de las decisiones
+- Muestra alternativas cuando sea relevante
+- Señala trade-offs de diferentes approaches
+- Pregunta si no entiendes el contexto completo
+
+### Al Refactorizar
+- Explica beneficios de los cambios
+- Mantén la funcionalidad existente
+- Haz cambios graduales, no rewrites completos
+- Preserva tests existentes o actualízalos
+
+## RECUERDA
+
+- La simplicidad es sofisticación suprema
+- El código se lee más veces de las que se escribe
+- La prematurez es la raíz de todo mal (en optimización)
+- Primero haz que funcione, luego haz que sea correcto, luego haz que sea rápido
+- El mejor código es el que no tienes que escribir
