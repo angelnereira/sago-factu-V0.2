@@ -12,9 +12,12 @@ export async function POST(request: NextRequest) {
     let body: any = {};
     try {
       const text = await request.text();
-      body = text ? JSON.parse(text) : {};
-    } catch {
-      // Si PubMed falla parsear, body vacío
+      if (text && text.trim()) {
+        body = JSON.parse(text);
+      }
+    } catch (error) {
+      // Body vacío o inválido, continuar con {}
+      console.log('Body vacío o inválido, continuando con valores por defecto');
     }
     
     const { organizationId } = body;
