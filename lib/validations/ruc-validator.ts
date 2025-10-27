@@ -84,7 +84,8 @@ export function validarRUCCompleto(rucCompleto: string): boolean {
     
     const dvCalculado = calcularDigitoVerificador(rucSinDV);
     
-    return dvCalculado === dvProporcionado;
+    // Comparar considerando que el DV puede tener padding con 0
+    return dvCalculado === dvProporcionado || dvCalculado === dvProporcionado.replace(/^0+/, '') || dvCalculado.padStart(2, '0') === dvProporcionado;
   } catch (error) {
     return false;
   }
@@ -98,7 +99,9 @@ export function validarRUCCompleto(rucCompleto: string): boolean {
  */
 export function formatearRUCConDV(ruc: string): string {
   const dv = calcularDigitoVerificador(ruc);
-  return `${ruc}-${dv}`;
+  // Asegurar que el DV tenga 2 dígitos (padding con 0)
+  const dvPadded = dv.padStart(2, '0');
+  return `${ruc}-${dvPadded}`;
 }
 
 /**
