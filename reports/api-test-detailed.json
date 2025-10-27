@@ -1,0 +1,385 @@
+{
+  "success": 1,
+  "failed": 8,
+  "authErrors": 11,
+  "total": 20,
+  "details": [
+    {
+      "name": "NextAuth Handler",
+      "endpoint": "/api/auth/[...nextauth]",
+      "method": "GET",
+      "status": 400,
+      "duration": 8468,
+      "success": false,
+      "needsAuth": false,
+      "responseSize": 14,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:30 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "\"Bad request.\""
+    },
+    {
+      "name": "Test HKA Connection",
+      "endpoint": "/api/hka/test-connection",
+      "method": "GET",
+      "status": 200,
+      "duration": 957,
+      "success": true,
+      "needsAuth": false,
+      "responseSize": 194,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:31 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"success\":true,\"message\":\"✅ Conexión a HKA exitosa\",\"environment\":\"demo\",\"credentials\":{\"usuario\":\"walgofugiitj_ws_tfhka\",\"tokenEmpresa\":\"walgofugii...\"},\"timestamp\":\"2025-10-27T17:28:31.705Z\"}"
+    },
+    {
+      "name": "Folios Disponibles",
+      "endpoint": "/api/folios/available",
+      "method": "GET",
+      "status": 401,
+      "duration": 1824,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:33 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    },
+    {
+      "name": "Comprar Folios",
+      "endpoint": "/api/folios/purchase",
+      "method": "POST",
+      "status": 401,
+      "duration": 2915,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:36 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    },
+    {
+      "name": "Sincronizar Folios",
+      "endpoint": "/api/folios/sincronizar",
+      "method": "POST",
+      "status": 500,
+      "duration": 3382,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 80,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:39 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"Error al sincronizar folios\",\"details\":\"Unexpected end of JSON input\"}"
+    },
+    {
+      "name": "Folios Tiempo Real",
+      "endpoint": "/api/folios/tiempo-real",
+      "method": "GET",
+      "status": 400,
+      "duration": 749,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 39,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:40 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"organizationId es requerido\"}"
+    },
+    {
+      "name": "Crear Factura",
+      "endpoint": "/api/invoices/create",
+      "method": "POST",
+      "status": 401,
+      "duration": 1041,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:41 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    },
+    {
+      "name": "Enviar Documento",
+      "endpoint": "/api/documentos/enviar",
+      "method": "POST",
+      "status": 500,
+      "duration": 1068,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 78,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:42 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"Error al enviar documento\",\"details\":\"Unexpected end of JSON input\"}"
+    },
+    {
+      "name": "Consultar Documento",
+      "endpoint": "/api/documentos/consultar",
+      "method": "POST",
+      "status": 405,
+      "duration": 924,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 18,
+      "headers": {
+        "connection": "keep-alive",
+        "date": "Mon, 27 Oct 2025 17:28:43 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"rawResponse\":\"\"}"
+    },
+    {
+      "name": "Anular Documento",
+      "endpoint": "/api/documentos/anular",
+      "method": "POST",
+      "status": 500,
+      "duration": 1074,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 78,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:44 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"Error al anular documento\",\"details\":\"Unexpected end of JSON input\"}"
+    },
+    {
+      "name": "Obtener Notificaciones",
+      "endpoint": "/api/notifications",
+      "method": "GET",
+      "status": 401,
+      "duration": 1314,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:46 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    },
+    {
+      "name": "Crear Notificación",
+      "endpoint": "/api/notifications",
+      "method": "POST",
+      "status": 401,
+      "duration": 117,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:46 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    },
+    {
+      "name": "Test HKA Config",
+      "endpoint": "/api/configuration/test-hka-connection",
+      "method": "GET",
+      "status": 405,
+      "duration": 1068,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 18,
+      "headers": {
+        "connection": "keep-alive",
+        "date": "Mon, 27 Oct 2025 17:28:47 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"rawResponse\":\"\"}"
+    },
+    {
+      "name": "Org Settings",
+      "endpoint": "/api/configuration/organization",
+      "method": "PUT",
+      "status": 401,
+      "duration": 1030,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:48 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    },
+    {
+      "name": "Invoice Settings",
+      "endpoint": "/api/configuration/invoice-settings",
+      "method": "PUT",
+      "status": 401,
+      "duration": 981,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:49 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    },
+    {
+      "name": "Notification Settings",
+      "endpoint": "/api/configuration/notifications",
+      "method": "PUT",
+      "status": 401,
+      "duration": 1033,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:50 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    },
+    {
+      "name": "Security Settings",
+      "endpoint": "/api/configuration/security",
+      "method": "PUT",
+      "status": 401,
+      "duration": 1055,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:51 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    },
+    {
+      "name": "Admin Folios Assign",
+      "endpoint": "/api/admin/folios/assign",
+      "method": "POST",
+      "status": 403,
+      "duration": 1030,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:52 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    },
+    {
+      "name": "Admin Organizations",
+      "endpoint": "/api/admin/organizations",
+      "method": "GET",
+      "status": 405,
+      "duration": 1001,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 18,
+      "headers": {
+        "connection": "keep-alive",
+        "date": "Mon, 27 Oct 2025 17:28:53 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"rawResponse\":\"\"}"
+    },
+    {
+      "name": "Admin Users Create",
+      "endpoint": "/api/admin/users/create",
+      "method": "POST",
+      "status": 403,
+      "duration": 1170,
+      "success": false,
+      "needsAuth": true,
+      "responseSize": 25,
+      "headers": {
+        "connection": "keep-alive",
+        "content-type": "application/json",
+        "date": "Mon, 27 Oct 2025 17:28:54 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch"
+      },
+      "data": "{\"error\":\"No autorizado\"}"
+    }
+  ]
+}
