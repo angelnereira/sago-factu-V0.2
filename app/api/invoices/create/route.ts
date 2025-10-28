@@ -95,22 +95,64 @@ export async function POST(request: Request) {
 
     // Crear la factura en una transacción
     const result = await prisma.$transaction(async (tx) => {
+      // Extraer RUC y DV del taxId (formato: RUC-DV o RUCDV)
+      const taxIdParts = client.taxId.includes('-') 
+        ? client.taxId.split('-')
+        : [client.taxId.substring(0, client.taxId.length - 2), client.taxId.substring(client.taxId.length - 2)];
+      
+      const ruc = taxIdParts[0];
+      const dv = taxIdParts[1] || "00";
+
+      // Buscar o crear el cliente
+      let customer = await tx.customer.findFirst({
+        where: {
+          organizationId,
+          ruc,
+          dv,
+        },
+      });
+
+      if (!customer) {
+        // Crear cliente si no existe
+        customer = await tx.customer.create({
+          data: {
+            organizationId,
+            ruc,
+            dv,
+            name: client.name,
+            email: client.email || null,
+            phone: client.phone || null,
+            address: client.address,
+            clientType: "01", // 01=Contribuyente por defecto
+          },
+        });
+      }
+
+      // Obtener datos de la organización
+      const organization = await tx.organization.findUnique({
+        where: { id: organizationId },
+      });
+
+      if (!organization) {
+        throw new Error("Organización no encontrada");
+      }
+
       // Crear la factura
       const invoice = await tx.invoice.create({
         data: {
           organizationId,
           createdBy: session.user.id,
-          clientReferenceId: `CLIENT-${Date.now()}`, // Temporal
+          clientReferenceId: customer.id, // ID real del cliente
           
           // Número de folio (solo si no es borrador)
           invoiceNumber: folioNumber,
           
-          // Datos del emisor (temporal - obtener de la organización)
-          issuerRuc: "0000000000",
-          issuerDv: "00",
-          issuerName: "Organización",
-          issuerAddress: "Dirección",
-          issuerEmail: "contacto@organizacion.com",
+          // Datos del emisor desde organización
+          issuerRuc: organization.ruc || "0000000000",
+          issuerDv: organization.dv || "00",
+          issuerName: organization.name,
+          issuerAddress: organization.address || "Dirección no especificada",
+          issuerEmail: organization.email || "contacto@organizacion.com",
           
           // Información del receptor (cliente)
           receiverRuc: client.taxId,
