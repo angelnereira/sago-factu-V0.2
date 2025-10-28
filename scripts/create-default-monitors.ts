@@ -88,6 +88,42 @@ export async function createDefaultHKAMonitors() {
       throw new Error('No se encontró un SUPER_ADMIN para crear los monitores');
     }
 
+    // Crear colección por defecto primero
+    let collection = await prisma.collection.findFirst({
+      where: { name: 'HKA API Tests' }
+    });
+
+    if (!collection) {
+      collection = await prisma.collection.create({
+        data: {
+          name: 'HKA API Tests',
+          description: 'Colección de pruebas para métodos HKA',
+          definition: {
+            requests: [
+              {
+                name: 'Test HKA Health',
+                method: 'GET',
+                url: 'https://httpbin.org/status/200',
+                headers: {
+                  'User-Agent': 'SAGO-FACTU-Monitor/1.0'
+                }
+              },
+              {
+                name: 'Test HKA Timeout',
+                method: 'GET', 
+                url: 'https://httpbin.org/delay/2',
+                headers: {
+                  'User-Agent': 'SAGO-FACTU-Monitor/1.0'
+                }
+              }
+            ]
+          },
+          createdBy: superAdmin.id,
+        },
+      });
+      console.log(`✅ Colección creada: ${collection.name}`);
+    }
+
     // Crear cada monitor
     for (const monitorData of defaultMonitors) {
       const existingMonitor = await prisma.monitor.findFirst({
@@ -98,6 +134,7 @@ export async function createDefaultHKAMonitors() {
         await prisma.monitor.create({
           data: {
             ...monitorData,
+            collectionId: collection.id,
             createdBy: superAdmin.id,
           }
         });

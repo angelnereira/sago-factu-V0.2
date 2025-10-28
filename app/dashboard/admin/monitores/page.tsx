@@ -17,6 +17,7 @@ export default function MonitoresPage() {
   const [monitors, setMonitors] = useState<Monitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [runningMonitors, setRunningMonitors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchMonitors();
@@ -51,6 +52,34 @@ export default function MonitoresPage() {
     } catch (error) {
       console.error('Error creating default monitors:', error);
       alert('Error al crear monitores por defecto');
+    }
+  };
+
+  const triggerMonitor = async (monitorId: string) => {
+    setRunningMonitors(prev => new Set(prev).add(monitorId));
+    
+    try {
+      const response = await fetch('/api/monitors/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ monitorId }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Monitor ejecutándose...');
+        fetchMonitors();
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error ejecutando monitor:', error);
+      alert('Error al ejecutar monitor');
+    } finally {
+      setRunningMonitors(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(monitorId);
+        return newSet;
+      });
     }
   };
 
@@ -137,8 +166,17 @@ export default function MonitoresPage() {
                     <h3 className="font-semibold">{monitor.name}</h3>
                     {monitor.description && <p className="text-sm text-gray-600 mt-1">{monitor.description}</p>}
                   </div>
-                  <button onClick={() => triggerMonitor(monitor.id)} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                    <Play className="w-5 h-5" />
+                  <button 
+                    onClick={() => triggerMonitor(monitor.id)} 
+                    disabled={runningMonitors.has(monitor.id)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      runningMonitors.has(monitor.id)
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                    }`}
+                    title={runningMonitors.has(monitor.id) ? 'Ejecutando...' : 'Ejecutar monitor'}
+                  >
+                    <Play className={`w-5 h-5 ${runningMonitors.has(monitor.id) ? 'animate-pulse' : ''}`} />
                   </button>
                 </div>
               ))}

@@ -25,7 +25,16 @@ export default function CreateMonitorModal({ isOpen, onClose, onSuccess }: Creat
       const response = await fetch('/api/monitors/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          schedule: { frequency: formData.schedule },
+          notifications: {
+            enabled: true,
+            recipients: [],
+            triggers: ['test_failure', 'error']
+          }
+        }),
       });
 
       const data = await response.json();

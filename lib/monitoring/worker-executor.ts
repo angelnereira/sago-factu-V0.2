@@ -19,34 +19,22 @@ interface CollectionDefinition {
 }
 
 export async function executeMonitor(runId: string, collection: CollectionDefinition) {
+  const startTime = Date.now();
+  let totalRequests = 0;
+  let failedRequests = 0;
+
   try {
-    const startTime = Date.now();
-    
     // Ejecutar cada request de la colección
     for (const request of collection.requests) {
-      await executeRequest(runId, request);
+      totalRequests++;
+      const requestResult = await executeRequest(runId, request);
+      if (requestResult.status === 'FAILED') {
+        failedRequests++;
+      }
     }
-    
+
     const duration = Date.now() - startTime;
-    
-    // Contar requests
-    const totalRequests = await prisma.monitorRunRequest.count({
-      where: { runId },
-    });
-    
-    const failedRequests = await prisma.monitorRunRequest.count({
-      where: { runId, status: { not: 'SUCCESS' } },
-    });
-    
-    // Obtener monitorId
-    const run = await prisma.monitorRun.findUnique({
-      where: { id: runId },
-    });
-    
-    if (!run) {
-      throw new Error('Run no encontrado');
-    }
-    
+
     // Actualizar run como completado
     await prisma.monitorRun.update({
       where: { id: runId },
@@ -55,19 +43,26 @@ export async function executeMonitor(runId: string, collection: CollectionDefini
         finishedAt: new Date(),
         duration,
         totalRequests,
-        failedTests: failedRequests,
+        failedRequests,
       },
     });
-    
-    // Enviar notificación si es necesario
-    await sendMonitorNotification(run.monitorId, {
-      runId,
-      monitorId: run.monitorId,
-      status: failedRequests > 0 ? 'FAILED' : 'SUCCESS',
-      failedRequests,
-      totalRequests,
-    });
-    
+
+    // Enviar notificación si hay fallos
+    if (failedRequests > 0) {
+      const monitorRun = await prisma.monitorRun.findUnique({
+        where: { id: runId },
+        include: { monitor: true },
+      });
+      
+      if (monitorRun?.monitor) {
+        await sendMonitorNotification(monitorRun.monitor, {
+          status: 'FAILED',
+          message: `${failedRequests} de ${totalRequests} requests fallaron.`,
+          error: monitorRun.error,
+        });
+      }
+    }
+
   } catch (error) {
     console.error('Error ejecutando monitor:', error);
     
@@ -79,49 +74,60 @@ export async function executeMonitor(runId: string, collection: CollectionDefini
         error: error instanceof Error ? error.message : 'Error desconocido',
       },
     });
+
+    // Enviar notificación de error
+    const monitorRun = await prisma.monitorRun.findUnique({
+      where: { id: runId },
+      include: { monitor: true },
+    });
+    
+    if (monitorRun?.monitor) {
+      await sendMonitorNotification(monitorRun.monitor, {
+        status: 'ERROR',
+        message: 'Error crítico en la ejecución del monitor.',
+        error: error instanceof Error ? error.message : 'Error desconocido',
+      });
+    }
   }
 }
 
 async function executeRequest(runId: string, request: RequestDefinition) {
+  const startTime = Date.now();
+  let status = 'FAILED';
+  let statusCode: number | null = null;
+  let responseBody: string | null = null;
+  let error: string | null = null;
+
   try {
-    const startTime = Date.now();
-    
-    // Crear request record
-    const requestRecord = await prisma.monitorRunRequest.create({
-      data: {
-        runId,
-        requestName: request.name,
-        method: request.method,
-        url: request.url,
-        status: 'RUNNING',
-      },
-    });
-    
-    // Ejecutar HTTP request
     const response = await fetch(request.url, {
       method: request.method,
       headers: request.headers,
       body: request.body,
     });
+
+    statusCode = response.status;
+    responseBody = await response.text();
+    status = response.ok ? 'SUCCESS' : 'FAILED';
+
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Error de red o desconocido';
+  } finally {
+    const duration = Date.now() - startTime;
     
-    const responseTime = Date.now() - startTime;
-    const responseBody = await response.text();
-    
-    // Actualizar request record
-    await prisma.monitorRunRequest.update({
-      where: { id: requestRecord.id },
+    await prisma.monitorRunRequest.create({
       data: {
-        statusCode: response.status,
-        responseTime,
-        responseSize: responseBody.length,
+        runId,
+        requestName: request.name,
+        method: request.method,
+        url: request.url,
+        status,
+        statusCode,
+        responseTime: duration,
         responseBody,
-        status: response.ok ? 'SUCCESS' : 'FAILED',
+        error,
       },
     });
-    
-  } catch (error) {
-    console.error('Error ejecutando request:', error);
-    
-    // TODO: Crear request record con error
   }
+
+  return { status, statusCode, error };
 }
