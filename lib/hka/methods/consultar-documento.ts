@@ -21,11 +21,10 @@ export async function consultarDocumento(
       dCufe: cufe,
     };
 
-    // Invocar método SOAP
-    const response = await hkaClient.invoke<ConsultarDocumentoResponse>(
-      'ConsultaFE',
-      params
-    );
+    // Invocar método SOAP con monitoreo
+    const response = await monitorHKACall('ConsultaFE', async () => {
+      return await hkaClient.invoke<ConsultarDocumentoResponse>('ConsultaFE', params);
+    });
 
     console.log(`✅ Documento consultado exitosamente`);
     console.log(`   Código: ${response.dCodRes}`);

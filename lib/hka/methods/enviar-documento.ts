@@ -1,6 +1,7 @@
 import { getHKAClient } from '../soap/client';
 import { EnviarDocumentoParams, EnviarDocumentoResponse } from '../soap/types';
 import { prisma } from '@/lib/db';
+import { monitorHKACall } from '@/lib/monitoring/hka-monitor-wrapper';
 
 /**
  * Envía un documento electrónico a HKA (Factura, Nota Crédito, Nota Débito)
@@ -33,11 +34,10 @@ export async function enviarDocumento(
       documento: xmlLimpio, // Enviar sin declaración XML
     };
 
-    // Invocar método SOAP "Enviar"
-    const response = await hkaClient.invoke<EnviarDocumentoResponse>(
-      'Enviar',
-      params
-    );
+    // Invocar método SOAP "Enviar" con monitoreo
+    const response = await monitorHKACall('Enviar', async () => {
+      return await hkaClient.invoke<EnviarDocumentoResponse>('Enviar', params);
+    });
 
     console.log(`✅ Documento enviado exitosamente`);
     console.log(`   CUFE: ${response.dCufe}`);

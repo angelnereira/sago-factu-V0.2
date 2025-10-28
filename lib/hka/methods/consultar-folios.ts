@@ -1,6 +1,7 @@
 import { getHKAClient } from '../soap/client';
 import { ConsultarFoliosParams, ConsultarFoliosResponse, Folio } from '../soap/types';
 import { sql } from '@/lib/db';
+import { monitorHKACall } from '@/lib/monitoring/hka-monitor-wrapper';
 
 /**
  * Consulta los folios disponibles de una empresa en HKA
@@ -23,11 +24,10 @@ export async function consultarFolios(
 
     console.log(`📊 Consultando folios para RUC: ${ruc}-${dv}`);
 
-    // Invocar método SOAP
-    const response = await hkaClient.invoke<any>(
-      'ConsultarFolios',
-      params
-    );
+    // Invocar método SOAP con monitoreo
+    const response = await monitorHKACall('ConsultarFolios', async () => {
+      return await hkaClient.invoke<any>('ConsultarFolios', params);
+    });
 
     // Procesar respuesta
     const folios: Folio[] = response.folios || [];
