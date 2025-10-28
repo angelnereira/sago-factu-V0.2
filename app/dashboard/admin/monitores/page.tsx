@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Activity, Play, Plus, AlertCircle, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import CreateMonitorModal from '@/components/admin/create-monitor-modal';
 
 interface Monitor {
   id: string;
@@ -15,6 +16,7 @@ interface Monitor {
 export default function MonitoresPage() {
   const [monitors, setMonitors] = useState<Monitor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetchMonitors();
@@ -34,20 +36,21 @@ export default function MonitoresPage() {
     }
   };
 
-  const triggerMonitor = async (monitorId: string) => {
+  const createDefaultMonitors = async () => {
     try {
-      const response = await fetch('/api/monitors/trigger', {
+      const response = await fetch('/api/monitors/create-defaults', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ monitorId }),
       });
       const data = await response.json();
       if (data.success) {
-        alert('Monitor ejecutándose...');
+        alert('Monitores por defecto creados exitosamente');
         fetchMonitors();
+      } else {
+        alert('Error: ' + data.error);
       }
     } catch (error) {
-      console.error('Error ejecutando monitor:', error);
+      console.error('Error creating default monitors:', error);
+      alert('Error al crear monitores por defecto');
     }
   };
 
@@ -68,7 +71,10 @@ export default function MonitoresPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Monitoreo API</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">Sistema de monitoreo para APIs críticas</p>
         </div>
-        <button className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        <button 
+          onClick={() => setShowCreateModal(true)}
+          className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+        >
           <Plus className="w-5 h-5 mr-2" />
           Nuevo Monitor
         </button>
@@ -131,6 +137,12 @@ export default function MonitoresPage() {
           )}
         </div>
       </div>
+
+      <CreateMonitorModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={fetchMonitors}
+      />
     </div>
   );
 }
