@@ -127,7 +127,8 @@ export class HKASOAPClient {
         console.log('📋 Listando métodos disponibles...');
         const methods = await this.listMethods();
         console.log('   Métodos disponibles:', methods);
-        throw new Error(`Método ${methodAsync} no existe. Métodos disponibles: ${methods.join(', ')}`);
+        const methodsStr = Array.isArray(methods) ? methods.join(', ') : String(methods);
+        throw new Error(`Método ${methodAsync} no existe. Métodos disponibles: ${methodsStr}`);
       }
       
       const [result] = await client[methodAsync](params);
