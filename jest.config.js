@@ -1,28 +1,32 @@
-const nextJest = require('next/jest')
-
-const createJestConfig = nextJest({
-  // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
-  dir: './',
-})
-
-// Add any custom config to be passed to Jest
-const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testEnvironment: 'jest-environment-jsdom',
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
+/** @type {import('jest').Config} */
+const config = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/__tests__'],
+  testMatch: [
+    '**/__tests__/**/*.test.ts',
+    '**/?(*.)+(spec|test).ts'
+  ],
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: 'tsconfig.json',
+    }],
   },
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
   collectCoverageFrom: [
-    'lib/**/*.{js,ts,tsx}',
-    'app/**/*.{js,ts,tsx}',
+    'lib/**/*.ts',
+    'components/**/*.ts',
+    'app/**/*.ts',
     '!**/*.d.ts',
     '!**/node_modules/**',
-    '!**/.next/**',
   ],
+  coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-}
+  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
+  testTimeout: 30000, // 30 segundos para tests de integración
+  verbose: true,
+  moduleNameMapping: {
+    '^@/(.*)$': '<rootDir>/$1',
+  },
+};
 
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-module.exports = createJestConfig(customJestConfig)
-
+module.exports = config;
