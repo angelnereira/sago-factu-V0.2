@@ -124,12 +124,24 @@ export async function processInvoice(
       customer: customer,
     };
 
-    const resultGenerate = await generateXMLFromInvoice(
-      invoiceWithCustomer as any,
-      customer
-    );
+    let resultGenerate: { xml: string; cufe: string; errores: string[] };
+    
+    try {
+      resultGenerate = await generateXMLFromInvoice(
+        invoiceWithCustomer as any,
+        customer
+      );
+    } catch (error) {
+      // Si generateXMLFromInvoice lanza error, crear respuesta con errores
+      console.error('Error en generateXMLFromInvoice:', error);
+      resultGenerate = {
+        xml: '',
+        cufe: '',
+        errores: [error instanceof Error ? error.message : 'Error generando XML']
+      };
+    }
 
-    // Validar que la respuesta no sea undefined
+    // Validar que la respuesta es válida
     if (!resultGenerate || !resultGenerate.errores || !Array.isArray(resultGenerate.errores)) {
       throw new Error('Error generando XML: respuesta inválida del generador');
     }
