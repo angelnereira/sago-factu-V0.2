@@ -274,6 +274,10 @@ model Invoice {
 
   // Idempotency
   clientReferenceId String @unique
+  
+  // RELACIÓN CUSTOMER
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
 
   // Datos del Emisor (snapshot)
   issuerRuc     String
@@ -434,6 +438,9 @@ model Customer {
 
   // Status
   isActive Boolean @default(true)
+
+  // Relación con Invoice
+  invoices Invoice[]
 
   // Timestamps
   createdAt DateTime @default(now())
