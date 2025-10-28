@@ -115,6 +115,9 @@ model User {
   notifications Notification[]
   auditLogs     AuditLog[]
   apiLogs       ApiLog[]
+  monitors      Monitor[]
+  collections   Collection[]
+  environments  Environment[]
 
   @@index([organizationId])
   @@index([email])
@@ -720,4 +723,180 @@ model ApiLog {
   @@index([apiName])
   @@index([createdAt])
   @@map("api_logs")
+}
+
+// ============================================
+// MONITORING SYSTEM
+// ============================================
+
+model Monitor {
+  id String @id @default(cuid())
+  
+  // Basic info
+  name String
+  description String? @db.Text
+  
+  // Collection reference
+  collectionId String?
+  collection Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  
+  // Schedule
+  schedule Json // Cron expression and settings
+  enabled Boolean @default(true)
+  
+  // Multi-region
+  regions Json? // Array of regions
+  
+  // Notification settings
+  notifications Json? // Notification config
+  
+  // Metadata
+  createdBy String
+  user User @relation(fields: [createdBy], references: [id])
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  runs MonitorRun[]
+  
+  @@index([createdBy])
+  @@index([enabled])
+  @@map("monitors")
+}
+
+model MonitorRun {
+  id String @id @default(cuid())
+  
+  // Run info
+  monitorId String
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  
+  status String // RUNNING | SUCCESS | FAILED | TIMEOUT
+  region String?
+  
+  // Timing
+  startedAt DateTime
+  finishedAt DateTime?
+  duration Int? // milliseconds
+  
+  triggeredBy String? // user_id or 'schedule'
+  
+  // Results
+  totalRequests Int @default(0)
+  passedTests Int @default(0)
+  failedTests Int @default(0)
+  
+  error String? @db.Text
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  // Relations
+  requests MonitorRunRequest[]
+  
+  @@index([monitorId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("monitor_runs")
+}
+
+model MonitorRunRequest {
+  id String @id @default(cuid())
+  
+  runId String
+  run MonitorRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  
+  requestName String
+  method String
+  url String
+  
+  statusCode Int?
+  responseTime Int? // milliseconds
+  responseSize Int? // bytes
+  
+  passedTests Int @default(0)
+  failedTests Int @default(0)
+  
+  error String? @db.Text
+  errorCode String?
+  
+  // Request/Response (sensitive data)
+  requestBody String? @db.Text
+  responseBody String? @db.Text
+  requestHeaders Json?
+  responseHeaders Json?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  // Relations
+  tests MonitorRunTest[]
+  
+  @@index([runId])
+  @@map("monitor_run_requests")
+}
+
+model MonitorRunTest {
+  id String @id @default(cuid())
+  
+  requestId String
+  request MonitorRunRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  testName String
+  passed Boolean
+  message String? @db.Text
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  @@index([requestId])
+  @@index([passed])
+  @@map("monitor_run_tests")
+}
+
+model Collection {
+  id String @id @default(cuid())
+  
+  name String
+  definition Json? // Collection definition (JSON format)
+  
+  // Metadata
+  createdBy String
+  user User @relation(fields: [createdBy], references: [id])
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  monitors Monitor[]
+  
+  @@index([createdBy])
+  @@map("collections")
+}
+
+model Environment {
+  id String @id @default(cuid())
+  
+  name String
+  
+  // Variables (encrypted at rest)
+  variables Json? // { [key: string]: string }
+  
+  // Scope
+  scope String @default("collection") // global | collection | monitor
+  
+  // Metadata
+  createdBy String
+  user User @relation(fields: [createdBy], references: [id])
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([createdBy])
+  @@index([scope])
+  @@map("environments")
 }
