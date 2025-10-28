@@ -80,7 +80,7 @@ export function XMLUploader({ onDataExtracted }: XMLUploaderProps) {
         const validation = await InvoiceExcelParser.validate(arrayBuffer)
         if (!validation.valid) {
           const errorMsg = validation.errors && Array.isArray(validation.errors) 
-            ? validation.errors ставjoin(", ") 
+            ? validation.errors.join(", ") 
             : 'Error de validación desconocido';
           setError(`Excel inválido: ${errorMsg}`)
           setIsProcessing(false)
