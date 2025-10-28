@@ -70,6 +70,7 @@ export async function processInvoice(
         organization: true,
         items: true,
         user: true,
+        customer: true, // Incluir relación customer
       },
     });
 
@@ -117,8 +118,14 @@ export async function processInvoice(
     // ============================================
     console.log('\n🔨 PASO 3: Generar XML...');
 
+    // Pasar customer a través de invoice.customer para que transformInvoiceToXMLInput lo encuentre
+    const invoiceWithCustomer = {
+      ...invoice,
+      customer: customer,
+    };
+
     const resultGenerate = await generateXMLFromInvoice(
-      invoice as any,
+      invoiceWithCustomer as any,
       customer
     );
 
