@@ -49,23 +49,23 @@ export async function POST(request: Request) {
     let folioNumber = null
 
     if (!saveAsDraft) {
-      // Buscar una asignación de folios con disponibles
-      folioAssignment = await prisma.folioAssignment.findFirst({
-        where: {
-          organizationId,
-        },
-        orderBy: {
-          assignedAt: "desc",
-        },
-      })
+      // Buscar una asignación de folios con disponibles usando consulta SQL
+      const availableAssignments = await prisma.$queryRaw`
+        SELECT * FROM "folio_assignments" 
+        WHERE "organizationId" = ${organizationId}
+        AND "assignedAmount" > "consumedAmount"
+        ORDER BY "assignedAt" DESC
+        LIMIT 1
+      ` as any[]
 
-      if (!folioAssignment) {
+      if (!availableAssignments || availableAssignments.length === 0) {
         return NextResponse.json(
           { error: "No hay folios disponibles. Debe comprar folios primero." },
           { status: 400 }
         )
       }
 
+      folioAssignment = availableAssignments[0]
       const disponibles = folioAssignment.assignedAmount - folioAssignment.consumedAmount
 
       if (disponibles <= 0) {
