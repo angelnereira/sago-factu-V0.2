@@ -87,7 +87,7 @@ export default function MonitoresPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lgbor shadow p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Monitores Activos</p>
