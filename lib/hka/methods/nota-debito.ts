@@ -1,6 +1,7 @@
 import { getHKAClient } from '../soap/client';
 import { NotaDebitoParams, NotaDebitoResponse } from '../soap/types';
 import { prisma } from '@/lib/db';
+import { monitorHKACall } from '@/lib/monitoring/hka-monitor-wrapper';
 
 /**
  * Emite una Nota de Débito
@@ -36,11 +37,10 @@ export async function emitirNotaDebito(
       dCufeReferencia: cufeFacturaOriginal,
     };
 
-    // Invocar método SOAP
-    const response = await hkaClient.invoke<NotaDebitoResponse>(
-      'NotaDebitoFE',
-      params
-    );
+    // Invocar método SOAP con monitoreo
+    const response = await monitorHKACall('NotaDebitoFE', async () => {
+      return await hkaClient.invoke<NotaDebitoResponse>('NotaDebitoFE', params);
+    });
 
     console.log(`✅ Nota de Débito emitida exitosamente`);
     console.log(`   CUFE: ${response.dCufe}`);

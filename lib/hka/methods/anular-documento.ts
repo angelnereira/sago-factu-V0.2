@@ -1,6 +1,7 @@
 import { getHKAClient } from '../soap/client';
 import { AnularDocumentoParams, AnularDocumentoResponse } from '../soap/types';
 import { prisma } from '@/lib/db';
+import { monitorHKACall } from '@/lib/monitoring/hka-monitor-wrapper';
 
 /**
  * Anula un documento electrónico en HKA
@@ -44,11 +45,10 @@ export async function anularDocumento(
       motivo,
     };
 
-    // Invocar método SOAP
-    const response = await hkaClient.invoke<AnularDocumentoResponse>(
-      'AnulacionFE',
-      params
-    );
+    // Invocar método SOAP con monitoreo
+    const response = await monitorHKACall('AnulacionFE', async () => {
+      return await hkaClient.invoke<AnularDocumentoResponse>('AnulacionFE', params);
+    });
 
     console.log(`✅ Documento anulado exitosamente`);
     console.log(`   Protocolo de anulación: ${response.dProtocoloAnulacion}`);

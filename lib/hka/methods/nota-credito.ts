@@ -1,6 +1,7 @@
 import { getHKAClient } from '../soap/client';
 import { NotaCreditoParams, NotaCreditoResponse } from '../soap/types';
 import { prisma } from '@/lib/db';
+import { monitorHKACall } from '@/lib/monitoring/hka-monitor-wrapper';
 
 /**
  * Emite una Nota de Crédito
@@ -46,11 +47,10 @@ export async function emitirNotaCredito(
       dCufeReferencia: cufeFacturaOriginal,
     };
 
-    // Invocar método SOAP
-    const response = await hkaClient.invoke<NotaCreditoResponse>(
-      'NotaCreditoFE',
-      params
-    );
+    // Invocar método SOAP con monitoreo
+    const response = await monitorHKACall('NotaCreditoFE', async () => {
+      return await hkaClient.invoke<NotaCreditoResponse>('NotaCreditoFE', params);
+    });
 
     console.log(`✅ Nota de Crédito emitida exitosamente`);
     console.log(`   CUFE: ${response.dCufe}`);
