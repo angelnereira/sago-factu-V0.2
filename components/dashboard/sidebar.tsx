@@ -10,7 +10,8 @@ import {
   Folder,
   Building2,
   ShieldCheck,
-  Activity
+  Activity,
+  Monitor
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -92,6 +93,12 @@ const adminItems: SidebarItem[] = [
     name: "Logs API",
     href: "/dashboard/admin/api-logs",
     icon: Activity,
+    roles: ["SUPER_ADMIN"],
+  },
+  {
+    name: "Monitoreo API",
+    href: "/dashboard/admin/monitores",
+    icon: Monitor,
     roles: ["SUPER_ADMIN"],
   },
 ]
