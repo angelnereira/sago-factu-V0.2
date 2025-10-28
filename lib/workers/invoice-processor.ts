@@ -148,7 +148,7 @@ export async function processInvoice(
 
     const { xml, cufe, errores } = resultGenerate;
 
-    if (errores.length > 0) {
+    if (errores && Array.isArray(errores) && errores.length > 0) {
       const errorMsg = `Errores de validación: ${errores.join(', ')}`;
       console.error(`   ❌ ${errorMsg}`);
 
