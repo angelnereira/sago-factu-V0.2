@@ -96,6 +96,11 @@ export async function processInvoice(
     // ============================================
     console.log('\n👤 PASO 2: Obtener Customer...');
 
+    // Validar que existe clientReferenceId
+    if (!invoice.clientReferenceId) {
+      throw new Error('Invoice no tiene cliente asociado (clientReferenceId es null)');
+    }
+
     const customer = await prisma.customer.findUnique({
       where: { id: invoice.clientReferenceId },
     });
