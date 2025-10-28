@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prismaServer as prisma } from '@/lib/prisma-server';
 import { createErrorResponse } from '@/lib/utils/api-error-response';
-import { getInvoiceQueue } from '@/lib/queue/invoice-queue';
+import { executeMonitor } from '@/lib/monitoring/worker-executor';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Monitor no encontrado' }, { status: 404 });
     }
 
-    // Encolar ejecución (por ahora, solo creamos el run)
+    // Crear run
     const run = await prisma.monitorRun.create({
       data: {
         monitorId,
@@ -51,8 +51,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: Aquí iría el worker que ejecuta realmente el monitor
-    // Por ahora solo creamos el run record
+    // Ejecutar monitor asíncronamente
+    if (monitor.collection && monitor.collection.definition) {
+      executeMonitor(run.id, monitor.collection.definition as any);
+    }
 
     return NextResponse.json({
       success: true,

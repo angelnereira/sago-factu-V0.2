@@ -4,6 +4,7 @@
  */
 
 import { prismaServer as prisma } from '@/lib/prisma-server';
+import { sendMonitorNotification } from '@/lib/notifications/email-notifier';
 
 interface RequestDefinition {
   name: string;
@@ -28,14 +29,43 @@ export async function executeMonitor(runId: string, collection: CollectionDefini
     
     const duration = Date.now() - startTime;
     
+    // Contar requests
+    const totalRequests = await prisma.monitorRunRequest.count({
+      where: { runId },
+    });
+    
+    const failedRequests = await prisma.monitorRunRequest.count({
+      where: { runId, status: { not: 'SUCCESS' } },
+    });
+    
+    // Obtener monitorId
+    const run = await prisma.monitorRun.findUnique({
+      where: { id: runId },
+    });
+    
+    if (!run) {
+      throw new Error('Run no encontrado');
+    }
+    
     // Actualizar run como completado
     await prisma.monitorRun.update({
       where: { id: runId },
       data: {
-        status: 'SUCCESS',
+        status: failedRequests > 0 ? 'FAILED' : 'SUCCESS',
         finishedAt: new Date(),
         duration,
+        totalRequests,
+        failedTests: failedRequests,
       },
+    });
+    
+    // Enviar notificación si es necesario
+    await sendMonitorNotification(run.monitorId, {
+      runId,
+      monitorId: run.monitorId,
+      status: failedRequests > 0 ? 'FAILED' : 'SUCCESS',
+      failedRequests,
+      totalRequests,
     });
     
   } catch (error) {
@@ -95,4 +125,3 @@ async function executeRequest(runId: string, request: RequestDefinition) {
     // TODO: Crear request record con error
   }
 }
-
