@@ -97,6 +97,28 @@ export class InvoiceExcelParser {
   }
 
   /**
+   * Normaliza un número que puede venir como string con símbolos ($, , .) o como número
+   */
+  private parseNumber(value: any): number {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+    if (typeof value !== 'string') return 0
+    const cleaned = value
+      .toString()
+      .replace(/\s+/g, '')
+      .replace(/[\$]/g, '')
+      .replace(/\./g, '') // remover separador de miles estilo es-PA
+      .replace(/,/g, '.')  // convertir coma decimal a punto
+    const parsed = parseFloat(cleaned)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
+  private isNumericLike(value: any): boolean {
+    if (typeof value === 'number') return true
+    if (typeof value !== 'string') return false
+    return /^\s*[\$]?[\d.,]+\s*$/.test(value)
+  }
+
+  /**
    * Verificar si tiene headers de cliente
    */
   private hasClientHeaders(keys: string[]): boolean {
@@ -271,37 +293,63 @@ export class InvoiceExcelParser {
       }
       
       let hasItemData = false
+      let candidateDescription: string | null = null
       
       for (const key in row) {
         const lowerKey = key.toLowerCase()
         const value = row[key]
         
-        // Descripción
-        if (lowerKey.includes('descrip') || lowerKey.includes('product') || lowerKey.includes('item') || lowerKey.includes('servicio')) {
-          item.description = String(value || '').trim()
-          if (item.description) hasItemData = true
+        // Precio unitario (ampliar sinónimos y normalizar formatos)
+        else if (
+          lowerKey.includes('precio') ||
+          lowerKey.includes('price') ||
+          lowerKey.includes('valor') ||
+          lowerKey.includes('unit') ||
+          lowerKey.includes('p.u') ||
+          lowerKey.includes('p/u') ||
+          lowerKey === 'pu' ||
+          lowerKey.includes('importe') ||
+          lowerKey.includes('monto') ||
+          lowerKey.includes('unitario')
+        ) {
+          const num = this.parseNumber(value)
+          if (num > 0) {
+            item.unitPrice = num
+            hasItemData = true
+          }
         }
         // Cantidad
         else if (lowerKey.includes('cantidad') || lowerKey.includes('quantity') || lowerKey.includes('cant') || lowerKey.includes('qty')) {
-          item.quantity = parseFloat(value) || 0
+          item.quantity = this.parseNumber(value) || 0
           if (item.quantity > 0) hasItemData = true
         }
-        // Precio unitario
-        else if (lowerKey.includes('precio') || lowerKey.includes('price') || lowerKey.includes('valor') || lowerKey.includes('unit')) {
-          item.unitPrice = parseFloat(value) || 0
-          if (item.unitPrice > 0) hasItemData = true
+        // Descripción (solo si no es numérico)
+        else if (lowerKey.includes('descrip') || lowerKey.includes('product') || lowerKey.includes('item') || lowerKey.includes('servicio')) {
+          const text = String(value ?? '').trim()
+          if (text && !this.isNumericLike(text)) {
+            item.description = text
+            hasItemData = true
+          } else if (text) {
+            // Guardar como candidata si resulta ser numérico (para no contaminar descripción)
+            candidateDescription = text
+          }
         }
         // Tasa de impuesto
         else if (lowerKey.includes('impuesto') || lowerKey.includes('tax') || lowerKey.includes('itbms') || lowerKey.includes('iva')) {
-          item.taxRate = parseFloat(value) || 7
+          item.taxRate = this.parseNumber(value) || 7
         }
         // Descuento
         else if (lowerKey.includes('descuento') || lowerKey.includes('discount')) {
-          item.discount = parseFloat(value) || 0
+          item.discount = this.parseNumber(value) || 0
         }
       }
       
-      // Solo agregar si tiene datos
+      // Si la descripción quedó vacía pero hay una candidata numérica y sí tenemos otros datos
+      if (!item.description && candidateDescription && !this.isNumericLike(candidateDescription)) {
+        item.description = candidateDescription
+      }
+
+      // Solo agregar si tiene datos y al menos una descripción razonable
       if (hasItemData && item.description) {
         items.push(item)
       }
@@ -349,15 +397,16 @@ export class InvoiceExcelParser {
       if (!description) continue
       
       items.push({
-        description: description,
-        quantity: parseFloat(row[1]) || 1,
-        unitPrice: parseFloat(row[2]) || 0,
-        taxRate: parseFloat(row[3]) || 7,
-        discount: parseFloat(row[4]) || 0,
+        description: this.isNumericLike(description) ? '' : description,
+        quantity: this.parseNumber(row[1]) || 1,
+        unitPrice: this.parseNumber(row[2]) || 0,
+        taxRate: this.parseNumber(row[3]) || 7,
+        discount: this.parseNumber(row[4]) || 0,
       })
     }
     
-    return items
+    // Filtrar filas que accidentalmente dejaron descripción numérica vacía
+    return items.filter(it => it.description)
   }
 
   /**
@@ -445,3 +494,4 @@ export class InvoiceExcelParser {
 export function createExcelParser() {
   return new InvoiceExcelParser()
 }
+
