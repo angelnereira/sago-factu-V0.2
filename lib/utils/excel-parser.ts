@@ -300,7 +300,7 @@ export class InvoiceExcelParser {
         const value = row[key]
         
         // Precio unitario (ampliar sinónimos y normalizar formatos)
-        else if (
+        if (
           lowerKey.includes('precio') ||
           lowerKey.includes('price') ||
           lowerKey.includes('valor') ||
