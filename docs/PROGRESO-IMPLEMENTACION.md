@@ -183,6 +183,9 @@ npm update
 | Vulnerabilidades | 100% | DOCUMENTADO |
 | Validacion RUC | 100% | COMPLETADO |
 | Tests | 100% | COMPLETADO |
+| Logging | 100% | COMPLETADO |
+| Rate Limiting | 100% | COMPLETADO |
+| Security Headers | 100% | COMPLETADO |
 | **TOTAL** | **100%** | **COMPLETADO** |
 
 ---
