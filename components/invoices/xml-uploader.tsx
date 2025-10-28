@@ -95,7 +95,10 @@ export function XMLUploader({ onDataExtracted }: XMLUploaderProps) {
         // Validar XML
         const validation = InvoiceXMLParser.validate(xmlContent)
         if (!validation.valid) {
-          setError(`XML inválido: ${validation.errors.join(", ")}`)
+          const errorMsg = validation.errors && Array.isArray(validation.errors) 
+            ? validation.errors.join(", ") 
+            : 'Error de validación desconocido';
+          setError(`XML inválido: ${errorMsg}`)
           setIsProcessing(false)
           return
         }
