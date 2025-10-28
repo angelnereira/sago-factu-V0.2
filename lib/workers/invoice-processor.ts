@@ -112,10 +112,17 @@ export async function processInvoice(
     // ============================================
     console.log('\n🔨 PASO 3: Generar XML...');
 
-    const { xml, cufe, errores } = await generateXMLFromInvoice(
+    const resultGenerate = await generateXMLFromInvoice(
       invoice as any,
       customer
     );
+
+    // Validar que la respuesta no sea undefined
+    if (!resultGenerate || !resultGenerate.errores || !Array.isArray(resultGenerate.errores)) {
+      throw new Error('Error generando XML: respuesta inválida del generador');
+    }
+
+    const { xml, cufe, errores } = resultGenerate;
 
     if (errores.length > 0) {
       const errorMsg = `Errores de validación: ${errores.join(', ')}`;
