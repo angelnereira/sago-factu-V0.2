@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prismaServer as prisma } from '@/lib/prisma-server';
 import { getInvoiceQueue } from '@/lib/queue/invoice-queue';
+import { createErrorResponse } from '@/lib/utils/api-error-response';
 
 /**
  * POST /api/documentos/enviar
@@ -78,9 +79,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error al enviar documento:', error);
-    return NextResponse.json(
-      { error: 'Error al enviar documento', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
+    const session = await auth();
+    return createErrorResponse(
+      error,
+      500,
+      session?.user?.role,
+      session?.user?.id
     );
   }
 }
