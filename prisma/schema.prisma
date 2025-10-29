@@ -373,6 +373,7 @@ model Invoice {
   items            InvoiceItem[]
   logs             InvoiceLog[]
   folioConsumption FolioConsumption?
+  emailDeliveries  EmailDelivery[]
 
   @@index([organizationId])
   @@index([createdBy])
@@ -407,6 +408,14 @@ enum ReceiverType {
   CONTRIBUTOR // 01 - Contribuyente con RUC
   FINAL_CONSUMER // 02 - Consumidor final
   FOREIGN // 03 - Extranjero
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  DELIVERED
+  BOUNCED
+  FAILED
 }
 
 // ============================================
@@ -535,6 +544,40 @@ enum LogAction {
   EMAIL_SENT
   RETRIED
   MANUAL_INTERVENTION
+}
+
+// ============================================
+// EMAIL DELIVERY
+// ============================================
+
+model EmailDelivery {
+  id String @id @default(cuid())
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  recipientEmail String
+  hkaTrackingId  String?
+
+  status EmailStatus
+
+  sentAt     DateTime?
+  deliveredAt DateTime?
+
+  includePDF   Boolean @default(true)
+  includeXML   Boolean @default(true)
+  customMessage String? @db.Text
+
+  retryCount Int    @default(0)
+  lastError  String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([invoiceId])
+  @@index([status])
+  @@index([hkaTrackingId])
+  @@map("email_deliveries")
 }
 
 // ============================================

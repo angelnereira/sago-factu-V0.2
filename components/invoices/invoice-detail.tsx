@@ -5,6 +5,8 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import Link from "next/link"
 import { useState } from "react"
+import { SendEmailButton } from "./send-email-button"
+import { EmailHistory } from "./email-history"
 
 interface InvoiceDetailProps {
   invoice: any
@@ -26,6 +28,11 @@ const statusConfig = {
     label: "Procesando",
     color: "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400",
     icon: Clock,
+  },
+  CERTIFIED: {
+    label: "Certificada",
+    color: "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400",
+    icon: CheckCircle,
   },
   APPROVED: {
     label: "Aprobada",
@@ -90,14 +97,20 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
         </div>
 
         <div className="flex items-center space-x-3">
-          {invoice.status === "APPROVED" && (
-            <button
-              onClick={handleDownloadPDF}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
-            >
-              <Download className="h-5 w-5" />
-              <span>Descargar PDF</span>
-            </button>
+          {invoice.status === "CERTIFIED" && (
+            <>
+              <button
+                onClick={handleDownloadPDF}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+              >
+                <Download className="h-5 w-5" />
+                <span>Descargar PDF</span>
+              </button>
+              <SendEmailButton 
+                invoiceId={invoice.id} 
+                defaultEmail={invoice.receiverEmail || undefined}
+              />
+            </>
           )}
           {invoice.status === "PENDING" && (
             <button
@@ -262,6 +275,16 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Notas / Observaciones</h2>
           <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{invoice.notes}</p>
+        </div>
+      )}
+
+      {/* Historial de Correos (solo si está certificada) */}
+      {invoice.status === "CERTIFIED" && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Historial de Correos Enviados
+          </h2>
+          <EmailHistory invoiceId={invoice.id} />
         </div>
       )}
 

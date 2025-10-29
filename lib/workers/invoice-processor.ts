@@ -13,6 +13,7 @@ import { Job } from 'bullmq';
 import { prisma } from '@/lib/db';
 import { generateXMLFromInvoice } from '@/lib/hka/transformers/invoice-to-xml';
 import { enviarDocumento } from '@/lib/hka/methods/enviar-documento';
+import { enviarCorreoHKA } from '@/lib/hka/methods/enviar-correo';
 
 // ============================================
 // TIPOS
@@ -208,6 +209,58 @@ export async function processInvoice(
         if (hkaResponse.dCodRes === '0200') {
           console.log(`   🎉 ¡Factura CERTIFICADA por HKA!`);
           result.success = true;
+
+          // Envío automático de correo si está habilitado
+          if (
+            sendEmail &&
+            invoice.organization.emailOnCertification &&
+            invoice.receiverEmail &&
+            invoice.cufe
+          ) {
+            console.log(`\n📧 Envío automático de correo habilitado...`);
+            try {
+              const emailResponse = await enviarCorreoHKA({
+                CAFE: invoice.cufe,
+                CorreoDestinatario: invoice.receiverEmail,
+                IncluirPDF: true,
+                IncluirXML: true,
+              });
+
+              // Crear registro de envío
+              // Nota: Usar prisma del import existente, que ya está configurado
+              await prisma.emailDelivery.create({
+                data: {
+                  invoiceId: invoice.id,
+                  recipientEmail: invoice.receiverEmail,
+                  hkaTrackingId: emailResponse.IdRastreo,
+                  status: 'SENT',
+                  sentAt: new Date(emailResponse.FechaEnvio),
+                  includePDF: true,
+                  includeXML: true,
+                },
+              });
+
+              // Agregar log
+              await prisma.invoiceLog.create({
+                data: {
+                  invoiceId: invoice.id,
+                  action: 'EMAIL_SENT',
+                  message: `Factura enviada automáticamente por correo a ${invoice.receiverEmail}`,
+                  metadata: {
+                    trackingId: emailResponse.IdRastreo,
+                    automatic: true,
+                  },
+                },
+              });
+
+              console.log(`   ✅ Correo enviado automáticamente (Tracking ID: ${emailResponse.IdRastreo})`);
+              result.emailSent = true;
+            } catch (emailError) {
+              console.error(`   ⚠️  Error al enviar correo automático:`, emailError);
+              result.emailSent = false;
+              // No lanzar error, el email es opcional
+            }
+          }
         } else {
           console.log(`   ⚠️  HKA rechazó la factura`);
           result.success = false;
@@ -235,22 +288,13 @@ export async function processInvoice(
     }
 
     // ============================================
-    // PASO 6: Enviar Email (si está habilitado)
+    // PASO 6: Enviar Email (manejo manual - solo si no se envió automáticamente)
     // ============================================
-    if (sendEmail && result.success) {
-      console.log('\n📧 PASO 6: Enviar email...');
-
-      try {
-        // TODO: Implementar envío de email
-        // await sendInvoiceEmail(invoice, customer, xml, cufe);
-        console.log(`   ⏭️  Email no implementado aún`);
-        result.emailSent = false;
-      } catch (emailError) {
-        console.error(`   ⚠️  Error al enviar email:`, emailError);
-        result.emailSent = false;
-        // No lanzar error, el email es opcional
-      }
-    } else {
+    // Nota: El envío automático ya se maneja arriba cuando la factura se certifica
+    // Este paso es solo para casos donde se quiera enviar manualmente después
+    if (sendEmail && result.success && !result.emailSent) {
+      console.log('\n⏭️  PASO 6: Email ya enviado automáticamente o no requiere envío manual');
+    } else if (!result.success) {
       console.log('\n⏭️  PASO 6: Email deshabilitado o procesamiento falló');
     }
 

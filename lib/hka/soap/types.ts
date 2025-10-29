@@ -134,6 +134,50 @@ export interface NotaDebitoResponse extends HKABaseResponse {
 }
 
 // ============================================
+// TIPOS PARA ENVÍO DE CORREO
+// ============================================
+
+export interface EnvioCorreoParams {
+  CAFE: string; // Código de Autorización de Factura Electrónica (invoice.cufe)
+  CorreoDestinatario: string;
+  IncluirPDF: boolean;
+  IncluirXML: boolean;
+  MensajePersonalizado?: string;
+  TokenEmpresa: string;
+  TokenPassword: string;
+}
+
+export interface EnvioCorreoResponse extends HKABaseResponse {
+  Exito: boolean;
+  CAFE: string;
+  CorreoEnviado: string;
+  FechaEnvio: string;
+  IdRastreo: string;
+  Mensaje: string;
+}
+
+// ============================================
+// TIPOS PARA RASTREO DE CORREO
+// ============================================
+
+export interface RastreoCorreoParams {
+  IdRastreo: string;
+  TokenEmpresa: string;
+  TokenPassword: string;
+}
+
+export type RastreoCorreoEstado = 'ENVIADO' | 'ENTREGADO' | 'REBOTADO' | 'FALLIDO';
+
+export interface RastreoCorreoResponse extends HKABaseResponse {
+  Exito: boolean;
+  IdRastreo: string;
+  Estado: RastreoCorreoEstado;
+  FechaEnvio: string;
+  FechaEntrega?: string;
+  CorreoDestinatario: string;
+}
+
+// ============================================
 // CÓDIGOS DE RESPUESTA HKA
 // ============================================
 
