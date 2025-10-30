@@ -41,6 +41,31 @@ export async function POST(request: Request) {
 
     const { client, items, notes, paymentMethod } = validationResult.data
 
+    // Cargar organización para determinar si requiere folios
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        id: true,
+        plan: true,
+        hkaEnvironment: true,
+        ruc: true,
+        dv: true,
+        name: true,
+        address: true,
+        email: true,
+      },
+    })
+
+    if (!organization) {
+      return NextResponse.json(
+        { error: "Organización no encontrada" },
+        { status: 404 }
+      )
+    }
+
+    // En modo DEMO o plan SIMPLE no exigimos folios
+    const noFolioRequired = organization.hkaEnvironment === 'DEMO' || organization.plan === 'SIMPLE'
+
     // Calcular totales
     const totals = calculateInvoiceTotals(items)
 
@@ -48,7 +73,7 @@ export async function POST(request: Request) {
     let folioAssignment = null
     let folioNumber = null
 
-    if (!saveAsDraft) {
+    if (!saveAsDraft && !noFolioRequired) {
       // Buscar una asignación de folios con disponibles usando consulta SQL
       const availableAssignments = await prisma.$queryRaw`
         SELECT * FROM "folio_assignments" 
@@ -128,14 +153,7 @@ export async function POST(request: Request) {
         });
       }
 
-      // Obtener datos de la organización
-      const organization = await tx.organization.findUnique({
-        where: { id: organizationId },
-      });
-
-      if (!organization) {
-        throw new Error("Organización no encontrada");
-      }
+      // organization ya cargada arriba
 
       // Crear la factura
       const invoice = await tx.invoice.create({
@@ -199,7 +217,7 @@ export async function POST(request: Request) {
       })
 
       // Si no es borrador, actualizar el consumo de folios
-      if (!saveAsDraft && folioAssignment) {
+      if (!saveAsDraft && folioAssignment && !noFolioRequired) {
         await tx.folioAssignment.update({
           where: { id: folioAssignment.id },
           data: {
