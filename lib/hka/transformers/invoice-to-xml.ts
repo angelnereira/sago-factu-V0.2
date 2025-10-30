@@ -148,12 +148,20 @@ export function transformInvoiceToXMLInput(
   // ============================================
   // CONSTRUIR INPUT FINAL
   // ============================================
+  // Normalizar número de documento: si no hay folio, usar un número sólo dígitos
+  const numeroDocumentoSeguro = (() => {
+    const raw = invoice.invoiceNumber;
+    if (raw && /^\d+$/.test(raw)) return raw;
+    const fallback = String(Date.now() % 1000000000).padStart(9, '0');
+    return fallback;
+  })();
+
   const facturaInput: FacturaElectronicaInput = {
     // Información General
     ambiente,
     tipoEmision: TipoEmision.NORMAL,
     tipoDocumento: mapTipoDocumento(invoice.documentType),
-    numeroDocumento: invoice.invoiceNumber || 'TEMP-' + Date.now(),
+    numeroDocumento: numeroDocumentoSeguro,
     puntoFacturacion: invoice.pointOfSale || '001',
     codigoSeguridad,
     fechaEmision: invoice.issueDate,
