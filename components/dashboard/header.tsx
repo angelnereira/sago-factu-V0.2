@@ -3,6 +3,7 @@
 import { LogOut, Settings, User } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { NotificationsCenter } from "./notifications-center"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { InstallPWAButton } from "@/components/install-pwa"
@@ -18,6 +19,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ user }: DashboardHeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const router = useRouter()
 
   const handleSignOut = async () => {
     // Primero hacer signOut
@@ -84,7 +86,15 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
                     </p>
                   </div>
                   
-                  <button className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2">
+                  <button
+                    onClick={() => {
+                      // Redirigir según rol: SIMPLE_USER -> /simple/configuracion, otros -> /dashboard/configuracion
+                      const target = user.role === 'SIMPLE_USER' ? '/simple/configuracion' : '/dashboard/configuracion'
+                      router.push(target)
+                      setShowUserMenu(false)
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                  >
                     <Settings className="h-4 w-4" />
                     <span>Configuración</span>
                   </button>

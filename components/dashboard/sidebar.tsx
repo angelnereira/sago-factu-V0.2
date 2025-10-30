@@ -30,6 +30,19 @@ const sidebarItems: SidebarItem[] = [
     href: "/dashboard",
     icon: LayoutDashboard,
   },
+  // Accesos para usuarios del Plan Simple
+  {
+    name: "Modo Simple",
+    href: "/simple",
+    icon: LayoutDashboard,
+    roles: ["SIMPLE_USER"],
+  },
+  {
+    name: "Configurar HKA",
+    href: "/simple/configuracion",
+    icon: Settings,
+    roles: ["SIMPLE_USER"],
+  },
   {
     name: "Folios",
     href: "/dashboard/folios",
