@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { XMLUploader } from '@/components/invoices/xml-uploader'
 import Link from 'next/link'
 
 interface ItemInput {
@@ -168,6 +169,38 @@ export default function NewSimpleInvoicePage() {
     }
   }
 
+  const applyImportedData = (data: any) => {
+    try {
+      // Cliente
+      if (data?.client) {
+        if (data.client.name) setCustomerName(String(data.client.name))
+        if (data.client.taxId) {
+          const tax = String(data.client.taxId)
+          setCustomerRuc(tax)
+          const parts = tax.split('-')
+          if (parts.length >= 2) {
+            setCustomerDv(parts[parts.length - 1])
+          }
+        }
+      }
+      // Items
+      if (Array.isArray(data?.items)) {
+        const mapped = data.items.map((it: any) => ({
+          description: String(it.description || ''),
+          quantity: Number(it.quantity || 1),
+          unitPrice: Number(it.unitPrice || 0),
+        }))
+        if (mapped.length > 0) setItems(mapped)
+      }
+      // Envío directo opcional
+      if (sendDirectOnImport) {
+        void handleSubmit()
+      }
+    } catch (_) {
+      // Silencioso: el usuario puede corregir manualmente
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -180,10 +213,10 @@ export default function NewSimpleInvoicePage() {
         </Link>
       </div>
 
-      {/* Importar archivo */}
+      {/* Importar archivo (drag & drop consistente con otros usuarios) */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Importar factura (XML)</h3>
+          <h3 className="font-semibold">Importar factura (XML / Excel)</h3>
           <label className="inline-flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -193,16 +226,7 @@ export default function NewSimpleInvoicePage() {
             Enviar directo al importar
           </label>
         </div>
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
-          <input
-            type="file"
-            accept=".xml,application/xml,text/xml,.csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            onChange={(e) => handleImport(e.target.files?.[0] || null)}
-            className="block w-full md:w-auto text-sm"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400">Tamaño máx. 5MB. Formatos: XML UBL/HKA, CSV, XLSX</p>
-          {(importing) && <span className="text-sm text-indigo-600">Importando…</span>}
-        </div>
+        <XMLUploader onDataExtracted={applyImportedData} />
       </div>
 
       {/* Cliente */}
