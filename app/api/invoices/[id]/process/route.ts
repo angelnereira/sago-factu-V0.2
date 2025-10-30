@@ -83,8 +83,14 @@ export async function POST(
     }
 
     // Procesar factura inmediatamente
+    const env = (invoice.organization.hkaEnvironment || 'demo').toLowerCase();
+    const hasSimpleCreds = Boolean(invoice.organization.hkaTokenUser && invoice.organization.hkaTokenPassword);
+    const shouldSendToHKA = autoSendToHKA && (
+      env === 'prod' || env === 'production' ? true : hasSimpleCreds
+    );
+
     const result = await processInvoiceDirectly(invoiceId, {
-      sendToHKA: autoSendToHKA,
+      sendToHKA: shouldSendToHKA,
       sendEmail: invoice.organization.emailOnCertification ?? true,
     });
 
