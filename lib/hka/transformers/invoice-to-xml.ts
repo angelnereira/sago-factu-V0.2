@@ -53,19 +53,19 @@ export function transformInvoiceToXMLInput(
   // ============================================
   const emisor: EmisorData = {
     tipoRuc: mapTipoRUC(invoice.organization.rucType),
-    ruc: invoice.organization.ruc!,
-    dv: invoice.organization.dv!,
-    razonSocial: invoice.organization.name,
+    ruc: invoice.issuerRuc || invoice.organization.ruc || '0000000000',
+    dv: invoice.issuerDv || invoice.organization.dv || '00',
+    razonSocial: invoice.issuerName || invoice.organization.name,
     nombreComercial: invoice.organization.tradeName || undefined,
     codigoSucursal: invoice.organization.branchCode || '0000',
     puntoFacturacion: invoice.pointOfSale || '001',
-    direccion: invoice.organization.address || 'PANAMA',
+    direccion: invoice.issuerAddress || invoice.organization.address || 'PANAMA',
     codigoUbicacion: invoice.organization.locationCode || '1-1-1',
     provincia: invoice.organization.province || 'PANAMA',
     distrito: invoice.organization.district || 'PANAMA',
     corregimiento: invoice.organization.corregimiento || 'SAN FELIPE',
     telefono: invoice.organization.phone || undefined,
-    correo: invoice.organization.email || undefined,
+    correo: invoice.issuerEmail || invoice.organization.email || undefined,
   };
   
   // ============================================
