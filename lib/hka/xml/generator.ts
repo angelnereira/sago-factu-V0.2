@@ -425,7 +425,8 @@ export function calcularTotales(items: ItemFactura[], tiempoPago: number = 1): T
     totalNeto,
     totalITBMS,
     totalISC,
-    totalGravado: totalITBMS,
+    // Base gravada: suma de importes antes de impuestos (precioItem)
+    totalGravado: totalNeto,
     totalDescuento,
     valorTotal,
     totalRecibido: valorTotal,
