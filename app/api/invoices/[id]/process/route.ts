@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prismaServer as prisma } from '@/lib/prisma-server';
 import { processInvoiceDirectly } from '@/lib/workers/invoice-processor';
-import { requireAuth, requireInvoiceAccess, handleApiError } from '@/lib/auth/api-helpers';
+import { requireAuth, requireInvoiceAccess } from '@/lib/auth/api-helpers';
 
 export async function POST(
   request: NextRequest,
@@ -111,7 +111,9 @@ export async function POST(
       }, { status: 500 });
     }
   } catch (error) {
-    return handleApiError(error);
+    console.error('[API] Error al procesar factura:', error);
+    const message = (error as any)?.message || 'Error al procesar la factura';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
