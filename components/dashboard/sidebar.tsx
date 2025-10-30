@@ -1,10 +1,10 @@
 "use client"
 
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Receipt, 
-  Users, 
+import {
+  LayoutDashboard,
+  FileText,
+  Receipt,
+  Users,
   Settings,
   BarChart3,
   Folder,
@@ -24,51 +24,21 @@ interface SidebarItem {
   roles?: string[] // Si se especifica, solo visible para estos roles
 }
 
-const sidebarItems: SidebarItem[] = [
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  // Accesos para usuarios del Plan Simple
-  {
-    name: "Modo Simple",
-    href: "/simple",
-    icon: LayoutDashboard,
-    roles: ["SIMPLE_USER"],
-  },
-  {
-    name: "Configurar HKA",
-    href: "/simple/configuracion",
-    icon: Settings,
-    roles: ["SIMPLE_USER"],
-  },
-  {
-    name: "Folios",
-    href: "/dashboard/folios",
-    icon: Folder,
-  },
-  {
-    name: "Facturas",
-    href: "/dashboard/facturas",
-    icon: FileText,
-  },
-  {
-    name: "Clientes",
-    href: "/dashboard/clientes",
-    icon: Users,
-  },
-  {
-    name: "Reportes",
-    href: "/dashboard/reportes",
-    icon: BarChart3,
-  },
-  {
-    name: "Configuración",
-    href: "/dashboard/configuracion",
-    icon: Settings,
-    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
-  },
+// Menú para usuarios estándar/enterprise
+const defaultSidebarItems: SidebarItem[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Folios", href: "/dashboard/folios", icon: Folder },
+  { name: "Facturas", href: "/dashboard/facturas", icon: FileText },
+  { name: "Clientes", href: "/dashboard/clientes", icon: Users },
+  { name: "Reportes", href: "/dashboard/reportes", icon: BarChart3 },
+  { name: "Configuración", href: "/dashboard/configuracion", icon: Settings, roles: ["SUPER_ADMIN", "ORG_ADMIN"] },
+]
+
+// Menú minimalista para SIMPLE_USER
+const simpleSidebarItems: SidebarItem[] = [
+  { name: "Home", href: "/simple", icon: LayoutDashboard },
+  { name: "Facturas", href: "/simple/facturas", icon: FileText },
+  { name: "Configuración", href: "/simple/configuracion", icon: Settings },
 ]
 
 const adminItems: SidebarItem[] = [
@@ -123,13 +93,16 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
   const pathname = usePathname()
 
-  // Filtrar items según rol
-  const visibleItems = sidebarItems.filter(item => {
+  // Elegir items según rol
+  const baseItems = userRole === 'SIMPLE_USER' ? simpleSidebarItems : defaultSidebarItems
+
+  // Filtrar items según rol declarado (para default)
+  const visibleItems = baseItems.filter(item => {
     if (!item.roles) return true
     return item.roles.includes(userRole)
   })
 
-  const visibleAdminItems = adminItems.filter(item => {
+  const visibleAdminItems = userRole === 'SIMPLE_USER' ? [] : adminItems.filter(item => {
     if (!item.roles) return true
     return item.roles.includes(userRole)
   })
