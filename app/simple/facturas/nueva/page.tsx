@@ -19,6 +19,8 @@ export default function NewSimpleInvoicePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [sendDirectOnImport, setSendDirectOnImport] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const addItem = () => {
     setItems((prev) => [...prev, { description: '', quantity: 1, unitPrice: 0 }])
@@ -48,6 +50,53 @@ export default function NewSimpleInvoicePage() {
     (sum, it) => sum + (Number(it.quantity) || 0) * (Number(it.unitPrice) || 0),
     0,
   )
+
+  const handleImport = async (file: File | null) => {
+    if (!file) return
+    setError('')
+    setSuccess('')
+    setImporting(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('sendDirect', String(sendDirectOnImport))
+
+      const res = await fetch('/api/simple/invoices/import', {
+        method: 'POST',
+        body: form,
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al importar el archivo')
+      }
+
+      const parsed = data.data || {}
+      if (parsed.customer) {
+        if (parsed.customer.name) setCustomerName(parsed.customer.name)
+        if (parsed.customer.ruc) setCustomerRuc(parsed.customer.ruc)
+        if (parsed.customer.dv) setCustomerDv(parsed.customer.dv)
+      }
+      if (Array.isArray(parsed.items) && parsed.items.length > 0) {
+        const mapped: ItemInput[] = parsed.items.map((it: any) => ({
+          description: String(it.description || ''),
+          quantity: Number(it.quantity || 1),
+          unitPrice: Number(it.unitPrice || 0),
+        }))
+        setItems(mapped)
+      }
+
+      setSuccess('Archivo importado correctamente')
+
+      if (sendDirectOnImport) {
+        // Tras autocompletar, enviar inmediatamente usando el mismo submit local
+        await handleSubmit()
+      }
+    } catch (e: any) {
+      setError(e.message || 'Error al importar')
+    } finally {
+      setImporting(false)
+    }
+  }
 
   const handleSubmit = async () => {
     setLoading(true)
@@ -129,6 +178,31 @@ export default function NewSimpleInvoicePage() {
         <Link href="/simple">
           <button className="px-4 py-2 border rounded-lg text-sm">Volver</button>
         </Link>
+      </div>
+
+      {/* Importar archivo */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Importar factura (XML)</h3>
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={sendDirectOnImport}
+              onChange={(e) => setSendDirectOnImport(e.target.checked)}
+            />
+            Enviar directo al importar
+          </label>
+        </div>
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+          <input
+            type="file"
+            accept=".xml,application/xml,text/xml,.csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            onChange={(e) => handleImport(e.target.files?.[0] || null)}
+            className="block w-full md:w-auto text-sm"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400">Tamaño máx. 5MB. Formatos: XML UBL/HKA, CSV, XLSX</p>
+          {(importing) && <span className="text-sm text-indigo-600">Importando…</span>}
+        </div>
       </div>
 
       {/* Cliente */}
