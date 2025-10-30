@@ -24,8 +24,11 @@ model Organization {
   logo    String?
 
   // HKA Configuration
-  hkaEnabled   Boolean @default(true)
-  hkaTokenUser String? // Token específico si lo tienen
+  hkaEnabled      Boolean  @default(true)
+  hkaTokenUser    String?  // Token específico si lo tienen
+  plan            OrganizationPlan @default(ENTERPRISE)
+  hkaTokenPassword String?         // Encriptado para Plan Simple
+  hkaEnvironment   String?         @default("demo") // demo | prod
 
   // Campos para XML/HKA
   rucType       String  @default("2") // 1=Natural, 2=Jurídica, 3=Extranjero
@@ -129,6 +132,7 @@ enum UserRole {
   SUPER_ADMIN // Gestión global
   ORG_ADMIN // Admin de organización
   USER // Usuario estándar
+  SIMPLE_USER // Usuario Plan Simple (interfaz HKA directa)
   API_USER // Usuario solo API
 }
 
@@ -408,6 +412,12 @@ enum ReceiverType {
   CONTRIBUTOR // 01 - Contribuyente con RUC
   FINAL_CONSUMER // 02 - Consumidor final
   FOREIGN // 03 - Extranjero
+}
+
+enum OrganizationPlan {
+  SUPER_ADMIN // Administrador de plataforma
+  ENTERPRISE // Plan empresarial (folio pool, credenciales centralizadas)
+  SIMPLE // Plan simple (interfaz HKA con credenciales propias)
 }
 
 enum EmailStatus {
