@@ -57,7 +57,8 @@ export async function enviarDocumento(
         // Validar estructura mínima del XML (RUC/DV y al menos un item)
         const hasRuc = /<dRuc>[^<]+<\/dRuc>/.test(xmlLimpio);
         const hasDv = /<dDV>[^<]+<\/dDV>/.test(xmlLimpio);
-        const hasItems = /<gItems>|<Items>|<ItemFactura>|<Item>/.test(xmlLimpio);
+        // El generador usa múltiples nodos <gItem> (no un contenedor plural)
+        const hasItems = /<gItem>/.test(xmlLimpio);
         if (!hasRuc || !hasDv || !hasItems) {
           throw new Error(
             'XML incompleto para HKA: faltan RUC/DV del emisor o no se encontraron ítems. Revisa datos del emisor/receptor e ítems.',
