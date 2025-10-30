@@ -13,6 +13,7 @@ import { Job } from 'bullmq';
 import { prisma } from '@/lib/db';
 import { generateXMLFromInvoice } from '@/lib/hka/transformers/invoice-to-xml';
 import { enviarDocumento } from '@/lib/hka/methods/enviar-documento';
+import { withHKACredentials } from '@/lib/hka/credentials-manager';
 import { enviarCorreoHKA } from '@/lib/hka/methods/enviar-correo';
 
 // ============================================
@@ -190,11 +191,14 @@ export async function processInvoice(
     // ============================================
     // PASO 5: Enviar a HKA (si está habilitado)
     // ============================================
-    if (sendToHKA) {
+      if (sendToHKA) {
       console.log('\n📤 PASO 5: Enviar a HKA...');
 
       try {
-        const hkaResponse = await enviarDocumento(xml, invoiceId);
+        // Ejecutar el envío con las credenciales correctas según el plan (SIMPLE/ENTERPRISE)
+        const hkaResponse = await withHKACredentials(invoice.organizationId, async () => {
+          return enviarDocumento(xml, invoiceId);
+        });
 
         console.log(`   ✅ Respuesta de HKA recibida`);
         console.log(`   Código: ${hkaResponse.dCodRes}`);
