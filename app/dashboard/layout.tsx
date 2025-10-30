@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
+import { prismaServer as prisma } from "@/lib/prisma-server"
 
 export default async function DashboardLayout({
   children,
@@ -12,6 +13,16 @@ export default async function DashboardLayout({
   
   if (!session) {
     redirect("/")
+  }
+
+  // Redirigir usuarios del Plan Simple al Home Simple
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: { organization: { select: { plan: true } } }
+  })
+
+  if (user?.organization?.plan === 'SIMPLE') {
+    redirect('/simple')
   }
 
   return (
