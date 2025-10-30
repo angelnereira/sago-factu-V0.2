@@ -99,17 +99,17 @@ export async function processInvoice(
     // ============================================
     console.log('\n👤 PASO 2: Obtener Customer...');
 
-    // Validar que existe clientReferenceId
-    if (!invoice.clientReferenceId) {
-      throw new Error('Invoice no tiene cliente asociado (clientReferenceId es null)');
+    // Obtener Customer desde la relación directa o por customerId
+    let customer = invoice.customer;
+    if (!customer && (invoice as any).customerId) {
+      customer = await prisma.customer.findUnique({
+        where: { id: (invoice as any).customerId as string },
+      });
     }
-
-    const customer = await prisma.customer.findUnique({
-      where: { id: invoice.clientReferenceId },
-    });
-
     if (!customer) {
-      throw new Error(`Customer no encontrado: ${invoice.clientReferenceId}`);
+      throw new Error(
+        `Customer no encontrado: ${(invoice as any).customerId || invoice.clientReferenceId || 'desconocido'}`,
+      );
     }
 
     console.log(`   ✅ Customer: ${customer.name}`);
@@ -124,7 +124,7 @@ export async function processInvoice(
     const invoiceWithCustomer = {
       ...invoice,
       customer: customer,
-    };
+    } as any;
 
     let resultGenerate: { xml: string; cufe: string; errores: string[] };
     
