@@ -122,16 +122,24 @@ export default function NewSimpleInvoicePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer: {
+          client: {
             name: customerName,
-            ruc: customerRuc,
-            dv: customerDv,
+            taxId: customerDv ? `${customerRuc}-${customerDv}` : customerRuc,
+            address: 'No especificada',
+            email: '',
+            phone: '',
+            city: 'Panamá',
+            country: 'PA',
           },
           items: items.map((it) => ({
             description: it.description,
-            quantity: it.quantity,
-            unitPrice: it.unitPrice,
+            quantity: Number(it.quantity) || 0,
+            unitPrice: Number(it.unitPrice) || 0,
+            taxRate: 7,
+            discount: 0,
           })),
+          notes: '',
+          paymentMethod: 'CASH',
         }),
       })
 
