@@ -36,6 +36,13 @@ export async function enviarDocumento(
         const hkaClient = getHKAClient();
         const credentials = hkaClient.getCredentials();
 
+        // Validación defensiva de credenciales antes de invocar HKA
+        if (!credentials?.tokenEmpresa || !credentials?.tokenPassword) {
+          throw new Error(
+            'Credenciales HKA ausentes o inválidas (tokenEmpresa/tokenPassword). Verifica configuración de la organización o del modo SIMPLE.',
+          );
+        }
+
         // HKA espera el XML como texto plano sin escapar
         // Remover la declaración XML del inicio si existe
         let xmlLimpio = xmlDocumento.trim();
@@ -45,6 +52,16 @@ export async function enviarDocumento(
           if (endOfDeclaration !== -1) {
             xmlLimpio = xmlLimpio.substring(endOfDeclaration + 2).trim();
           }
+        }
+
+        // Validar estructura mínima del XML (RUC/DV y al menos un item)
+        const hasRuc = /<dRuc>[^<]+<\/dRuc>/.test(xmlLimpio);
+        const hasDv = /<dDV>[^<]+<\/dDV>/.test(xmlLimpio);
+        const hasItems = /<gItems>|<Items>|<ItemFactura>|<Item>/.test(xmlLimpio);
+        if (!hasRuc || !hasDv || !hasItems) {
+          throw new Error(
+            'XML incompleto para HKA: faltan RUC/DV del emisor o no se encontraron ítems. Revisa datos del emisor/receptor e ítems.',
+          );
         }
 
         // Parámetros para envío
