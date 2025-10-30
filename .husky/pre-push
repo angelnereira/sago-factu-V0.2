@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 echo "[pre-push] Ejecutando lint/tests/build (no bloqueante)"
 npm run lint || true
 npm test || true

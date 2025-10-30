@@ -2,7 +2,8 @@ module.exports = {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'scope-case': [2, 'always', 'kebab-case'],
-    'subject-case': [2, 'always', 'sentence-case'],
+    // Desactivado para permitir tu estilo natural en español
+    'subject-case': [0],
     'type-enum': [
       2,
       'always',
