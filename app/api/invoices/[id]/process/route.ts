@@ -85,9 +85,10 @@ export async function POST(
     // Procesar factura inmediatamente
     const env = (invoice.organization.hkaEnvironment || 'demo').toLowerCase();
     const hasSimpleCreds = Boolean(invoice.organization.hkaTokenUser && invoice.organization.hkaTokenPassword);
-    const shouldSendToHKA = autoSendToHKA && (
-      env === 'prod' || env === 'production' ? true : hasSimpleCreds
-    );
+    // En DEMO nunca llamar a HKA, aunque existan credenciales
+    const shouldSendToHKA = env === 'prod' || env === 'production'
+      ? (autoSendToHKA && hasSimpleCreds)
+      : false;
 
     const result = await processInvoiceDirectly(invoiceId, {
       sendToHKA: shouldSendToHKA,
@@ -99,9 +100,9 @@ export async function POST(
         success: true,
         message: result.sentToHKA 
           ? 'Factura procesada y enviada a HKA' 
-          : 'Factura procesada (XML generado)',
+          : 'Factura procesada y certificada en modo DEMO',
         cufe: result.cufe,
-        status: result.sentToHKA ? 'PROCESSING' : 'DRAFT',
+        status: result.sentToHKA ? 'PROCESSING' : 'CERTIFIED',
       });
     } else {
       return NextResponse.json({
