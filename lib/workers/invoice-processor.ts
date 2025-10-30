@@ -162,7 +162,9 @@ export async function processInvoice(
         },
       });
 
-      throw new Error(errorMsg);
+      result.success = false;
+      result.error = errorMsg;
+      return result;
     }
 
     console.log(`   ✅ XML generado exitosamente`);
@@ -275,7 +277,7 @@ export async function processInvoice(
         result.sentToHKA = false;
         result.error =
           hkaError instanceof Error ? hkaError.message : 'Error desconocido';
-        throw hkaError;
+        return result;
       }
     } else {
       console.log('\n⏭️  PASO 5: Envío a HKA deshabilitado (modo test)');

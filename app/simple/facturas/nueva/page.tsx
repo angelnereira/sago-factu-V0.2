@@ -161,7 +161,8 @@ export default function NewSimpleInvoicePage() {
       })
       const processData = await processRes.json()
       if (!processRes.ok) {
-        throw new Error(processData.error || 'Error al procesar factura')
+        const details = processData?.error || processData?.message || ''
+        throw new Error(details || 'Error al procesar factura')
       }
 
       setSuccess('Factura creada y enviada correctamente')
