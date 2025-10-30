@@ -3,7 +3,8 @@ import { prismaServer as prisma } from "@/lib/prisma-server"
 import { NextResponse } from "next/server"
 import { createInvoiceSchema, calculateInvoiceTotals, calculateItemTotals } from "@/lib/validations/invoice"
 import { Decimal } from "@prisma/client/runtime/library"
-import { InvoiceStatus } from "@prisma/client"
+import { Prisma } from "@prisma/client"
+import crypto from "crypto"
 
 export async function POST(request: Request) {
   try {
@@ -160,7 +161,9 @@ export async function POST(request: Request) {
         data: {
           organizationId,
           createdBy: session.user.id,
-          clientReferenceId: customer.id, // ID real del cliente
+          // Usar relación customerId y un identificador único independiente para idempotencia
+          customerId: customer.id,
+          clientReferenceId: crypto.randomUUID(),
           
           // Número de folio (solo si no es borrador)
           invoiceNumber: folioNumber,
@@ -174,7 +177,7 @@ export async function POST(request: Request) {
           
           // Información del receptor (cliente)
           receiverRuc: client.taxId,
-          receiverDv: "00", // Calcular según normativa panameña
+          receiverDv: undefined,
           receiverName: client.name,
           receiverEmail: client.email || null,
           receiverPhone: client.phone || null,
@@ -258,8 +261,16 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error("[API] Error al crear factura:", error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          { error: "Conflicto de idempotencia: clientReferenceId duplicado" },
+          { status: 409 }
+        )
+      }
+    }
     return NextResponse.json(
-      { error: "Error al procesar la factura" },
+      { error: (error as any)?.message || "Error al procesar la factura" },
       { status: 500 }
     )
   }
