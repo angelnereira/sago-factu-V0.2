@@ -11,6 +11,15 @@ export default function HKACredentialsForm() {
   const [tokenPassword, setTokenPassword] = useState('');
   const [environment, setEnvironment] = useState<'demo' | 'prod'>('demo');
   const [isConfigured, setIsConfigured] = useState(false);
+  
+  // Datos del contribuyente
+  const [ruc, setRuc] = useState('');
+  const [dv, setDv] = useState('');
+  const [razonSocial, setRazonSocial] = useState('');
+  const [nombreComercial, setNombreComercial] = useState('');
+  const [email, setEmail] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [direccion, setDireccion] = useState('');
 
   useEffect(() => {
     fetch('/api/settings/hka-credentials')
@@ -20,6 +29,15 @@ export default function HKACredentialsForm() {
           setTokenUser(data.tokenUser);
           setEnvironment(data.environment);
           setIsConfigured(true);
+          
+          // Cargar datos del contribuyente
+          if (data.ruc) setRuc(data.ruc);
+          if (data.dv) setDv(data.dv);
+          if (data.razonSocial) setRazonSocial(data.razonSocial);
+          if (data.nombreComercial) setNombreComercial(data.nombreComercial);
+          if (data.email) setEmail(data.email);
+          if (data.telefono) setTelefono(data.telefono);
+          if (data.direccion) setDireccion(data.direccion);
         }
       })
       .catch(err => console.error('Error cargando credenciales:', err));
@@ -34,7 +52,18 @@ export default function HKACredentialsForm() {
       const res = await fetch('/api/settings/hka-credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tokenUser, tokenPassword, environment }),
+        body: JSON.stringify({ 
+          tokenUser, 
+          tokenPassword, 
+          environment,
+          ruc,
+          dv,
+          razonSocial,
+          nombreComercial,
+          email,
+          telefono,
+          direccion,
+        }),
       });
 
       const result = await res.json();
@@ -126,6 +155,120 @@ export default function HKACredentialsForm() {
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Usa "Demo" para pruebas y "Producción" para facturas reales
         </p>
+      </div>
+
+      {/* Datos del Contribuyente */}
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Datos del Contribuyente (Para Facturación)
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="ruc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              RUC
+            </label>
+            <input
+              id="ruc"
+              type="text"
+              value={ruc}
+              onChange={(e) => setRuc(e.target.value)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+              placeholder="155738031-2"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="dv" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Dígito Verificador
+            </label>
+            <input
+              id="dv"
+              type="text"
+              value={dv}
+              onChange={(e) => setDv(e.target.value)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+              placeholder="20"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="razonSocial" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Razón Social
+            </label>
+            <input
+              id="razonSocial"
+              type="text"
+              value={razonSocial}
+              onChange={(e) => setRazonSocial(e.target.value)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+              placeholder="Mi Empresa S.A."
+            />
+          </div>
+
+          <div>
+            <label htmlFor="nombreComercial" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Nombre Comercial
+            </label>
+            <input
+              id="nombreComercial"
+              type="text"
+              value={nombreComercial}
+              onChange={(e) => setNombreComercial(e.target.value)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+              placeholder="Mi Empresa"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+              placeholder="empresa@ejemplo.com"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Teléfono
+            </label>
+            <input
+              id="telefono"
+              type="text"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+              placeholder="+507 1234-5678"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label htmlFor="direccion" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Dirección Fiscal
+            </label>
+            <input
+              id="direccion"
+              type="text"
+              value={direccion}
+              onChange={(e) => setDireccion(e.target.value)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+              placeholder="Ciudad, Provincia"
+            />
+          </div>
+        </div>
       </div>
 
       {message && (

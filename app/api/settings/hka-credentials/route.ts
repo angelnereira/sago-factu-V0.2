@@ -8,6 +8,14 @@ const credentialsSchema = z.object({
   tokenUser: z.string().min(1, 'Token de usuario es requerido'),
   tokenPassword: z.string().min(1, 'Token password es requerido'),
   environment: z.enum(['demo', 'prod']),
+  // Datos del contribuyente
+  ruc: z.string().optional(),
+  dv: z.string().optional(),
+  razonSocial: z.string().optional(),
+  nombreComercial: z.string().optional(),
+  email: z.string().email().optional(),
+  telefono: z.string().optional(),
+  direccion: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -38,13 +46,21 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = credentialsSchema.parse(body);
 
-    // Actualizar organización con credenciales encriptadas
+    // Actualizar organización con credenciales encriptadas y datos del contribuyente
     await prisma.organization.update({
       where: { id: user.organizationId },
       data: {
         hkaTokenUser: data.tokenUser,
         hkaTokenPassword: encryptToken(data.tokenPassword),
         hkaEnvironment: data.environment,
+        // Actualizar datos del contribuyente si se proporcionan
+        ...(data.ruc && { ruc: data.ruc }),
+        ...(data.dv && { dv: data.dv }),
+        ...(data.razonSocial && { name: data.razonSocial }),
+        ...(data.nombreComercial && { tradeName: data.nombreComercial }),
+        ...(data.email && { email: data.email }),
+        ...(data.telefono && { phone: data.telefono }),
+        ...(data.direccion && { address: data.direccion }),
       }
     });
 
@@ -99,6 +115,14 @@ export async function GET() {
       select: {
         hkaTokenUser: true,
         hkaEnvironment: true,
+        // Datos del contribuyente
+        ruc: true,
+        dv: true,
+        name: true,
+        tradeName: true,
+        email: true,
+        phone: true,
+        address: true,
         // NO retornar hkaTokenPassword por seguridad
       }
     });
@@ -107,6 +131,14 @@ export async function GET() {
       configured: !!org?.hkaTokenUser,
       tokenUser: org?.hkaTokenUser || null,
       environment: org?.hkaEnvironment || 'demo',
+      // Datos del contribuyente
+      ruc: org?.ruc || null,
+      dv: org?.dv || null,
+      razonSocial: org?.name || null,
+      nombreComercial: org?.tradeName || null,
+      email: org?.email || null,
+      telefono: org?.phone || null,
+      direccion: org?.address || null,
     });
 
   } catch (error) {
