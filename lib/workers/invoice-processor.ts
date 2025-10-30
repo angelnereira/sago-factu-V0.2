@@ -280,17 +280,22 @@ export async function processInvoice(
         return result;
       }
     } else {
-      console.log('\n⏭️  PASO 5: Envío a HKA deshabilitado (modo test)');
-      
-      // En modo test, marcar como certificado (simulado)
+      console.log('\n⏭️  PASO 5: Envío a HKA deshabilitado (modo demo/test)');
+
+      // Si no se envía a HKA (demo/simple sin credenciales), simulamos certificación
+      const demoCufe = result.cufe && result.cufe.length > 0 ? result.cufe : `DEMO-${Date.now()}`;
+
       await prisma.invoice.update({
         where: { id: invoiceId },
         data: {
-          status: 'PROCESSING', // Dejar en PROCESSING si no se envía a HKA
+          cufe: demoCufe,
+          status: 'CERTIFIED',
         },
       });
-      
+
       result.success = true;
+      result.sentToHKA = false;
+      result.cufe = demoCufe;
     }
 
     // ============================================
