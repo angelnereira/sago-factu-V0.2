@@ -18,21 +18,44 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 });
     }
 
-    // Verificar que tiene XML generado
-    if (!invoice.xmlContent) {
-      return NextResponse.json({ error: 'La factura no tiene XML generado' }, { status: 400 });
+    // Intentar obtener XML desde BD (preferir XML firmado, luego XML generado)
+    let xmlContent: string | null = null;
+    let fileName = `factura-${invoice.invoiceNumber || invoiceId}.xml`;
+    
+    if (invoice.rawXml) {
+      // XML firmado por DGI guardado en BD
+      console.log('✅ XML firmado encontrado en base de datos');
+      xmlContent = invoice.rawXml;
+      
+      // Decodificar si está en Base64
+      if (xmlContent && !xmlContent.startsWith('<?xml')) {
+        try {
+          xmlContent = Buffer.from(xmlContent, 'base64').toString('utf-8');
+        } catch (error) {
+          console.error('Error decodificando XML desde Base64:', error);
+          xmlContent = invoice.rawXml; // Usar el original si falla
+        }
+      }
+    } else if (invoice.xmlContent) {
+      // XML generado (no firmado)
+      console.log('⚠️ Usando XML generado (no firmado)');
+      xmlContent = invoice.xmlContent;
+    } else {
+      return NextResponse.json({ error: 'La factura no tiene XML disponible' }, { status: 400 });
     }
 
-    // Generar nombre de archivo
-    const fileName = `factura-${invoice.invoiceNumber || invoiceId}.xml`;
+    // Usar número fiscal si está disponible
+    if (invoice.numeroDocumentoFiscal) {
+      fileName = `Factura_${invoice.numeroDocumentoFiscal.replace(/\//g, '-')}.xml`;
+    }
 
     // Retornar XML como descarga
-    return new NextResponse(invoice.xml忙, {
+    return new NextResponse(xmlContent, {
       status: 200,
       headers: {
         'Content-Type': 'application/xml',
         'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'public, max-age=31536000',
       },
     });
   } catch (error) {

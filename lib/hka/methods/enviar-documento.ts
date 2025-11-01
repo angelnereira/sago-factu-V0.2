@@ -85,31 +85,60 @@ export async function enviarDocumento(
     console.log(`   Código: ${response.dCodRes}`);
     console.log(`   Mensaje: ${response.dMsgRes}`);
 
-    // Actualizar en base de datos con Prisma
+    // Verificar si la respuesta indica éxito
+    const isSuccess = response.Exito !== false && response.dCodRes === '0200';
+    
+    // Determinar mensaje de error si existe
+    let errorMessage = response.dMsgRes;
+    if (response.Errores && response.Errores.length > 0) {
+      errorMessage = response.Errores.map((err) => `${err.Codigo}: ${err.Descripcion}`).join('; ');
+    }
+
+    // Actualizar en base de datos con Prisma - CAPTURA COMPLETA DE RESPUESTA
     await prisma.invoice.update({
       where: { id: invoiceId },
       data: {
+        // Códigos de identificación
         cufe: response.dCufe,
-        // hkaProtocol: response.dProtocolo, // TODO: Agregar campo al schema
-        qrCode: response.dQr,
-        // pdfBase64: response.xContPDF, // TODO: Agregar campo al schema
-        // hkaResponseCode: response.dCodRes, // TODO: Agregar campo al schema
-        // hkaResponseMessage: response.dMsgRes, // TODO: Agregar campo al schema
-        status: response.dCodRes === '0200' ? 'CERTIFIED' : 'REJECTED',
-        certifiedAt: response.dCodRes === '0200' ? new Date() : null,
+        cafe: response.CAFE,
+        numeroDocumentoFiscal: response.NumeroDocumentoFiscal,
+        hkaProtocol: response.dProtocolo || response.ProtocoloAutorizacion,
+        
+        // Archivos en Base64 (priorizar campos nuevos de la guía, luego legacy)
+        pdfBase64: response.PDF || response.xContPDF,
+        qrCode: response.CodigoQR || response.dQr,
+        rawXml: response.XMLFirmado, // XML firmado por DGI
+        
+        // Metadatos HKA
+        hkaResponseCode: response.dCodRes,
+        hkaResponseMessage: errorMessage || response.Mensaje || response.dMsgRes,
+        hkaProtocolDate: response.FechaRecepcion ? new Date(response.FechaRecepcion) : null,
+        
+        // Estado
+        status: isSuccess ? 'CERTIFIED' : 'REJECTED',
+        certifiedAt: isSuccess ? new Date() : null,
       },
     });
+
+    console.log(`💾 Respuesta de HKA guardada en BD`);
+    console.log(`   PDF: ${response.PDF || response.xContPDF ? 'Sí' : 'No'}`);
+    console.log(`   XML Firmado: ${response.XMLFirmado ? 'Sí' : 'No'}`);
+    console.log(`   QR: ${response.CodigoQR || response.dQr ? 'Sí' : 'No'}`);
 
     return response;
   } catch (error) {
     console.error('❌ Error al enviar documento:', error);
+    
+    // Determinar mensaje de error
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido al enviar a HKA';
     
     // Actualizar error en base de datos
     await prisma.invoice.update({
       where: { id: invoiceId },
       data: {
         status: 'REJECTED',
-        // hkaResponseMessage: error instanceof Error ? error.message : 'Unknown error', // TODO: Agregar campo al schema
+        hkaResponseCode: 'ERROR',
+        hkaResponseMessage: errorMessage,
       },
     });
 

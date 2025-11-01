@@ -304,10 +304,12 @@ model Invoice {
   receiverAddress String?
 
   // Documento
-  documentType  DocumentType @default(FACTURA)
-  invoiceNumber String? // Asignado por HKA
-  cufe          String?      @unique
-  qrCode        String?      @db.Text
+  documentType           DocumentType @default(FACTURA)
+  invoiceNumber          String? // Asignado por HKA
+  cufe                   String?      @unique
+  cafe                   String? // Código de Autorización FE
+  numeroDocumentoFiscal  String? // Ej: 001-0000-01-12345678
+  qrCode                 String?      @db.Text
 
   // Campos adicionales para XML/HKA
   pointOfSale   String    @default("001")
@@ -383,6 +385,7 @@ model Invoice {
   @@index([createdBy])
   @@index([status])
   @@index([cufe])
+  @@index([cafe])
   @@index([issuerRuc])
   @@index([receiverRuc])
   @@index([createdAt])

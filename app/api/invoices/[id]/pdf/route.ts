@@ -22,32 +22,49 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Verificar que la factura está certificada
     if (invoice.status !== 'CERTIFIED') {
       return NextResponse.json(
-        { error的习惯: 'La factura no está certificada. Solo las facturas certificadas tienen PDF disponible.' },
+        { error: 'La factura no está certificada. Solo las facturas certificadas tienen PDF disponible.' },
         { status: 400 }
       );
     }
 
-    // Verificar que tiene CUFE
-    if (!invoice.cufe) {
-      return NextResponse.json({ error: 'La factura no tiene CUFE' }, { status: 400 });
-    }
-
-    // Obtener PDF desde HKA
-    const pdfBuffer = await obtenerPdfDocumento(invoice.cufe);
-
-    if (!pdfBuffer) {
-      return NextResponse.json({ error: 'No se pudo obtener el PDF desde HKA' }, { status: 500 });
+    // Intentar obtener PDF desde BD primero (guarda la respuesta de HKA)
+    let pdfBuffer: Buffer | null = null;
+    let fileName = `factura-${invoice.invoiceNumber || invoiceId}.pdf`;
+    
+    if (invoice.pdfBase64) {
+      // PDF guardado en BD desde la respuesta de HKA
+      console.log('✅ PDF encontrado en base de datos');
+      pdfBuffer = Buffer.from(invoice.pdfBase64, 'base64');
+      
+      // Usar número fiscal si está disponible
+      if (invoice.numeroDocumentoFiscal) {
+        fileName = `Factura_${invoice.numeroDocumentoFiscal.replace(/\//g, '-')}.pdf`;
+      }
+    } else if (invoice.cufe) {
+      // Fallback: obtener PDF desde HKA si no está en BD
+      console.log('⚠️ PDF no en BD, obteniendo desde HKA...');
+      try {
+        pdfBuffer = await obtenerPdfDocumento(invoice.cufe);
+        if (!pdfBuffer) {
+          return NextResponse.json({ error: 'No se pudo obtener el PDF desde HKA' }, { status: 500 });
+        }
+      } catch (error) {
+        console.error('Error al obtener PDF desde HKA:', error);
+        return NextResponse.json({ error: 'PDF no disponible en la base de datos ni en HKA' }, { status: 404 });
+      }
+    } else {
+      return NextResponse.json({ error: 'La factura no tiene PDF disponible' }, { status: 404 });
     }
 
     // Generar nombre de archivo
-    const fileName = `factura-${invoice.invoiceNumber || invoiceId}.pdf`;
+    const finalFileName = fileName;
 
     // Retornar PDF como descarga
-    return new NextResponse(pdfBuffer as unknown as BodyInit, {
+    return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Content-Disposition': `attachment; filename="${finalFileName}"`,
         'Cache-Control': 'public, max-age=31536000',
       },
     });

@@ -217,16 +217,19 @@ export async function processInvoice(
           result.success = true;
 
           // Envío automático de correo si está habilitado
+          // Usar CAFE de la respuesta (si disponible), o CUFE como fallback
+          const cafeToUse = hkaResponse.CAFE || invoice.cufe;
           if (
             sendEmail &&
             invoice.organization.emailOnCertification &&
             invoice.receiverEmail &&
-            invoice.cufe
+            cafeToUse
           ) {
             console.log(`\n📧 Envío automático de correo habilitado...`);
+            console.log(`   Usando CAFE: ${cafeToUse}`);
             try {
               const emailResponse = await enviarCorreoHKA({
-                CAFE: invoice.cufe,
+                CAFE: cafeToUse,
                 CorreoDestinatario: invoice.receiverEmail,
                 IncluirPDF: true,
                 IncluirXML: true,

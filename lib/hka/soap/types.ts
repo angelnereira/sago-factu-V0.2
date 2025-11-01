@@ -32,6 +32,22 @@ export interface EnviarDocumentoResponse extends HKABaseResponse {
   dProtocolo?: string;    // Número de protocolo
   dQr?: string;           // Código QR
   xContPDF?: string;      // Contenido PDF en Base64
+  // Campos adicionales según guía de implementación HKA
+  CAFE?: string;          // Código de Autorización FE
+  NumeroDocumentoFiscal?: string; // Ej: 001-0000-01-12345678
+  XMLFirmado?: string;    // XML firmado por DGI (Base64)
+  PDF?: string;           // PDF generado por HKA (Base64)
+  CodigoQR?: string;      // Imagen QR en Base64
+  Mensaje?: string;       // Mensaje descriptivo de respuesta
+  FechaRecepcion?: string; // Fecha de recepción (ISO DateTime)
+  ProtocoloAutorizacion?: string; // ID protocolo de autorización
+  Exito?: boolean;        // Indica si el proceso fue exitoso
+  Errores?: Array<{       // Array de errores (si los hay)
+    Codigo: string;
+    Descripcion: string;
+  }>;
+  // Campos de HKABaseResponse ya incluidos:
+  // dCodRes, dMsgRes, dVerApl, dFecProc
 }
 
 // ============================================
