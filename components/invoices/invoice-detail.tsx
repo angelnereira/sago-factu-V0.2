@@ -1,12 +1,13 @@
 "use client"
 
-import { Download, Send, XCircle, CheckCircle, Clock, FileText, ArrowLeft } from "lucide-react"
+import { Download, Send, XCircle, CheckCircle, Clock, FileText, ArrowLeft, FileCode } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import Link from "next/link"
 import { useState } from "react"
 import { SendEmailButton } from "./send-email-button"
 import { EmailHistory } from "./email-history"
+import { useRouter } from "next/navigation"
 
 interface InvoiceDetailProps {
   invoice: any
@@ -52,26 +53,100 @@ const statusConfig = {
 }
 
 export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
+  const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
   const status = statusConfig[invoice.status as keyof typeof statusConfig] || statusConfig.DRAFT
   const StatusIcon = status.icon
 
   const handleSendToHKA = async () => {
     setIsProcessing(true)
+    setDownloadError(null)
     try {
-      // TODO: Implementar envío a HKA
-      alert("Funcionalidad pendiente: Enviar a HKA")
+      const response = await fetch(`/api/invoices/${invoice.id}/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || result.message || 'Error al procesar factura')
+      }
+
+      // Recargar la página para mostrar el nuevo estado y CUFE
+      router.refresh()
+    } catch (error) {
+      console.error("Error al enviar a HKA:", error)
+      setDownloadError(error instanceof Error ? error.message : 'Error al enviar factura')
     } finally {
       setIsProcessing(false)
     }
   }
 
   const handleDownloadPDF = async () => {
+    setDownloadError(null)
     try {
-      // TODO: Implementar descarga de PDF
-      alert("Funcionalidad pendiente: Descargar PDF")
+      const response = await fetch(`/api/invoices/${invoice.id}/pdf`)
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Error al obtener PDF' }))
+        throw new Error(error.error || 'Error al descargar PDF')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      
+      // Usar número fiscal si está disponible, sino CUFE o ID
+      const fileName = invoice.numeroDocumentoFiscal 
+        ? `Factura_${invoice.numeroDocumentoFiscal.replace(/\//g, '-')}.pdf`
+        : invoice.cufe 
+        ? `Factura_${invoice.cufe.substring(0, 20)}.pdf`
+        : `Factura_${invoice.id}.pdf`
+      
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
     } catch (error) {
       console.error("Error al descargar PDF:", error)
+      setDownloadError(error instanceof Error ? error.message : 'Error al descargar PDF')
+    }
+  }
+
+  const handleDownloadXML = async () => {
+    setDownloadError(null)
+    try {
+      const response = await fetch(`/api/invoices/${invoice.id}/xml`)
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Error al obtener XML' }))
+        throw new Error(error.error || 'Error al descargar XML')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      
+      // Usar número fiscal si está disponible, sino CUFE o ID
+      const fileName = invoice.numeroDocumentoFiscal 
+        ? `Factura_${invoice.numeroDocumentoFiscal.replace(/\//g, '-')}.xml`
+        : invoice.cufe 
+        ? `Factura_${invoice.cufe.substring(0, 20)}.xml`
+        : `Factura_${invoice.id}.xml`
+      
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error("Error al descargar XML:", error)
+      setDownloadError(error instanceof Error ? error.message : 'Error al descargar XML')
     }
   }
 
@@ -102,9 +177,18 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
               <button
                 onClick={handleDownloadPDF}
                 className="flex items-center space-x-2 px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                title="Descargar PDF certificado"
               >
                 <Download className="h-5 w-5" />
-                <span>Descargar PDF</span>
+                <span>PDF</span>
+              </button>
+              <button
+                onClick={handleDownloadXML}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                title="Descargar XML firmado"
+              >
+                <FileCode className="h-5 w-5" />
+                <span>XML</span>
               </button>
               <SendEmailButton 
                 invoiceId={invoice.id} 
@@ -112,7 +196,7 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
               />
             </>
           )}
-          {invoice.status === "PENDING" && (
+          {(invoice.status === "PENDING" || invoice.status === "DRAFT") && (
             <button
               onClick={handleSendToHKA}
               disabled={isProcessing}
@@ -124,6 +208,15 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
           )}
         </div>
       </div>
+
+      {/* Error message */}
+      {downloadError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-sm text-red-600 dark:text-red-400">
+            {downloadError}
+          </p>
+        </div>
+      )}
 
       {/* Estado */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
@@ -140,10 +233,52 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
           </span>
         </div>
 
-        {invoice.cufe && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400">CUFE (Código Único)</p>
-            <p className="text-sm font-mono text-gray-900 dark:text-gray-100 mt-1">{invoice.cufe}</p>
+        {/* Información de Certificación */}
+        {invoice.status === "CERTIFIED" && (invoice.cufe || invoice.cafe || invoice.numeroDocumentoFiscal || invoice.hkaResponseMessage) && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Certificación DGI</p>
+              {invoice.cufe && (
+                <div className="mb-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">CUFE</p>
+                  <p className="text-xs font-mono text-gray-900 dark:text-gray-100 break-all bg-gray-50 dark:bg-gray-900/30 p-2 rounded">
+                    {invoice.cufe}
+                  </p>
+                </div>
+              )}
+              {invoice.cafe && (
+                <div className="mb-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">CAFE</p>
+                  <p className="text-xs font-mono text-gray-900 dark:text-gray-100 break-all bg-gray-50 dark:bg-gray-900/30 p-2 rounded">
+                    {invoice.cafe}
+                  </p>
+                </div>
+              )}
+              {invoice.numeroDocumentoFiscal && (
+                <div className="mb-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Número Fiscal</p>
+                  <p className="text-xs font-mono text-gray-900 dark:text-gray-100 break-all bg-gray-50 dark:bg-gray-900/30 p-2 rounded">
+                    {invoice.numeroDocumentoFiscal}
+                  </p>
+                </div>
+              )}
+              {invoice.hkaResponseMessage && (
+                <div className="mb-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Mensaje HKA</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-2 rounded">
+                    {invoice.hkaResponseMessage}
+                  </p>
+                </div>
+              )}
+              {invoice.certifiedAt && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Certificada el</p>
+                  <p className="text-xs text-gray-900 dark:text-gray-100">
+                    {format(new Date(invoice.certifiedAt), "dd 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es })}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
