@@ -230,6 +230,10 @@ export async function enviarDocumento(
           console.log(`📄 XML a enviar (primeros 500 chars): ${xmlLimpio.substring(0, 500)}...`);
         }
 
+        // Obtener cliente SOAP HKA
+        const hkaClient = getHKAClient();
+        await hkaClient.initialize();
+
         // Parámetros para envío
         const params: EnviarDocumentoParams = {
           tokenEmpresa: credentials.tokenEmpresa,
