@@ -60,20 +60,25 @@ export async function enviarDocumento(
         // ============================================
         console.log('🔍 Validando estructura completa del XML antes de enviar a HKA...');
         
-        // Validaciones de campos críticos
+        // Validaciones de campos críticos según formato rFE v1.00 de HKA/DGI
+        // IMPORTANTE: Usar los nombres EXACTOS que se generan en el XML según documentación HKA
         const validaciones: { campo: string; encontrado: boolean; regex: RegExp }[] = [
-          { campo: 'dRuc (Emisor)', encontrado: /<dRuc>[^<]+<\/dRuc>/.test(xmlLimpio), regex: /<dRuc>[^<]+<\/dRuc>/ },
-          { campo: 'dDV (Emisor)', encontrado: /<dDV>[^<]+<\/dDV>/.test(xmlLimpio), regex: /<dDV>[^<]+<\/dDV>/ },
-          { campo: 'dTipoRuc (Emisor)', encontrado: /<dTipoRuc>[^<]+<\/dTipoRuc>/.test(xmlLimpio), regex: /<dTipoRuc>[^<]+<\/dTipoRuc>/ },
-          { campo: 'dNombEm (Razón Social Emisor)', encontrado: /<dNombEm>[^<]+<\/dNombEm>/.test(xmlLimpio), regex: /<dNombEm>[^<]+<\/dNombEm>/ },
-          { campo: 'dDirEmi (Dirección Emisor)', encontrado: /<dDirEmi>[^<]+<\/dDirEmi>/.test(xmlLimpio), regex: /<dDirEmi>[^<]+<\/dDirEmi>/ },
-          { campo: 'dRucRe (RUC Receptor)', encontrado: /<dRucRe>[^<]+<\/dRucRe>/.test(xmlLimpio), regex: /<dRucRe>[^<]+<\/dRucRe>/ },
-          { campo: 'dDVRe (DV Receptor)', encontrado: /<dDVRe>[^<]+<\/dDVRe>/.test(xmlLimpio), regex: /<dDVRe>[^<]+<\/dDVRe>/ },
-          { campo: 'dNomRe (Nombre Receptor)', encontrado: /<dNomRe>[^<]+<\/dNomRe>/.test(xmlLimpio), regex: /<dNomRe>[^<]+<\/dNomRe>/ },
+          // Emisor
+          { campo: 'dRuc (Emisor)', encontrado: /<gRucEmi>[\s\S]*?<dRuc>[^<]+<\/dRuc>/.test(xmlLimpio), regex: /<gRucEmi>[\s\S]*?<dRuc>([^<]+)<\/dRuc>/ },
+          { campo: 'dDV (Emisor)', encontrado: /<gRucEmi>[\s\S]*?<dDV>[^<]+<\/dDV>/.test(xmlLimpio), regex: /<gRucEmi>[\s\S]*?<dDV>([^<]+)<\/dDV>/ },
+          { campo: 'dTipoRuc (Emisor)', encontrado: /<gRucEmi>[\s\S]*?<dTipoRuc>[^<]+<\/dTipoRuc>/.test(xmlLimpio), regex: /<gRucEmi>[\s\S]*?<dTipoRuc>([^<]+)<\/dTipoRuc>/ },
+          { campo: 'dNombEm (Razón Social Emisor)', encontrado: /<dNombEm>[^<]+<\/dNombEm>/.test(xmlLimpio), regex: /<dNombEm>([^<]+)<\/dNombEm>/ },
+          { campo: 'dDirecEm (Dirección Emisor)', encontrado: /<dDirecEm>[^<]+<\/dDirecEm>/.test(xmlLimpio), regex: /<dDirecEm>([^<]+)<\/dDirecEm>/ },
+          // Receptor - Los campos están dentro de gRucRec, no como dRucRe/dDVRe
+          { campo: 'dRuc (Receptor)', encontrado: /<gRucRec>[\s\S]*?<dRuc>[^<]+<\/dRuc>/.test(xmlLimpio), regex: /<gRucRec>[\s\S]*?<dRuc>([^<]+)<\/dRuc>/ },
+          { campo: 'dDV (Receptor)', encontrado: /<gRucRec>[\s\S]*?<dDV>[^<]+<\/dDV>/.test(xmlLimpio), regex: /<gRucRec>[\s\S]*?<dDV>([^<]+)<\/dDV>/ },
+          { campo: 'dNombRec (Nombre Receptor)', encontrado: /<dNombRec>[^<]+<\/dNombRec>/.test(xmlLimpio), regex: /<dNombRec>([^<]+)<\/dNombRec>/ },
+          { campo: 'dDirecRec (Dirección Receptor)', encontrado: /<dDirecRec>[^<]+<\/dDirecRec>/.test(xmlLimpio), regex: /<dDirecRec>([^<]+)<\/dDirecRec>/ },
+          // Items y Totales
           { campo: 'gItem (Items)', encontrado: /<gItem>/.test(xmlLimpio), regex: /<gItem>/ },
-          { campo: 'dTotNeto (Total Neto)', encontrado: /<dTotNeto>[^<]+<\/dTotNeto>/.test(xmlLimpio), regex: /<dTotNeto>[^<]+<\/dTotNeto>/ },
-          { campo: 'dVTot (Total Final)', encontrado: /<dVTot>[^<]+<\/dVTot>/.test(xmlLimpio), regex: /<dVTot>[^<]+<\/dVTot>/ },
-          { campo: 'dId (CUFE)', encontrado: /<dId>[^<]+<\/dId>/.test(xmlLimpio), regex: /<dId>[^<]+<\/dId>/ },
+          { campo: 'dTotNeto (Total Neto)', encontrado: /<dTotNeto>[^<]+<\/dTotNeto>/.test(xmlLimpio), regex: /<dTotNeto>([^<]+)<\/dTotNeto>/ },
+          { campo: 'dVTot (Total Final)', encontrado: /<dVTot>[^<]+<\/dVTot>/.test(xmlLimpio), regex: /<dVTot>([^<]+)<\/dVTot>/ },
+          { campo: 'dId (CUFE)', encontrado: /<dId>[^<]+<\/dId>/.test(xmlLimpio), regex: /<dId>([^<]+)<\/dId>/ },
         ];
 
         // Log de validaciones
@@ -102,8 +107,16 @@ export async function enviarDocumento(
           if (v.encontrado) {
             const match = xmlLimpio.match(v.regex);
             if (match) {
-              // Extraer el valor entre las etiquetas
-              const valor = match[0].replace(/<\/?[^>]+(>|$)/g, '').trim();
+              // Extraer el valor capturado (grupo 1 del regex) o del match completo
+              let valor: string;
+              if (match[1]) {
+                // Si el regex tiene grupo de captura, usar ese valor
+                valor = match[1].trim();
+              } else {
+                // Si no, extraer el valor entre las etiquetas
+                valor = match[0].replace(/<\/?[^>]+(>|$)/g, '').trim();
+              }
+              
               if (!valor || valor === '' || valor === 'null' || valor === 'undefined') {
                 valoresVacios.push(v.campo);
                 console.error(`   ⚠️  ${v.campo} está vacío o es null`);

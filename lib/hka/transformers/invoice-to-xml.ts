@@ -51,15 +51,17 @@ export function transformInvoiceToXMLInput(
   // ============================================
   // TRANSFORMAR DATOS DEL EMISOR
   // ============================================
+  // IMPORTANTE: Todos los campos críticos deben tener valores válidos según documentación HKA
+  // Si faltan, usar valores por defecto para evitar errores de NullReference en HKA
   const emisor: EmisorData = {
-    tipoRuc: mapTipoRUC(invoice.organization.rucType),
+    tipoRuc: mapTipoRUC(invoice.organization.rucType || '2'), // Default: Persona Jurídica
     ruc: invoice.issuerRuc || invoice.organization.ruc || '0000000000',
     dv: invoice.issuerDv || invoice.organization.dv || '00',
-    razonSocial: invoice.issuerName || invoice.organization.name,
+    razonSocial: invoice.issuerName || invoice.organization.name || 'EMISOR SIN NOMBRE', // CRÍTICO: debe tener valor
     nombreComercial: invoice.organization.tradeName || undefined,
     codigoSucursal: invoice.organization.branchCode || '0000',
     puntoFacturacion: invoice.pointOfSale || '001',
-    direccion: invoice.issuerAddress || invoice.organization.address || 'PANAMA',
+    direccion: invoice.issuerAddress || invoice.organization.address || 'PANAMA', // CRÍTICO: debe tener valor
     codigoUbicacion: invoice.organization.locationCode || '1-1-1',
     provincia: invoice.organization.province || 'PANAMA',
     distrito: invoice.organization.district || 'PANAMA',
@@ -71,20 +73,22 @@ export function transformInvoiceToXMLInput(
   // ============================================
   // TRANSFORMAR DATOS DEL RECEPTOR (CLIENTE)
   // ============================================
+  // IMPORTANTE: Todos los campos críticos deben tener valores válidos según documentación HKA
+  // Si faltan, usar valores por defecto para evitar errores de NullReference en HKA
   const receptor: ReceptorData = {
-    tipoRuc: mapTipoRUC(clienteData.rucType),
-    ruc: clienteData.ruc,
-    dv: clienteData.dv,
-    tipoCliente: mapTipoCliente(clienteData.clientType),
-    razonSocial: clienteData.name,
-    direccion: clienteData.address,
+    tipoRuc: mapTipoRUC(clienteData.rucType || '2'), // Default: Persona Jurídica
+    ruc: clienteData.ruc || invoice.receiverRuc || '0000000000', // Fallback a invoice.receiverRuc si no hay customer.ruc
+    dv: clienteData.dv || invoice.receiverDv || '00', // Fallback a invoice.receiverDv si no hay customer.dv
+    tipoCliente: mapTipoCliente(clienteData.clientType || '01'), // Default: Contribuyente
+    razonSocial: clienteData.name || invoice.receiverName || 'CLIENTE SIN NOMBRE', // CRÍTICO: debe tener valor
+    direccion: clienteData.address || invoice.receiverAddress || 'PANAMA', // CRÍTICO: debe tener valor
     codigoUbicacion: clienteData.locationCode || undefined,
-    provincia: clienteData.province || undefined,
-    distrito: clienteData.district || undefined,
+    provincia: clienteData.province || 'PANAMA',
+    distrito: clienteData.district || 'PANAMA',
     corregimiento: clienteData.corregimiento || undefined,
     paisCodigo: clienteData.countryCode || 'PA',
     telefono: clienteData.phone || undefined,
-    correo: clienteData.email || undefined,
+    correo: clienteData.email || invoice.receiverEmail || undefined,
   };
   
   // ============================================
