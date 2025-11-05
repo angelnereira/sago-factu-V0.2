@@ -19,6 +19,8 @@ import {
   TasaITBMS,
   calcularTotales,
 } from '../xml/generator';
+import { getUbicacionOrDefault, getDefaultUbicacion } from '../constants/ubicaciones-panama';
+import { hkaLogger } from '../utils/logger';
 
 // ============================================
 // TIPO PARA INVOICE CON RELACIONES
@@ -53,28 +55,56 @@ export function transformInvoiceToXMLInput(
   // ============================================
   // IMPORTANTE: Todos los campos críticos deben tener valores válidos según documentación HKA
   // Si faltan, usar valores por defecto para evitar errores de NullReference en HKA
+  
+  // Determinar ambiente para usar RUC demo si es necesario
+  const ambienteOrg = (invoice.organization.hkaEnvironment || 'demo').toLowerCase();
+  const isDemo = ambienteOrg === 'demo';
+  
+  // Obtener RUC válido (demo o producción)
+  const { ruc: emisorRuc, dv: emisorDv } = getValidRUC(
+    invoice.issuerRuc || invoice.organization.ruc,
+    invoice.issuerDv || invoice.organization.dv,
+    isDemo
+  );
+  
+  // Obtener ubicación válida usando catálogo
+  const ubicacionEmisor = getUbicacionOrDefault(invoice.organization.locationCode);
+  
   const emisor: EmisorData = {
     tipoRuc: mapTipoRUC(invoice.organization.rucType || '2'), // Default: Persona Jurídica
-    ruc: invoice.issuerRuc || invoice.organization.ruc || '0000000000',
-    dv: invoice.issuerDv || invoice.organization.dv || '00',
+    ruc: emisorRuc,
+    dv: emisorDv,
     razonSocial: invoice.issuerName || invoice.organization.name || 'EMISOR SIN NOMBRE', // CRÍTICO: debe tener valor
     nombreComercial: invoice.organization.tradeName || undefined,
     codigoSucursal: invoice.organization.branchCode || '0000',
     puntoFacturacion: invoice.pointOfSale || '001',
     direccion: invoice.issuerAddress || invoice.organization.address || 'PANAMA', // CRÍTICO: debe tener valor
-    codigoUbicacion: invoice.organization.locationCode || '1-1-1',
-    provincia: invoice.organization.province || 'PANAMA',
-    distrito: invoice.organization.district || 'PANAMA',
-    corregimiento: invoice.organization.corregimiento || 'SAN FELIPE',
+    codigoUbicacion: ubicacionEmisor.codigo,
+    provincia: ubicacionEmisor.provincia,
+    distrito: ubicacionEmisor.distrito,
+    corregimiento: ubicacionEmisor.corregimiento,
     telefono: invoice.organization.phone || undefined,
     correo: invoice.issuerEmail || invoice.organization.email || undefined,
   };
+  
+  // Log warning si se usa RUC demo
+  if (isDemo) {
+    hkaLogger.warn('USING_DEMO_RUC', `Usando RUC demo para ambiente DEMO: ${emisorRuc}`, {
+      invoiceId: invoice.id,
+      organizationId: invoice.organizationId,
+      data: { ruc: emisorRuc, ambiente: ambienteOrg },
+    });
+  }
   
   // ============================================
   // TRANSFORMAR DATOS DEL RECEPTOR (CLIENTE)
   // ============================================
   // IMPORTANTE: Todos los campos críticos deben tener valores válidos según documentación HKA
   // Si faltan, usar valores por defecto para evitar errores de NullReference en HKA
+  
+  // Obtener ubicación válida usando catálogo para receptor
+  const ubicacionReceptor = getUbicacionOrDefault(clienteData.locationCode);
+  
   const receptor: ReceptorData = {
     tipoRuc: mapTipoRUC(clienteData.rucType || '2'), // Default: Persona Jurídica
     ruc: clienteData.ruc || invoice.receiverRuc || '0000000000', // Fallback a invoice.receiverRuc si no hay customer.ruc
@@ -82,10 +112,10 @@ export function transformInvoiceToXMLInput(
     tipoCliente: mapTipoCliente(clienteData.clientType || '01'), // Default: Contribuyente
     razonSocial: clienteData.name || invoice.receiverName || 'CLIENTE SIN NOMBRE', // CRÍTICO: debe tener valor
     direccion: clienteData.address || invoice.receiverAddress || 'PANAMA', // CRÍTICO: debe tener valor
-    codigoUbicacion: clienteData.locationCode || undefined,
-    provincia: clienteData.province || 'PANAMA',
-    distrito: clienteData.district || 'PANAMA',
-    corregimiento: clienteData.corregimiento || undefined,
+    codigoUbicacion: ubicacionReceptor.codigo,
+    provincia: ubicacionReceptor.provincia,
+    distrito: ubicacionReceptor.distrito,
+    corregimiento: ubicacionReceptor.corregimiento,
     paisCodigo: clienteData.countryCode || 'PA',
     telefono: clienteData.phone || undefined,
     correo: clienteData.email || invoice.receiverEmail || undefined,
@@ -156,7 +186,7 @@ export function transformInvoiceToXMLInput(
   // ============================================
   // DETERMINAR AMBIENTE (DEMO O PRODUCCIÓN)
   // ============================================
-  const ambiente = process.env.HKA_ENVIRONMENT === 'prod' 
+  const ambienteTipo = (invoice.organization.hkaEnvironment || 'demo').toLowerCase() === 'prod'
     ? TipoAmbiente.PRODUCCION 
     : TipoAmbiente.DEMO;
   
@@ -173,7 +203,7 @@ export function transformInvoiceToXMLInput(
 
   const facturaInput: FacturaElectronicaInput = {
     // Información General
-    ambiente,
+    ambiente: ambienteTipo,
     tipoEmision: TipoEmision.NORMAL,
     tipoDocumento: mapTipoDocumento(invoice.documentType),
     numeroDocumento: numeroDocumentoSeguro,
@@ -291,6 +321,50 @@ function mapTiempoPago(paymentTerm: string): number {
     'CREDITO': 2,
   };
   return map[paymentTerm] || 1;
+}
+
+// ============================================
+// FUNCIÓN: OBTENER RUC VÁLIDO PARA DEMO
+// ============================================
+
+/**
+ * Obtiene RUC válido para ambiente demo o producción
+ */
+function getValidDemoRUC(): { ruc: string; dv: string } {
+  // RUC demo válido proporcionado por usuario
+  return {
+    ruc: '155738031',
+    dv: '2',
+  };
+}
+
+/**
+ * Obtiene RUC válido según ambiente (demo o producción)
+ */
+function getValidRUC(
+  rucOrg: string | null | undefined,
+  dvOrg: string | null | undefined,
+  isDemo: boolean
+): { ruc: string; dv: string } {
+  // Si es demo, usar RUC demo válido
+  if (isDemo) {
+    return getValidDemoRUC();
+  }
+  
+  // En producción, usar RUC de la organización
+  if (rucOrg && dvOrg) {
+    return {
+      ruc: rucOrg.trim(),
+      dv: dvOrg.trim(),
+    };
+  }
+  
+  // Fallback: usar RUC demo si no hay RUC de organización
+  // (esto puede pasar en casos de prueba incluso en producción)
+  hkaLogger.warn('RUC_FALLBACK', 'No se encontró RUC de organización, usando RUC demo como fallback', {
+    data: { rucOrg, dvOrg, isDemo },
+  });
+  return getValidDemoRUC();
 }
 
 // ============================================

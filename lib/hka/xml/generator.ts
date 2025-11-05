@@ -5,7 +5,9 @@
 // Compatible con The Factory HKA
 
 import { create } from 'xmlbuilder2';
+import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import { formatPanamaISO } from '@/lib/utils/date-timezone';
+import { hkaLogger } from '../utils/logger';
 
 // ============================================
 // TIPOS Y ENUMS
@@ -264,9 +266,8 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   gDGen.ele('iTipoTranVenta').txt(data.tipoTransaccion).up();
   gDGen.ele('iTipoSuc').txt(data.tipoSucursal).up();
   
-  if (data.infoInteres) {
-    gDGen.ele('dInfEmFE').txt(data.infoInteres).up();
-  }
+  // Usar helper para campos opcionales
+  addElementIfNotEmpty(gDGen, 'dInfEmFE', data.infoInteres);
   
   // ============================================
   // DATOS DEL EMISOR
@@ -293,29 +294,25 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   gRucEmi.up();
   
   gEmis.ele('dNombEm').txt(data.emisor.razonSocial.trim()).up(); // Asegurar sin espacios extra
-  if (data.emisor.nombreComercial && data.emisor.nombreComercial.trim() !== '') {
-    gEmis.ele('dNombComer').txt(data.emisor.nombreComercial.trim()).up();
-  }
+  // Usar helper para campos opcionales
+  addElementIfNotEmpty(gEmis, 'dNombComer', data.emisor.nombreComercial);
   gEmis.ele('dSucEm').txt(data.emisor.codigoSucursal.trim()).up();
   // ⚠️ CRÍTICO: NO incluir dCoordEm si está vacío - HKA rechaza campos vacíos
-  // Si tiene coordenadas, agregarlas aquí
+  // Coordenadas no se incluyen por ahora (campo opcional y problemático)
   gEmis.ele('dDirecEm').txt(data.emisor.direccion.trim()).up(); // Asegurar sin espacios extra
   
   // ⚠️ CRÍTICO: gUbiEmi es OBLIGATORIO y todos sus campos deben tener valores válidos
   // HKA rechaza si algún campo de ubicación está vacío
   const gUbiEmi = gEmis.ele('gUbiEmi');
-  gUbiEmi.ele('dCodUbi').txt(data.emisor.codigoUbicacion || '8-1-1').up(); // Default: Panamá Centro
-  gUbiEmi.ele('dCorreg').txt(data.emisor.corregimiento || 'SAN FELIPE').up(); // Default si no viene
-  gUbiEmi.ele('dDistr').txt(data.emisor.distrito || 'PANAMA').up(); // Default si no viene
-  gUbiEmi.ele('dProv').txt(data.emisor.provincia || 'PANAMA').up(); // Default si no viene
+  gUbiEmi.ele('dCodUbi').txt(data.emisor.codigoUbicacion || '8-1-12').up(); // Default: Panamá Centro
+  gUbiEmi.ele('dCorreg').txt(data.emisor.corregimiento || 'SAN FRANCISCO').up(); // Default si no viene
+  gUbiEmi.ele('dDistr').txt(data.emisor.distrito || 'PANAMÁ').up(); // Default si no viene
+  gUbiEmi.ele('dProv').txt(data.emisor.provincia || 'PANAMÁ').up(); // Default si no viene
   gUbiEmi.up();
   
-  if (data.emisor.correo) {
-    gEmis.ele('dCorreoEm').txt(data.emisor.correo).up();
-  }
-  if (data.emisor.telefono) {
-    gEmis.ele('dTfnEm').txt(data.emisor.telefono).up();
-  }
+  // Usar helper para campos opcionales
+  addElementIfNotEmpty(gEmis, 'dCorreoEm', data.emisor.correo);
+  addElementIfNotEmpty(gEmis, 'dTfnEm', data.emisor.telefono);
   gEmis.up();
   
   // ============================================
@@ -350,18 +347,15 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   // ⚠️ CRÍTICO: gUbiRec es OBLIGATORIO para receptores contribuyentes
   // Si no viene codigoUbicacion, usar valores por defecto para evitar campos vacíos
   const gUbiRec = gDatRec.ele('gUbiRec');
-  gUbiRec.ele('dCodUbi').txt(data.receptor.codigoUbicacion || '8-1-1').up(); // Default: Panamá Centro
-  gUbiRec.ele('dCorreg').txt(data.receptor.corregimiento || 'SAN FELIPE').up(); // Default si no viene
-  gUbiRec.ele('dDistr').txt(data.receptor.distrito || 'PANAMA').up(); // Default si no viene
-  gUbiRec.ele('dProv').txt(data.receptor.provincia || 'PANAMA').up(); // Default si no viene
+  gUbiRec.ele('dCodUbi').txt(data.receptor.codigoUbicacion || '8-1-12').up(); // Default: Panamá Centro
+  gUbiRec.ele('dCorreg').txt(data.receptor.corregimiento || 'SAN FRANCISCO').up(); // Default si no viene
+  gUbiRec.ele('dDistr').txt(data.receptor.distrito || 'PANAMÁ').up(); // Default si no viene
+  gUbiRec.ele('dProv').txt(data.receptor.provincia || 'PANAMÁ').up(); // Default si no viene
   gUbiRec.up();
   
-  if (data.receptor.telefono) {
-    gDatRec.ele('dTfnRec').txt(data.receptor.telefono).up();
-  }
-  if (data.receptor.correo) {
-    gDatRec.ele('dCorElectRec').txt(data.receptor.correo).up();
-  }
+  // Usar helper para campos opcionales
+  addElementIfNotEmpty(gDatRec, 'dTfnRec', data.receptor.telefono);
+  addElementIfNotEmpty(gDatRec, 'dCorElectRec', data.receptor.correo);
   gDatRec.ele('cPaisRec').txt(data.receptor.paisCodigo || 'PA').up();
   gDatRec.up();
   

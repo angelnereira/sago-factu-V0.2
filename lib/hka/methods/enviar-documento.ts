@@ -6,6 +6,10 @@ import { hkaTestModeWrapper } from '../utils/test-mode';
 import { validarRUCCompleto, generarRUCPrueba } from '../utils/ruc-validator';
 import { getPanamaTimestamp } from '@/lib/utils/date-timezone';
 import { decryptToken } from '@/lib/utils/encryption';
+import { validateXMLStructure, generateValidationReport } from '../validators/xml-validator';
+import { hkaLogger } from '../utils/logger';
+import { parseHKAResponse, validateMinimumResponse, toEnviarDocumentoResponse } from '../utils/response-parser';
+import { withRetryOrThrow } from '../utils/retry';
 
 /**
  * Obtiene credenciales HKA priorizando BD sobre variables de entorno
@@ -61,7 +65,10 @@ export async function enviarDocumento(
   organizationId?: string
 ): Promise<EnviarDocumentoResponse> {
   try {
-    console.log(`📤 Enviando documento a HKA para invoice: ${invoiceId}`);
+    await hkaLogger.info('ENVIAR_DOCUMENTO_START', `Enviando documento a HKA para invoice: ${invoiceId}`, {
+      invoiceId,
+      organizationId,
+    });
 
     // Obtener organización para usar credenciales de BD si están disponibles
     let organization = null;
@@ -112,7 +119,10 @@ export async function enviarDocumento(
           throw new Error(errorMsg);
         }
 
-        console.log(`   ✅ Credenciales válidas: ${credentials.tokenEmpresa.substring(0, 10)}...`);
+        await hkaLogger.info('CREDENTIALS_VALIDATED', `Credenciales válidas: ${credentials.tokenEmpresa.substring(0, 10)}...`, {
+          invoiceId,
+          organizationId: organization?.id,
+        });
 
         // HKA espera el XML como texto plano sin escapar
         // Remover la declaración XML del inicio si existe
@@ -128,7 +138,42 @@ export async function enviarDocumento(
         // ============================================
         // VALIDACIÓN EXHAUSTIVA DEL XML ANTES DE ENVIAR
         // ============================================
-        console.log('🔍 Validando estructura completa del XML antes de enviar a HKA...');
+        await hkaLogger.info('XML_VALIDATION_START', 'Validando estructura completa del XML antes de enviar a HKA', {
+          invoiceId,
+          organizationId: organization?.id,
+        });
+        
+        // Usar módulo de validación estructurado
+        const validationResult = validateXMLStructure(xmlLimpio);
+        
+        if (!validationResult.isValid) {
+          const report = generateValidationReport(validationResult);
+          await hkaLogger.error('XML_VALIDATION_FAILED', 'XML no válido para HKA', {
+            invoiceId,
+            organizationId: organization?.id,
+            data: { errors: validationResult.errors, warnings: validationResult.warnings },
+            error: new Error(validationResult.errors.join('; ')),
+          });
+          
+          // Guardar XML para debugging
+          await hkaLogger.saveXMLDebug(xmlDocumento, invoiceId, 'validation-failed');
+          
+          throw new Error(`XML inválido para HKA:\n${report}`);
+        }
+        
+        // Log warnings si existen
+        if (validationResult.warnings.length > 0) {
+          await hkaLogger.warn('XML_VALIDATION_WARNINGS', 'Advertencias en validación XML', {
+            invoiceId,
+            organizationId: organization?.id,
+            data: { warnings: validationResult.warnings },
+          });
+        }
+        
+        await hkaLogger.info('XML_VALIDATION_SUCCESS', 'XML válido para HKA', {
+          invoiceId,
+          organizationId: organization?.id,
+        });
         
         // Validaciones de campos críticos según formato rFE v1.00 de HKA/DGI
         // IMPORTANTE: Usar los nombres EXACTOS que se generan en el XML según documentación HKA
@@ -223,68 +268,13 @@ export async function enviarDocumento(
           throw new Error(errorDetallado);
         }
 
-        console.log('✅ Validación XML completa: Todos los campos críticos están presentes y tienen valores válidos');
-        
-        // Guardar XML completo para debugging (SIEMPRE, no solo en desarrollo)
-        const timestamp = Date.now();
-        const xmlDebugPath = `/tmp/xml-hka-${timestamp}.xml`;
-        try {
-          const fs = await import('fs/promises');
-          await fs.writeFile(xmlDebugPath, xmlDocumento, 'utf-8');
-          console.log(`💾 XML completo guardado en: ${xmlDebugPath}`);
-          console.log(`📄 XML a enviar (primeros 1000 chars):\n${xmlLimpio.substring(0, 1000)}...`);
-        } catch (fsError) {
-          console.warn('⚠️  No se pudo guardar XML para debugging:', fsError);
-        }
-        
-        // Validación adicional: Verificar que no haya campos null, undefined o vacíos en el XML
-        // HKA rechaza campos vacíos (<campo/> o <campo></campo>) en campos críticos
-        const xmlString = xmlLimpio;
-        const criticalEmptyFields = [
-          /<dRuc>\s*<\/dRuc>/,
-          /<dRuc\s*\/>/,
-          /<dDV>\s*<\/dDV>/,
-          /<dDV\s*\/>/,
-          /<dNombEm>\s*<\/dNombEm>/,
-          /<dNombEm\s*\/>/,
-          /<dNombRec>\s*<\/dNombRec>/,
-          /<dNombRec\s*\/>/,
-          /<dDirecEm>\s*<\/dDirecEm>/,
-          /<dDirecEm\s*\/>/,
-          /<dDirecRec>\s*<\/dDirecRec>/,
-          /<dDirecRec\s*\/>/,
-          /<dDescProd>\s*<\/dDescProd>/,
-          /<dDescProd\s*\/>/,
-          /<dCodUbi>\s*<\/dCodUbi>/,
-          /<dCodUbi\s*\/>/,
-          /<dCorreg>\s*<\/dCorreg>/,
-          /<dCorreg\s*\/>/,
-          /<dDistr>\s*<\/dDistr>/,
-          /<dDistr\s*\/>/,
-          /<dProv>\s*<\/dProv>/,
-          /<dProv\s*\/>/,
-        ];
-        
-        const foundEmptyFields: string[] = [];
-        criticalEmptyFields.forEach(regex => {
-          if (regex.test(xmlString)) {
-            foundEmptyFields.push(regex.toString());
-          }
+        // Guardar XML completo para debugging (SIEMPRE)
+        const xmlDebugPath = await hkaLogger.saveXMLDebug(xmlDocumento, invoiceId, 'pre-envio');
+        await hkaLogger.debug('XML_PRE_ENVIO', `XML guardado para debugging: ${xmlDebugPath}`, {
+          invoiceId,
+          organizationId: organization?.id,
+          data: { xmlLength: xmlLimpio.length, debugPath: xmlDebugPath },
         });
-        
-        if (foundEmptyFields.length > 0) {
-          const errorMsg = `XML contiene campos vacíos que HKA rechaza (${foundEmptyFields.length} campos detectados).\n\nRevise el XML guardado en: ${xmlDebugPath}\n\nCampos críticos no pueden estar vacíos.`;
-          console.error('❌ Validación final XML falló:', errorMsg);
-          console.error('   XML (primeros 2000 chars):', xmlString.substring(0, 2000));
-          throw new Error(errorMsg);
-        }
-        
-        // Verificar que no haya valores "null" o "undefined" como texto
-        if (xmlString.includes('>null<') || xmlString.includes('>undefined<')) {
-          const errorMsg = `XML contiene valores "null" o "undefined" como texto. HKA rechaza estos valores.\n\nXML guardado en: ${xmlDebugPath}`;
-          console.error('❌ Validación final XML falló:', errorMsg);
-          throw new Error(errorMsg);
-        }
 
         // Obtener cliente SOAP HKA
         const hkaClient = getHKAClient();
@@ -297,24 +287,82 @@ export async function enviarDocumento(
           documento: xmlLimpio, // Enviar sin declaración XML
         };
 
-        // Invocar método SOAP "Enviar" con monitoreo
-        return await monitorHKACall('Enviar', async () => {
-          return await hkaClient.invoke<EnviarDocumentoResponse>('Enviar', params);
+        // Invocar método SOAP "Enviar" con monitoreo y reintentos
+        await hkaLogger.info('HKA_SOAP_INVOKE_START', 'Invocando método SOAP Enviar de HKA', {
+          invoiceId,
+          organizationId: organization?.id,
         });
+        
+        const rawResponse = await withRetryOrThrow(
+          async () => {
+            return await monitorHKACall('Enviar', async () => {
+              return await hkaClient.invoke<any>('Enviar', params);
+            });
+          },
+          {
+            maxRetries: 3,
+            initialDelayMs: 2000,
+            maxDelayMs: 10000,
+          }
+        );
+        
+        // Parsear respuesta robusta
+        await hkaLogger.debug('HKA_RESPONSE_RECEIVED', 'Respuesta recibida de HKA, parseando...', {
+          invoiceId,
+          organizationId: organization?.id,
+          data: { responseType: typeof rawResponse, hasResponse: !!rawResponse },
+        });
+        
+        const parsedResponse = parseHKAResponse(rawResponse);
+        
+        // Validar respuesta mínima
+        const responseValidation = validateMinimumResponse(parsedResponse);
+        if (!responseValidation.isValid) {
+          await hkaLogger.error('HKA_RESPONSE_INVALID', 'Respuesta HKA no contiene campos mínimos requeridos', {
+            invoiceId,
+            organizationId: organization?.id,
+            data: { missingFields: responseValidation.missingFields },
+            error: new Error(`Campos faltantes: ${responseValidation.missingFields.join(', ')}`),
+          });
+          throw new Error(`Respuesta HKA incompleta. Campos faltantes: ${responseValidation.missingFields.join(', ')}`);
+        }
+        
+        // Convertir a formato EnviarDocumentoResponse
+        const response = toEnviarDocumentoResponse(parsedResponse);
+        
+        await hkaLogger.info('HKA_SOAP_INVOKE_SUCCESS', 'Respuesta HKA parseada exitosamente', {
+          invoiceId,
+          organizationId: organization?.id,
+          data: {
+            codigo: response.dCodRes,
+            mensaje: response.dMsgRes,
+            hasCufe: !!response.dCufe,
+            hasCafe: !!response.CAFE,
+            hasPdf: !!response.PDF,
+          },
+        });
+        
+        return response;
       }
     );
 
-    console.log(`✅ Documento enviado exitosamente`);
-    console.log(`   CUFE: ${response.dCufe}`);
-    console.log(`   Protocolo: ${response.dProtocolo}`);
-    console.log(`   Código: ${response.dCodRes}`);
-    console.log(`   Mensaje: ${response.dMsgRes}`);
+    await hkaLogger.info('ENVIAR_DOCUMENTO_SUCCESS', 'Documento enviado exitosamente a HKA', {
+      invoiceId,
+      organizationId,
+      data: {
+        cufe: response.dCufe,
+        cafe: response.CAFE,
+        protocolo: response.nroProtocoloAutorizacion || response.dProtocolo,
+        codigo: response.dCodRes,
+        mensaje: response.dMsgRes,
+      },
+    });
 
     // Verificar si la respuesta indica éxito
-    const isSuccess = response.Exito !== false && response.dCodRes === '0200';
+    const isSuccess = response.Exito !== false && (response.dCodRes === '200' || response.dCodRes === '0200');
     
     // Determinar mensaje de error si existe
-    let errorMessage = response.dMsgRes;
+    let errorMessage = response.dMsgRes || response.Mensaje;
     if (response.Errores && response.Errores.length > 0) {
       errorMessage = response.Errores.map((err) => `${err.Codigo}: ${err.Descripcion}`).join('; ');
     }
@@ -332,9 +380,9 @@ export async function enviarDocumento(
         cufe: response.dCufe,
         cafe: response.CAFE,
         numeroDocumentoFiscal: response.NumeroDocumentoFiscal,
-        hkaProtocol: response.dProtocolo || response.ProtocoloAutorizacion || response.nroProtocoloAutorizacion,
+        hkaProtocol: response.nroProtocoloAutorizacion || response.dProtocolo,
         
-        // Archivos en Base64 (priorizar campos nuevos de la guía, luego legacy)
+        // Archivos en Base64
         pdfBase64: response.PDF || response.xContPDF,
         qrCode: qrCodeBase64, // QR como imagen Base64 (si está disponible)
         qrUrl: qrUrl, // URL del QR para consulta en DGI (según documentación oficial)
@@ -343,8 +391,8 @@ export async function enviarDocumento(
         // Metadatos HKA
         hkaResponseCode: response.dCodRes,
         hkaResponseMessage: errorMessage || response.Mensaje || response.dMsgRes,
-        hkaProtocolDate: response.FechaRecepcion || response.fechaRecepcionDGI 
-          ? new Date(response.FechaRecepcion || response.fechaRecepcionDGI) 
+        hkaProtocolDate: (response.fechaRecepcionDGI || response.FechaRecepcion)
+          ? new Date(response.fechaRecepcionDGI || response.FechaRecepcion || '') 
           : null,
         
         // Estado
@@ -353,26 +401,40 @@ export async function enviarDocumento(
       },
     });
 
-    console.log(`💾 Respuesta de HKA guardada en BD`);
-    console.log(`   PDF: ${response.PDF || response.xContPDF ? 'Sí' : 'No'}`);
-    console.log(`   XML Firmado: ${response.XMLFirmado ? 'Sí' : 'No'}`);
-    console.log(`   QR: ${response.CodigoQR || response.dQr ? 'Sí' : 'No'}`);
+    await hkaLogger.info('HKA_RESPONSE_SAVED', 'Respuesta de HKA guardada en BD', {
+      invoiceId,
+      organizationId,
+      data: {
+        hasPdf: !!(response.PDF || response.xContPDF),
+        hasXml: !!response.XMLFirmado,
+        hasQr: !!(qrCodeBase64 || qrUrl),
+        status: isSuccess ? 'CERTIFIED' : 'REJECTED',
+      },
+    });
 
     return response;
   } catch (error) {
-    console.error('❌ Error al enviar documento:', error);
-    
-    // Determinar mensaje de error
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido al enviar a HKA';
+    
+    await hkaLogger.error('ENVIAR_DOCUMENTO_ERROR', `Error al enviar documento a HKA: ${errorMessage}`, {
+      invoiceId,
+      organizationId,
+      error: error instanceof Error ? error : new Error(String(error)),
+    });
     
     // Actualizar error en base de datos
     await prisma.invoice.update({
       where: { id: invoiceId },
       data: {
-        status: 'REJECTED',
+        status: 'ERROR',
         hkaResponseCode: 'ERROR',
         hkaResponseMessage: errorMessage,
       },
+    }).catch(dbError => {
+      hkaLogger.error('DB_UPDATE_ERROR', 'Error actualizando estado de factura en BD', {
+        invoiceId,
+        error: dbError instanceof Error ? dbError : new Error(String(dbError)),
+      });
     });
 
     throw error;
