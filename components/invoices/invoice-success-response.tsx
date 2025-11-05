@@ -119,7 +119,7 @@ export function InvoiceSuccessResponse({ data }: InvoiceSuccessResponseProps) {
   }
 
   // URL de consulta DGI (según ambiente)
-  const consultaUrl = data.qrUrl || 'https://fe.dai.mef.gob.pa/consulta'
+  const consultaUrl = data.qrUrl || 'https://fe.dgi.mef.gob.pa'
 
   // Debug: Log para verificar datos recibidos (SIEMPRE en desarrollo, también en producción si hay problemas)
   useEffect(() => {
