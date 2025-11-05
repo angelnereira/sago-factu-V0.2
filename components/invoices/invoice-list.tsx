@@ -1,11 +1,10 @@
 "use client"
 
 import { FileText, Eye, Download, Search } from "lucide-react"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
+import { formatPanamaDateShortMonth } from "@/lib/utils/date-timezone"
 
 interface Invoice {
   id: string
@@ -173,7 +172,7 @@ export function InvoiceList({ invoices, currentPage, totalPages, currentStatus }
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {format(new Date(invoice.issueDate || invoice.createdAt), "dd MMM yyyy", { locale: es })}
+                      {formatPanamaDateShortMonth(invoice.issueDate || invoice.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-gray-100">
                       ${typeof invoice.total === 'number' ? invoice.total.toFixed(2) : invoice.total.toString()}

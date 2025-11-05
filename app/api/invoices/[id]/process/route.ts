@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prismaServer as prisma } from '@/lib/prisma-server';
 import { processInvoiceDirectly } from '@/lib/workers/invoice-processor';
 import { requireAuth, requireInvoiceAccess } from '@/lib/auth/api-helpers';
+import { getPanamaTimestamp } from '@/lib/utils/date-timezone';
 
 export async function POST(
   request: NextRequest,
@@ -72,7 +73,7 @@ export async function POST(
     if (requireApproval) {
       await prisma.invoice.update({
         where: { id: invoiceId },
-        data: { status: 'QUEUED', queuedAt: new Date() },
+        data: { status: 'QUEUED', queuedAt: getPanamaTimestamp() },
       });
 
       return NextResponse.json({

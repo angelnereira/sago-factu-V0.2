@@ -15,6 +15,7 @@ import { generateXMLFromInvoice } from '@/lib/hka/transformers/invoice-to-xml';
 import { enviarDocumento } from '@/lib/hka/methods/enviar-documento';
 import { withHKACredentials } from '@/lib/hka/credentials-manager';
 import { enviarCorreoHKA } from '@/lib/hka/methods/enviar-correo';
+import { getPanamaTimestamp } from '@/lib/utils/date-timezone';
 
 // ============================================
 // TIPOS
@@ -243,7 +244,7 @@ export async function processInvoice(
                   recipientEmail: invoice.receiverEmail,
                   hkaTrackingId: emailResponse.IdRastreo,
                   status: 'SENT',
-                  sentAt: new Date(emailResponse.FechaEnvio),
+                  sentAt: emailResponse.FechaEnvio ? new Date(emailResponse.FechaEnvio) : getPanamaTimestamp(),
                   includePDF: true,
                   includeXML: true,
                 },
@@ -290,6 +291,7 @@ export async function processInvoice(
               status: 'CERTIFIED',
               hkaStatus: '0200',
               hkaMessage: `Certificación DEMO por fallback. Motivo: ${errorMsg}`,
+              certifiedAt: getPanamaTimestamp(),
             } as any,
           });
           result.success = true;

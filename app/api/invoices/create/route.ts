@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 import { createInvoiceSchema, calculateInvoiceTotals, calculateItemTotals } from "@/lib/validations/invoice"
 import { Decimal } from "@prisma/client/runtime/library"
 import { Prisma } from "@prisma/client"
+import { getPanamaTimestamp } from "@/lib/utils/date-timezone"
 import crypto from "crypto"
 
 export async function POST(request: Request) {
@@ -193,8 +194,8 @@ export async function POST(request: Request) {
           // Información adicional
           notes,
           
-          // Fechas
-          issueDate: new Date(),
+          // Fechas - usar zona horaria de Panamá
+          issueDate: getPanamaTimestamp(),
         },
       })
 

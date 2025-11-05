@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { monitorHKACall } from '@/lib/monitoring/hka-monitor-wrapper';
 import { hkaTestModeWrapper } from '../utils/test-mode';
 import { validarRUCCompleto, generarRUCPrueba } from '../utils/ruc-validator';
+import { getPanamaTimestamp } from '@/lib/utils/date-timezone';
 
 /**
  * Envía un documento electrónico a HKA (Factura, Nota Crédito, Nota Débito)
@@ -116,7 +117,7 @@ export async function enviarDocumento(
         
         // Estado
         status: isSuccess ? 'CERTIFIED' : 'REJECTED',
-        certifiedAt: isSuccess ? new Date() : null,
+        certifiedAt: isSuccess ? getPanamaTimestamp() : null,
       },
     });
 

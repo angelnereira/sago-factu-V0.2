@@ -5,6 +5,7 @@
 // Compatible con The Factory HKA
 
 import { create } from 'xmlbuilder2';
+import { formatPanamaISO } from '@/lib/utils/date-timezone';
 
 // ============================================
 // TIPOS Y ENUMS
@@ -189,15 +190,9 @@ export function generarCUFE(data: FacturaElectronicaInput): string {
 // ============================================
 
 function formatFecha(fecha: Date): string {
-  // Formato: YYYY-MM-DDTHH:mm:ss-05:00
-  const year = fecha.getFullYear();
-  const month = String(fecha.getMonth() + 1).padStart(2, '0');
-  const day = String(fecha.getDate()).padStart(2, '0');
-  const hours = String(fecha.getHours()).padStart(2, '0');
-  const minutes = String(fecha.getMinutes()).padStart(2, '0');
-  const seconds = String(fecha.getSeconds()).padStart(2, '0');
-  
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}-05:00`;
+  // Formato: YYYY-MM-DDTHH:mm:ss-05:00 (zona horaria de Panamá)
+  // Usa la utilidad de zona horaria para asegurar formato correcto
+  return formatPanamaISO(fecha);
 }
 
 function formatDecimal(value: number, decimals: number = 2): string {

@@ -1,13 +1,12 @@
 "use client"
 
 import { Download, Send, XCircle, CheckCircle, Clock, FileText, ArrowLeft, FileCode } from "lucide-react"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
 import Link from "next/link"
 import { useState } from "react"
 import { SendEmailButton } from "./send-email-button"
 import { EmailHistory } from "./email-history"
 import { useRouter } from "next/navigation"
+import { formatPanamaDateReadable, formatPanamaDateShort } from "@/lib/utils/date-timezone"
 
 interface InvoiceDetailProps {
   invoice: any
@@ -166,7 +165,7 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
               Factura {invoice.invoiceNumber || "Sin número"}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Creada el {format(new Date(invoice.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: es })}
+              Creada el {formatPanamaDateReadable(invoice.createdAt, false)}
             </p>
           </div>
         </div>
@@ -274,7 +273,7 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
                 <div>
                   <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Certificada el</p>
                   <p className="text-xs text-gray-900 dark:text-gray-100">
-                    {format(new Date(invoice.certifiedAt), "dd 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es })}
+                    {formatPanamaDateReadable(invoice.certifiedAt, true)}
                   </p>
                 </div>
               )}
@@ -434,7 +433,7 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
           <div>
             <span className="text-gray-600 dark:text-gray-400">Fecha de emisión:</span>
             <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
-              {format(new Date(invoice.issueDate), "dd/MM/yyyy HH:mm", { locale: es })}
+              {formatPanamaDateShort(invoice.issueDate)}
             </span>
           </div>
           <div>
