@@ -78,7 +78,7 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
   // Debug: Log para verificar datos (SIEMPRE se ejecuta en el cliente)
   useEffect(() => {
-    console.log('🔍 InvoiceDetail Debug (useEffect):', {
+    const debugInfo = {
       status: invoice.status,
       invoiceId: invoice.id,
       hasCufe: !!invoice.cufe,
@@ -90,25 +90,37 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
       qrUrl: invoice.qrUrl,
       hasNumeroFiscal: !!invoice.numeroDocumentoFiscal,
       numeroDocumentoFiscal: invoice.numeroDocumentoFiscal,
-      certifiedData,
-      successData,
-      displayData,
+      certifiedData: certifiedData ? 'EXISTE' : 'NULL',
+      successData: successData ? 'EXISTE' : 'NULL',
+      displayData: displayData ? 'EXISTE' : 'NULL',
       willShowComponent: !!displayData,
-    })
-    console.log('✅ InvoiceDetail se está renderizando correctamente')
-  }, [invoice.status, invoice.cufe, invoice.cafe, displayData])
+    }
+    console.log('🔍 [InvoiceDetail] Debug (useEffect):', debugInfo)
+    console.log('✅ [InvoiceDetail] Componente renderizado correctamente')
+    
+    // Alert visual si está certificada pero no tiene displayData
+    if (invoice.status === 'CERTIFIED' && !displayData) {
+      console.warn('⚠️ [InvoiceDetail] Factura CERTIFIED pero sin displayData!', {
+        certifiedData,
+        successData,
+      })
+    }
+  }, [invoice.status, invoice.cufe, invoice.cafe, invoice.id, invoice.qrCode, invoice.qrUrl, invoice.numeroDocumentoFiscal, certifiedData, successData, displayData])
 
   const handleSendToHKA = async () => {
     setIsProcessing(true)
     setDownloadError(null)
     setSuccessData(null)
     try {
+      console.log('🚀 [InvoiceDetail] Enviando factura a HKA...', invoice.id)
+      
       const response = await fetch(`/api/invoices/${invoice.id}/process`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
 
       const result = await response.json()
+      console.log('📥 [InvoiceDetail] Respuesta recibida:', result)
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || result.message || 'Error al procesar factura')
@@ -116,13 +128,19 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
       // Si hay datos de respuesta exitosa, mostrarlos
       if (result.data) {
+        console.log('✅ [InvoiceDetail] Estableciendo successData:', result.data)
         setSuccessData(result.data)
+        // Scroll al inicio para mostrar el componente
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }, 100)
       } else {
+        console.log('⚠️ [InvoiceDetail] No hay result.data, recargando página...')
         // Recargar la página para mostrar el nuevo estado y CUFE
         router.refresh()
       }
     } catch (error) {
-      console.error("Error al enviar a HKA:", error)
+      console.error("❌ [InvoiceDetail] Error al enviar a HKA:", error)
       setDownloadError(error instanceof Error ? error.message : 'Error al enviar factura')
     } finally {
       setIsProcessing(false)
@@ -199,11 +217,21 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
     <div className="space-y-6">
       {/* DEBUG: Mostrar siempre si está certificada para verificar renderizado */}
       {invoice.status === "CERTIFIED" && (
-        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <p className="text-xs text-blue-800 dark:text-blue-200 font-mono">
-            🐛 DEBUG: Factura CERTIFIED detectada. displayData={displayData ? 'EXISTE' : 'NULL'}, 
-            hasCufe={invoice.cufe ? 'SÍ' : 'NO'}, hasCafe={invoice.cafe ? 'SÍ' : 'NO'}
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg">
+          <p className="text-xs text-blue-800 dark:text-blue-200 font-mono font-bold">
+            🐛 DEBUG: Factura CERTIFIED detectada
           </p>
+          <p className="text-xs text-blue-700 dark:text-blue-300 font-mono mt-1">
+            displayData: {displayData ? '✅ EXISTE' : '❌ NULL'}
+          </p>
+          <p className="text-xs text-blue-700 dark:text-blue-300 font-mono">
+            hasCufe: {invoice.cufe ? '✅ SÍ' : '❌ NO'} | hasCafe: {invoice.cafe ? '✅ SÍ' : '❌ NO'}
+          </p>
+          {successData && (
+            <p className="text-xs text-green-700 dark:text-green-300 font-mono mt-1">
+              ✅ successData establecido (factura recién enviada)
+            </p>
+          )}
         </div>
       )}
 
