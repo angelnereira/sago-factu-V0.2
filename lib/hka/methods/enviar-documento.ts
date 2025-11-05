@@ -237,30 +237,51 @@ export async function enviarDocumento(
           console.warn('⚠️  No se pudo guardar XML para debugging:', fsError);
         }
         
-        // Validación adicional: Verificar que no haya campos null o undefined en el XML
+        // Validación adicional: Verificar que no haya campos null, undefined o vacíos en el XML
+        // HKA rechaza campos vacíos (<campo/> o <campo></campo>) en campos críticos
         const xmlString = xmlLimpio;
-        const nullFields = [
-          'null',
-          'undefined',
-          '<dRuc></dRuc>',
-          '<dRuc/>',
-          '<dDV></dDV>',
-          '<dDV/>',
-          '<dNombEm></dNombEm>',
-          '<dNombEm/>',
-          '<dNombRec></dNombRec>',
-          '<dNombRec/>',
-          '<dDirecEm></dDirecEm>',
-          '<dDirecEm/>',
-          '<dDirecRec></dDirecRec>',
-          '<dDirecRec/>',
-          '<dDescProd></dDescProd>',
-          '<dDescProd/>',
+        const criticalEmptyFields = [
+          /<dRuc>\s*<\/dRuc>/,
+          /<dRuc\s*\/>/,
+          /<dDV>\s*<\/dDV>/,
+          /<dDV\s*\/>/,
+          /<dNombEm>\s*<\/dNombEm>/,
+          /<dNombEm\s*\/>/,
+          /<dNombRec>\s*<\/dNombRec>/,
+          /<dNombRec\s*\/>/,
+          /<dDirecEm>\s*<\/dDirecEm>/,
+          /<dDirecEm\s*\/>/,
+          /<dDirecRec>\s*<\/dDirecRec>/,
+          /<dDirecRec\s*\/>/,
+          /<dDescProd>\s*<\/dDescProd>/,
+          /<dDescProd\s*\/>/,
+          /<dCodUbi>\s*<\/dCodUbi>/,
+          /<dCodUbi\s*\/>/,
+          /<dCorreg>\s*<\/dCorreg>/,
+          /<dCorreg\s*\/>/,
+          /<dDistr>\s*<\/dDistr>/,
+          /<dDistr\s*\/>/,
+          /<dProv>\s*<\/dProv>/,
+          /<dProv\s*\/>/,
         ];
         
-        const foundNullFields = nullFields.filter(field => xmlString.includes(field));
-        if (foundNullFields.length > 0) {
-          const errorMsg = `XML contiene campos vacíos o null que HKA rechaza:\n${foundNullFields.map(f => `  - ${f}`).join('\n')}\n\nXML guardado en: ${xmlDebugPath}`;
+        const foundEmptyFields: string[] = [];
+        criticalEmptyFields.forEach(regex => {
+          if (regex.test(xmlString)) {
+            foundEmptyFields.push(regex.toString());
+          }
+        });
+        
+        if (foundEmptyFields.length > 0) {
+          const errorMsg = `XML contiene campos vacíos que HKA rechaza (${foundEmptyFields.length} campos detectados).\n\nRevise el XML guardado en: ${xmlDebugPath}\n\nCampos críticos no pueden estar vacíos.`;
+          console.error('❌ Validación final XML falló:', errorMsg);
+          console.error('   XML (primeros 2000 chars):', xmlString.substring(0, 2000));
+          throw new Error(errorMsg);
+        }
+        
+        // Verificar que no haya valores "null" o "undefined" como texto
+        if (xmlString.includes('>null<') || xmlString.includes('>undefined<')) {
+          const errorMsg = `XML contiene valores "null" o "undefined" como texto. HKA rechaza estos valores.\n\nXML guardado en: ${xmlDebugPath}`;
           console.error('❌ Validación final XML falló:', errorMsg);
           throw new Error(errorMsg);
         }

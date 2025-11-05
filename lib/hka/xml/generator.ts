@@ -297,14 +297,17 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
     gEmis.ele('dNombComer').txt(data.emisor.nombreComercial.trim()).up();
   }
   gEmis.ele('dSucEm').txt(data.emisor.codigoSucursal.trim()).up();
-  gEmis.ele('dCoordEm').txt('').up(); // Coordenadas opcionales
+  // ⚠️ CRÍTICO: NO incluir dCoordEm si está vacío - HKA rechaza campos vacíos
+  // Si tiene coordenadas, agregarlas aquí
   gEmis.ele('dDirecEm').txt(data.emisor.direccion.trim()).up(); // Asegurar sin espacios extra
   
+  // ⚠️ CRÍTICO: gUbiEmi es OBLIGATORIO y todos sus campos deben tener valores válidos
+  // HKA rechaza si algún campo de ubicación está vacío
   const gUbiEmi = gEmis.ele('gUbiEmi');
-  gUbiEmi.ele('dCodUbi').txt(data.emisor.codigoUbicacion).up();
-  gUbiEmi.ele('dCorreg').txt(data.emisor.corregimiento).up();
-  gUbiEmi.ele('dDistr').txt(data.emisor.distrito).up();
-  gUbiEmi.ele('dProv').txt(data.emisor.provincia).up();
+  gUbiEmi.ele('dCodUbi').txt(data.emisor.codigoUbicacion || '8-1-1').up(); // Default: Panamá Centro
+  gUbiEmi.ele('dCorreg').txt(data.emisor.corregimiento || 'SAN FELIPE').up(); // Default si no viene
+  gUbiEmi.ele('dDistr').txt(data.emisor.distrito || 'PANAMA').up(); // Default si no viene
+  gUbiEmi.ele('dProv').txt(data.emisor.provincia || 'PANAMA').up(); // Default si no viene
   gUbiEmi.up();
   
   if (data.emisor.correo) {
@@ -344,14 +347,14 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   gDatRec.ele('dNombRec').txt(data.receptor.razonSocial.trim()).up(); // Asegurar sin espacios extra
   gDatRec.ele('dDirecRec').txt(data.receptor.direccion.trim()).up(); // Asegurar sin espacios extra
   
-  if (data.receptor.codigoUbicacion) {
-    const gUbiRec = gDatRec.ele('gUbiRec');
-    gUbiRec.ele('dCodUbi').txt(data.receptor.codigoUbicacion).up();
-    gUbiRec.ele('dCorreg').txt(data.receptor.corregimiento || '').up();
-    gUbiRec.ele('dDistr').txt(data.receptor.distrito || '').up();
-    gUbiRec.ele('dProv').txt(data.receptor.provincia || '').up();
-    gUbiRec.up();
-  }
+  // ⚠️ CRÍTICO: gUbiRec es OBLIGATORIO para receptores contribuyentes
+  // Si no viene codigoUbicacion, usar valores por defecto para evitar campos vacíos
+  const gUbiRec = gDatRec.ele('gUbiRec');
+  gUbiRec.ele('dCodUbi').txt(data.receptor.codigoUbicacion || '8-1-1').up(); // Default: Panamá Centro
+  gUbiRec.ele('dCorreg').txt(data.receptor.corregimiento || 'SAN FELIPE').up(); // Default si no viene
+  gUbiRec.ele('dDistr').txt(data.receptor.distrito || 'PANAMA').up(); // Default si no viene
+  gUbiRec.ele('dProv').txt(data.receptor.provincia || 'PANAMA').up(); // Default si no viene
+  gUbiRec.up();
   
   if (data.receptor.telefono) {
     gDatRec.ele('dTfnRec').txt(data.receptor.telefono).up();
