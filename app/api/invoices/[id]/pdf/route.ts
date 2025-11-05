@@ -40,6 +40,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       if (invoice.numeroDocumentoFiscal) {
         fileName = `Factura_${invoice.numeroDocumentoFiscal.replace(/\//g, '-')}.pdf`;
       }
+      
+      // Marcar como descargado si no estaba marcado
+      if (!invoice.pdfDescargado) {
+        await prisma.invoice.update({
+          where: { id: invoiceId },
+          data: { pdfDescargado: true },
+        });
+      }
     } else if (invoice.cufe) {
       // Fallback: obtener PDF desde HKA si no está en BD
       console.log('⚠️ PDF no en BD, obteniendo desde HKA...');
@@ -48,6 +56,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         if (!pdfBuffer) {
           return NextResponse.json({ error: 'No se pudo obtener el PDF desde HKA' }, { status: 500 });
         }
+        
+        // Guardar PDF en BD para futuras consultas y marcar como descargado
+        await prisma.invoice.update({
+          where: { id: invoiceId },
+          data: {
+            pdfBase64: pdfBuffer.toString('base64'),
+            pdfDescargado: true,
+          },
+        });
       } catch (error) {
         console.error('Error al obtener PDF desde HKA:', error);
         return NextResponse.json({ error: 'PDF no disponible en la base de datos ni en HKA' }, { status: 404 });

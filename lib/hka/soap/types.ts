@@ -30,17 +30,20 @@ export interface EnviarDocumentoParams {
 export interface EnviarDocumentoResponse extends HKABaseResponse {
   dCufe?: string;         // Código Único de Factura Electrónica
   dProtocolo?: string;    // Número de protocolo
-  dQr?: string;           // Código QR
+  dQr?: string;           // Código QR (puede ser URL o Base64 según la versión de HKA)
   xContPDF?: string;      // Contenido PDF en Base64
   // Campos adicionales según guía de implementación HKA
   CAFE?: string;          // Código de Autorización FE
   NumeroDocumentoFiscal?: string; // Ej: 001-0000-01-12345678
   XMLFirmado?: string;    // XML firmado por DGI (Base64)
   PDF?: string;           // PDF generado por HKA (Base64)
-  CodigoQR?: string;      // Imagen QR en Base64
+  CodigoQR?: string;      // Imagen QR en Base64 (legacy)
+  qr?: string;            // URL del QR para consulta en DGI (según documentación oficial)
+  fechaRecepcionDGI?: string; // Fecha de recepción en DGI (ISO DateTime)
+  nroProtocoloAutorizacion?: string; // Número de protocolo de autorización
   Mensaje?: string;       // Mensaje descriptivo de respuesta
-  FechaRecepcion?: string; // Fecha de recepción (ISO DateTime)
-  ProtocoloAutorizacion?: string; // ID protocolo de autorización
+  FechaRecepcion?: string; // Fecha de recepción (ISO DateTime) - alias
+  ProtocoloAutorizacion?: string; // ID protocolo de autorización - alias
   Exito?: boolean;        // Indica si el proceso fue exitoso
   Errores?: Array<{       // Array de errores (si los hay)
     Codigo: string;

@@ -309,7 +309,8 @@ model Invoice {
   cufe                   String?      @unique
   cafe                   String? // Código de Autorización FE
   numeroDocumentoFiscal  String? // Ej: 001-0000-01-12345678
-  qrCode                 String?      @db.Text
+  qrCode                 String?      @db.Text // QR en Base64 (imagen)
+  qrUrl                  String?      @db.Text // URL del QR para consulta en DGI
 
   // Campos adicionales para XML/HKA
   pointOfSale   String    @default("001")
@@ -351,6 +352,10 @@ model Invoice {
   hkaResponseData    Json? // Datos adicionales en JSON
   hkaLastAttempt     DateTime?
   hkaAttempts        Int       @default(0)
+  
+  // Control de descarga de archivos
+  pdfDescargado      Boolean   @default(false) // Indica si el PDF fue descargado
+  xmlDescargado      Boolean   @default(false) // Indica si el XML fue descargado
 
   // Storage
   xmlUrl String?

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { SendEmailButton } from "./send-email-button"
 import { EmailHistory } from "./email-history"
+import { InvoiceSuccessResponse } from "./invoice-success-response"
 import { useRouter } from "next/navigation"
 import { formatPanamaDateReadable, formatPanamaDateShort } from "@/lib/utils/date-timezone"
 
@@ -55,12 +56,14 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
+  const [successData, setSuccessData] = useState<any>(null)
   const status = statusConfig[invoice.status as keyof typeof statusConfig] || statusConfig.DRAFT
   const StatusIcon = status.icon
 
   const handleSendToHKA = async () => {
     setIsProcessing(true)
     setDownloadError(null)
+    setSuccessData(null)
     try {
       const response = await fetch(`/api/invoices/${invoice.id}/process`, {
         method: 'POST',
@@ -73,8 +76,13 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
         throw new Error(result.error || result.message || 'Error al procesar factura')
       }
 
-      // Recargar la página para mostrar el nuevo estado y CUFE
-      router.refresh()
+      // Si hay datos de respuesta exitosa, mostrarlos
+      if (result.data) {
+        setSuccessData(result.data)
+      } else {
+        // Recargar la página para mostrar el nuevo estado y CUFE
+        router.refresh()
+      }
     } catch (error) {
       console.error("Error al enviar a HKA:", error)
       setDownloadError(error instanceof Error ? error.message : 'Error al enviar factura')
@@ -151,6 +159,24 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
   return (
     <div className="space-y-6">
+      {/* Mostrar componente de respuesta exitosa si hay datos de éxito */}
+      {successData && (
+        <div className="mb-6">
+          <InvoiceSuccessResponse data={successData} />
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => {
+                setSuccessData(null)
+                router.refresh()
+              }}
+              className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -170,8 +196,26 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
           </div>
         </div>
 
+        {/* Mostrar componente de respuesta exitosa si hay datos de éxito */}
+        {successData && (
+          <div className="mb-6">
+            <InvoiceSuccessResponse data={successData} />
+            <div className="mt-4 flex justify-center">
+              <button
+                onClick={() => {
+                  setSuccessData(null)
+                  router.refresh()
+                }}
+                className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center space-x-3">
-          {invoice.status === "CERTIFIED" && (
+          {invoice.status === "CERTIFIED" && !successData && (
             <>
               <button
                 onClick={handleDownloadPDF}

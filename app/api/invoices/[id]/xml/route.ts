@@ -36,6 +36,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           xmlContent = invoice.rawXml; // Usar el original si falla
         }
       }
+      
+      // Marcar como descargado si no estaba marcado
+      if (!invoice.xmlDescargado) {
+        await prisma.invoice.update({
+          where: { id: invoiceId },
+          data: { xmlDescargado: true },
+        });
+      }
     } else if (invoice.xmlContent) {
       // XML generado (no firmado)
       console.log('⚠️ Usando XML generado (no firmado)');

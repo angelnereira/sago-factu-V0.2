@@ -95,6 +95,11 @@ export async function enviarDocumento(
       errorMessage = response.Errores.map((err) => `${err.Codigo}: ${err.Descripcion}`).join('; ');
     }
 
+    // Determinar si el QR es una URL o Base64
+    // Según la documentación oficial, HKA devuelve el QR como URL para consulta DGI
+    const qrUrl = response.qr || (response.dQr && response.dQr.startsWith('http') ? response.dQr : null);
+    const qrCodeBase64 = response.CodigoQR || (response.dQr && !response.dQr.startsWith('http') ? response.dQr : null);
+    
     // Actualizar en base de datos con Prisma - CAPTURA COMPLETA DE RESPUESTA
     await prisma.invoice.update({
       where: { id: invoiceId },
@@ -103,17 +108,20 @@ export async function enviarDocumento(
         cufe: response.dCufe,
         cafe: response.CAFE,
         numeroDocumentoFiscal: response.NumeroDocumentoFiscal,
-        hkaProtocol: response.dProtocolo || response.ProtocoloAutorizacion,
+        hkaProtocol: response.dProtocolo || response.ProtocoloAutorizacion || response.nroProtocoloAutorizacion,
         
         // Archivos en Base64 (priorizar campos nuevos de la guía, luego legacy)
         pdfBase64: response.PDF || response.xContPDF,
-        qrCode: response.CodigoQR || response.dQr,
+        qrCode: qrCodeBase64, // QR como imagen Base64 (si está disponible)
+        qrUrl: qrUrl, // URL del QR para consulta en DGI (según documentación oficial)
         rawXml: response.XMLFirmado, // XML firmado por DGI
         
         // Metadatos HKA
         hkaResponseCode: response.dCodRes,
         hkaResponseMessage: errorMessage || response.Mensaje || response.dMsgRes,
-        hkaProtocolDate: response.FechaRecepcion ? new Date(response.FechaRecepcion) : null,
+        hkaProtocolDate: response.FechaRecepcion || response.fechaRecepcionDGI 
+          ? new Date(response.FechaRecepcion || response.fechaRecepcionDGI) 
+          : null,
         
         // Estado
         status: isSuccess ? 'CERTIFIED' : 'REJECTED',

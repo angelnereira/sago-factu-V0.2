@@ -97,13 +97,40 @@ export async function POST(
     });
 
     if (result.success) {
+      // Obtener factura actualizada con todos los campos de respuesta HKA
+      const invoiceUpdated = await prisma.invoice.findUnique({
+        where: { id: invoiceId },
+        select: {
+          id: true,
+          cufe: true,
+          cafe: true,
+          numeroDocumentoFiscal: true,
+          qrUrl: true,
+          qrCode: true,
+          hkaProtocol: true,
+          hkaProtocolDate: true,
+          status: true,
+          certifiedAt: true,
+        },
+      });
+
       return NextResponse.json({
         success: true,
         message: result.sentToHKA 
-          ? 'Factura procesada y enviada a HKA' 
+          ? 'Factura procesada y enviada a HKA exitosamente' 
           : 'Factura procesada y certificada en modo DEMO',
-        cufe: result.cufe,
-        status: result.sentToHKA ? 'PROCESSING' : 'CERTIFIED',
+        data: {
+          invoiceId: invoiceUpdated?.id,
+          cufe: invoiceUpdated?.cufe || result.cufe,
+          cafe: invoiceUpdated?.cafe,
+          numeroDocumentoFiscal: invoiceUpdated?.numeroDocumentoFiscal,
+          qrUrl: invoiceUpdated?.qrUrl,
+          protocoloAutorizacion: invoiceUpdated?.hkaProtocol,
+          fechaRecepcionDGI: invoiceUpdated?.hkaProtocolDate 
+            ? invoiceUpdated.hkaProtocolDate.toISOString() 
+            : null,
+          status: invoiceUpdated?.status || (result.sentToHKA ? 'PROCESSING' : 'CERTIFIED'),
+        },
       });
     } else {
       return NextResponse.json({
