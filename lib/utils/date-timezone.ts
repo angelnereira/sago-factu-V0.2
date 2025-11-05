@@ -3,7 +3,7 @@
  * Panamá usa America/Panama (UTC-5) sin horario de verano
  */
 
-import { format, formatInTimeZone, zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+import { formatInTimeZone, fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 
 // Zona horaria de Panamá
@@ -14,21 +14,21 @@ export const PANAMA_TIMEZONE = 'America/Panama';
  */
 export function nowInPanama(): Date {
   const now = new Date();
-  return utcToZonedTime(now, PANAMA_TIMEZONE);
+  return toZonedTime(now, PANAMA_TIMEZONE);
 }
 
 /**
  * Convierte una fecha UTC a zona horaria de Panamá
  */
 export function toPanamaTime(date: Date): Date {
-  return utcToZonedTime(date, PANAMA_TIMEZONE);
+  return toZonedTime(date, PANAMA_TIMEZONE);
 }
 
 /**
  * Convierte una fecha de Panamá a UTC
  */
 export function panamaToUTC(date: Date): Date {
-  return zonedTimeToUtc(date, PANAMA_TIMEZONE);
+  return fromZonedTime(date, PANAMA_TIMEZONE);
 }
 
 /**
@@ -87,7 +87,7 @@ export function createPanamaDate(
 ): Date {
   // Crear fecha en formato ISO string asumiendo Panamá
   const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}-05:00`;
-  return zonedTimeToUtc(new Date(dateStr), PANAMA_TIMEZONE);
+  return fromZonedTime(new Date(dateStr), PANAMA_TIMEZONE);
 }
 
 /**
@@ -105,7 +105,7 @@ export function getPanamaTimestamp(): Date {
   // Convertir ese string ISO (que tiene offset -05:00) a un Date en UTC
   // Esto asegura que cuando se almacene en BD (UTC) y se lea y formatee,
   // mostrará la hora correcta de Panamá
-  return zonedTimeToUtc(panamaISO, PANAMA_TIMEZONE);
+  return fromZonedTime(panamaISO, PANAMA_TIMEZONE);
 }
 
 /**
