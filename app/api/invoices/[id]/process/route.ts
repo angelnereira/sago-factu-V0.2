@@ -84,10 +84,16 @@ export async function POST(
     }
 
     // Procesar factura inmediatamente
-    // IMPORTANTE: Solo enviar a HKA si hay credenciales configuradas
-    // NO simular respuestas - solo respuestas reales de HKA
+    // En DEMO: permitir enviar a HKA para probar conexión y credenciales
+    // En PROD: solo enviar si hay credenciales configuradas
+    const env = (invoice.organization.hkaEnvironment || 'demo').toLowerCase();
     const hasSimpleCreds = Boolean(invoice.organization.hkaTokenUser && invoice.organization.hkaTokenPassword);
-    const shouldSendToHKA = autoSendToHKA && hasSimpleCreds;
+    
+    // En DEMO siempre intentar enviar si hay credenciales (para testing)
+    // En PROD solo enviar si autoSendToHKA está habilitado y hay credenciales
+    const shouldSendToHKA = (env === 'demo' || env === 'prod' || env === 'production')
+      ? (autoSendToHKA && hasSimpleCreds)
+      : false;
 
     const result = await processInvoiceDirectly(invoiceId, {
       sendToHKA: shouldSendToHKA,

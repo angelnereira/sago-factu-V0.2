@@ -280,8 +280,28 @@ export async function processInvoice(
         console.error(`   ❌ Error al enviar a HKA:`, hkaError);
         const errorMsg = hkaError instanceof Error ? hkaError.message : 'Error desconocido';
 
-        // NO SIMULAR certificaciones - Solo respuestas reales de HKA
-        // Actualizar estado de la factura para reflejar el error real
+        // En ambiente DEMO, mostrar el error pero permitir continuar con testing
+        // NO simular certificación, pero sí permitir que el usuario vea el error de conexión
+        if (invoice.organization.hkaEnvironment === 'DEMO') {
+          console.log(`   ⚠️  Ambiente DEMO: Error de conexión detectado - ${errorMsg}`);
+          console.log(`   💡 Esto es útil para probar credenciales y conexión antes de producción`);
+          
+          await prisma.invoice.update({
+            where: { id: invoiceId },
+            data: {
+              status: 'ERROR',
+              hkaStatus: 'ERROR',
+              hkaMessage: `[DEMO] Error de conexión con HKA: ${errorMsg}. Verifique credenciales y conexión.`,
+            } as any,
+          });
+
+          result.sentToHKA = false;
+          result.success = false;
+          result.error = `Error de conexión en ambiente DEMO: ${errorMsg}. Verifique credenciales y configuración.`;
+          return result;
+        }
+
+        // En producción: propagar error real
         await prisma.invoice.update({
           where: { id: invoiceId },
           data: {
@@ -291,7 +311,6 @@ export async function processInvoice(
           } as any,
         });
 
-        // Propagar error para que el usuario vea el problema real
         result.sentToHKA = false;
         result.success = false;
         result.error = errorMsg;
@@ -299,20 +318,25 @@ export async function processInvoice(
       }
     } else {
       console.log('\n⏭️  PASO 5: Envío a HKA deshabilitado');
+      
+      const isDemo = invoice.organization.hkaEnvironment === 'DEMO';
+      const mensaje = isDemo
+        ? 'XML generado correctamente. En ambiente DEMO, configure credenciales HKA para probar la conexión real.'
+        : 'Factura generada pero no enviada a HKA. Configure credenciales HKA para enviar.';
 
-      // NO SIMULAR certificaciones - La factura debe enviarse a HKA para ser certificada
-      // Si no se envía a HKA, mantenerla en estado DRAFT
+      // En DEMO: mantener como DRAFT pero con mensaje claro de que es para testing
+      // En producción: mantener como DRAFT hasta que se envíe
       await prisma.invoice.update({
         where: { id: invoiceId },
         data: {
-          status: 'DRAFT', // Mantener como borrador hasta que se envíe realmente a HKA
-          hkaMessage: 'Factura generada pero no enviada a HKA. Configure credenciales HKA para enviar.',
+          status: 'DRAFT',
+          hkaMessage: mensaje,
         } as any,
       });
 
       result.success = false;
       result.sentToHKA = false;
-      result.error = 'Envío a HKA deshabilitado. Configure credenciales HKA para enviar la factura.';
+      result.error = mensaje;
     }
 
     // ============================================
