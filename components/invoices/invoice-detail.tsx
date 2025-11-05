@@ -61,19 +61,41 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
   const StatusIcon = status.icon
 
   // Preparar datos para mostrar InvoiceSuccessResponse si la factura está certificada
-  const certifiedData = invoice.status === "CERTIFIED" && (invoice.cufe || invoice.cafe) ? {
+  // IMPORTANTE: Mostrar siempre si está certificada, incluso sin CUFE/CAFE (para mostrar datos parciales)
+  const certifiedData = invoice.status === "CERTIFIED" ? {
     invoiceId: invoice.id,
-    cufe: invoice.cufe,
-    cafe: invoice.cafe,
-    numeroDocumentoFiscal: invoice.numeroDocumentoFiscal,
-    qrUrl: invoice.qrUrl,
-    qrCode: invoice.qrCode,
-    protocoloAutorizacion: invoice.hkaProtocol,
+    cufe: invoice.cufe || undefined,
+    cafe: invoice.cafe || undefined,
+    numeroDocumentoFiscal: invoice.numeroDocumentoFiscal || undefined,
+    qrUrl: invoice.qrUrl || undefined,
+    qrCode: invoice.qrCode || undefined,
+    protocoloAutorizacion: invoice.hkaProtocol || undefined,
     fechaRecepcionDGI: invoice.hkaProtocolDate ? new Date(invoice.hkaProtocolDate).toISOString() : null,
   } : null
 
   // Mostrar successData si existe (después de enviar) o certifiedData si la factura ya está certificada
   const displayData = successData || certifiedData
+
+  // Debug: Log para verificar datos (siempre en desarrollo, también en producción si hay problemas)
+  if (typeof window !== 'undefined') {
+    console.log('🔍 InvoiceDetail Debug:', {
+      status: invoice.status,
+      invoiceId: invoice.id,
+      hasCufe: !!invoice.cufe,
+      cufe: invoice.cufe,
+      hasCafe: !!invoice.cafe,
+      cafe: invoice.cafe,
+      hasQrCode: !!invoice.qrCode,
+      hasQrUrl: !!invoice.qrUrl,
+      qrUrl: invoice.qrUrl,
+      hasNumeroFiscal: !!invoice.numeroDocumentoFiscal,
+      numeroDocumentoFiscal: invoice.numeroDocumentoFiscal,
+      certifiedData,
+      successData,
+      displayData,
+      willShowComponent: !!displayData,
+    })
+  }
 
   const handleSendToHKA = async () => {
     setIsProcessing(true)
@@ -175,7 +197,7 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
   return (
     <div className="space-y-6">
       {/* Mostrar componente de respuesta exitosa si hay datos de éxito O si la factura ya está certificada */}
-      {displayData && (
+      {displayData ? (
         <div className="mb-6">
           <InvoiceSuccessResponse data={displayData} />
           {/* Solo mostrar botón "Continuar" si es successData (recién enviado) */}
@@ -193,7 +215,17 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
             </div>
           )}
         </div>
-      )}
+      ) : invoice.status === "CERTIFIED" ? (
+        // Fallback: Si está certificada pero no tiene displayData, mostrar mensaje
+        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            ⚠️ Factura certificada pero faltan datos de respuesta HKA. Recarga la página o contacta soporte.
+          </p>
+          <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-2">
+            Debug: status={invoice.status}, hasCufe={invoice.cufe ? 'sí' : 'no'}, hasCafe={invoice.cafe ? 'sí' : 'no'}
+          </p>
+        </div>
+      ) : null}
 
       {/* Header */}
       <div className="flex items-center justify-between">

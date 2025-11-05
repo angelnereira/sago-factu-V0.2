@@ -121,6 +121,30 @@ export function InvoiceSuccessResponse({ data }: InvoiceSuccessResponseProps) {
   // URL de consulta DGI (según ambiente)
   const consultaUrl = data.qrUrl || 'https://fe.dai.mef.gob.pa/consulta'
 
+  // Debug: Log para verificar datos recibidos (solo en desarrollo)
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('🔍 InvoiceSuccessResponse Debug:', {
+      invoiceId: data.invoiceId,
+      hasCufe: !!data.cufe,
+      hasCafe: !!data.cafe,
+      hasQrCode: !!data.qrCode,
+      hasQrUrl: !!data.qrUrl,
+      numeroDocumentoFiscal: data.numeroDocumentoFiscal,
+      consultaUrl,
+    })
+  }
+
+  // Validación: Si no hay invoiceId, no renderizar
+  if (!data.invoiceId) {
+    if (typeof window !== 'undefined') {
+      console.warn('⚠️ InvoiceSuccessResponse: Falta invoiceId', data)
+    }
+    return null
+  }
+
+  // Mostrar componente incluso sin CUFE/CAFE, pero con mensaje informativo
+  const hasMinimumData = data.cufe || data.cafe
+
   return (
     <>
       {/* Modal de vista previa PDF */}
@@ -151,6 +175,16 @@ export function InvoiceSuccessResponse({ data }: InvoiceSuccessResponseProps) {
 
       {/* Contenedor principal */}
       <div className="w-full max-w-4xl mx-auto space-y-6">
+        {/* Mensaje si faltan datos críticos */}
+        {!hasMinimumData && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-600 rounded-lg p-4">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              ⚠️ <strong>Nota:</strong> Esta factura está certificada pero aún no se han recibido todos los datos de respuesta de HKA. 
+              Los datos se completarán automáticamente cuando estén disponibles.
+            </p>
+          </div>
+        )}
+
         {/* Documento tipo CAFE - Similar al documento físico de la DGI */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border-2 border-gray-300 dark:border-gray-600 p-8 space-y-6">
           {/* Header tipo documento oficial */}
@@ -183,7 +217,7 @@ export function InvoiceSuccessResponse({ data }: InvoiceSuccessResponseProps) {
             </div>
 
             {/* CUFE */}
-            {data.cufe && (
+            {data.cufe ? (
               <>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
                   Usando el CUFE:
@@ -203,12 +237,15 @@ export function InvoiceSuccessResponse({ data }: InvoiceSuccessResponseProps) {
                 {copied && (
                   <p className="text-xs text-green-600 dark:text-green-400">✓ CUFE copiado al portapapeles</p>
                 )}
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+                  O escaneando el código QR
+                </p>
               </>
+            ) : (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 italic">
+                CUFE pendiente de asignación por HKA...
+              </p>
             )}
-
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
-              O escaneando el código QR
-            </p>
           </div>
 
           {/* QR Code - Visual prominente */}
