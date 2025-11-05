@@ -125,6 +125,7 @@ export async function POST(
           cafe: invoiceUpdated?.cafe,
           numeroDocumentoFiscal: invoiceUpdated?.numeroDocumentoFiscal,
           qrUrl: invoiceUpdated?.qrUrl,
+          qrCode: invoiceUpdated?.qrCode, // QR en Base64 para mostrar como imagen
           protocoloAutorizacion: invoiceUpdated?.hkaProtocol,
           fechaRecepcionDGI: invoiceUpdated?.hkaProtocolDate 
             ? invoiceUpdated.hkaProtocolDate.toISOString() 
