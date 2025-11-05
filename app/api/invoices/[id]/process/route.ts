@@ -84,16 +84,26 @@ export async function POST(
     }
 
     // Procesar factura inmediatamente
-    // En DEMO: permitir enviar a HKA para probar conexión y credenciales
-    // En PROD: solo enviar si hay credenciales configuradas
+    // FUNCIONALIDAD GLOBAL: Todos los usuarios usan la misma lógica de envío
+    // Las credenciales se obtienen automáticamente: primero de BD, luego de .env
     const env = (invoice.organization.hkaEnvironment || 'demo').toLowerCase();
-    const hasSimpleCreds = Boolean(invoice.organization.hkaTokenUser && invoice.organization.hkaTokenPassword);
     
-    // En DEMO siempre intentar enviar si hay credenciales (para testing)
-    // En PROD solo enviar si autoSendToHKA está habilitado y hay credenciales
-    const shouldSendToHKA = (env === 'demo' || env === 'prod' || env === 'production')
-      ? (autoSendToHKA && hasSimpleCreds)
-      : false;
+    // Verificar si hay credenciales disponibles (BD o .env)
+    // getHKACredentialsForInvoice maneja esto automáticamente, pero verificamos aquí para evitar errores
+    const hasOrgCreds = Boolean(invoice.organization.hkaTokenUser && invoice.organization.hkaTokenPassword);
+    const hasEnvCreds = Boolean(
+      process.env.HKA_DEMO_TOKEN_USER || process.env.HKA_PROD_TOKEN_USER
+    );
+    
+    // Determinar si debe enviar a HKA
+    // - Si autoSendToHKA está habilitado Y hay credenciales (BD o .env)
+    // - Funciona igual para todos los usuarios (SIMPLE, DASHBOARD, ENTERPRISE)
+    const shouldSendToHKA = autoSendToHKA && (hasOrgCreds || hasEnvCreds);
+    
+    if (!shouldSendToHKA && autoSendToHKA) {
+      console.warn(`⚠️  Envío a HKA deshabilitado: autoSendToHKA=${autoSendToHKA}, hasOrgCreds=${hasOrgCreds}, hasEnvCreds=${hasEnvCreds}`);
+      console.warn(`   Configure credenciales en /simple/configuracion o en variables de entorno (.env)`);
+    }
 
     const result = await processInvoiceDirectly(invoiceId, {
       sendToHKA: shouldSendToHKA,

@@ -225,9 +225,44 @@ export async function enviarDocumento(
 
         console.log('✅ Validación XML completa: Todos los campos críticos están presentes y tienen valores válidos');
         
-        // Guardar XML para debugging (solo si hay error después)
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`📄 XML a enviar (primeros 500 chars): ${xmlLimpio.substring(0, 500)}...`);
+        // Guardar XML completo para debugging (SIEMPRE, no solo en desarrollo)
+        const timestamp = Date.now();
+        const xmlDebugPath = `/tmp/xml-hka-${timestamp}.xml`;
+        try {
+          const fs = await import('fs/promises');
+          await fs.writeFile(xmlDebugPath, xmlDocumento, 'utf-8');
+          console.log(`💾 XML completo guardado en: ${xmlDebugPath}`);
+          console.log(`📄 XML a enviar (primeros 1000 chars):\n${xmlLimpio.substring(0, 1000)}...`);
+        } catch (fsError) {
+          console.warn('⚠️  No se pudo guardar XML para debugging:', fsError);
+        }
+        
+        // Validación adicional: Verificar que no haya campos null o undefined en el XML
+        const xmlString = xmlLimpio;
+        const nullFields = [
+          'null',
+          'undefined',
+          '<dRuc></dRuc>',
+          '<dRuc/>',
+          '<dDV></dDV>',
+          '<dDV/>',
+          '<dNombEm></dNombEm>',
+          '<dNombEm/>',
+          '<dNombRec></dNombRec>',
+          '<dNombRec/>',
+          '<dDirecEm></dDirecEm>',
+          '<dDirecEm/>',
+          '<dDirecRec></dDirecRec>',
+          '<dDirecRec/>',
+          '<dDescProd></dDescProd>',
+          '<dDescProd/>',
+        ];
+        
+        const foundNullFields = nullFields.filter(field => xmlString.includes(field));
+        if (foundNullFields.length > 0) {
+          const errorMsg = `XML contiene campos vacíos o null que HKA rechaza:\n${foundNullFields.map(f => `  - ${f}`).join('\n')}\n\nXML guardado en: ${xmlDebugPath}`;
+          console.error('❌ Validación final XML falló:', errorMsg);
+          throw new Error(errorMsg);
         }
 
         // Obtener cliente SOAP HKA

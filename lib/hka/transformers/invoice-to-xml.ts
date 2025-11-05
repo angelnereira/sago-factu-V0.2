@@ -112,12 +112,23 @@ export function transformInvoiceToXMLInput(
     // 🔧 FIX: Si la tasa es EXENTO (00), el valor ITBMS DEBE ser 0
     const valorITBMSFinal = tasaITBMS === TasaITBMS.EXENTO ? 0 : valorITBMS;
     
+    // Validar que los campos críticos no estén vacíos
+    if (!item.description || item.description.trim() === '') {
+      throw new Error(`Item en línea ${index + 1} no tiene descripción. Todos los items deben tener descripción.`);
+    }
+    if (cantidad <= 0) {
+      throw new Error(`Item "${item.description}" tiene cantidad inválida: ${cantidad}. La cantidad debe ser mayor a 0.`);
+    }
+    if (precioUnitario <= 0) {
+      throw new Error(`Item "${item.description}" tiene precio unitario inválido: ${precioUnitario}. El precio debe ser mayor a 0.`);
+    }
+    
     return {
       secuencia: item.lineNumber || (index + 1),
-      descripcion: item.description,
-      codigo: item.code || `PROD-${index + 1}`,
+      descripcion: item.description.trim(), // Asegurar que no tenga espacios extra
+      codigo: (item.code || `PROD-${index + 1}`).trim(), // Asegurar código válido
       codigoCPBS: undefined, // Opcional, si lo tienes en el schema agregarlo
-      unidadMedida: item.unit || 'und',
+      unidadMedida: (item.unit || 'und').trim(), // Asegurar unidad válida
       cantidad,
       precioUnitario,
       precioUnitarioDescuento,

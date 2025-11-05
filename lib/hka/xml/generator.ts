@@ -196,7 +196,20 @@ function formatFecha(fecha: Date): string {
 }
 
 function formatDecimal(value: number, decimals: number = 2): string {
-  return value.toFixed(decimals);
+  // Validar que el valor sea un número válido
+  if (value === null || value === undefined || isNaN(value)) {
+    console.error(`⚠️  formatDecimal recibió valor inválido: ${value}`);
+    return '0.00'; // Valor por defecto seguro
+  }
+  
+  // Asegurar que sea un número finito
+  const numValue = Number(value);
+  if (!isFinite(numValue)) {
+    console.error(`⚠️  formatDecimal recibió valor no finito: ${value}`);
+    return '0.00';
+  }
+  
+  return numValue.toFixed(decimals);
 }
 
 export function calcularValorITBMS(precioItem: number, tasa: TasaITBMS): number {
@@ -258,20 +271,34 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   // ============================================
   // DATOS DEL EMISOR
   // ============================================
+  // Validar campos críticos del emisor
+  if (!data.emisor.ruc || data.emisor.ruc.trim() === '') {
+    throw new Error('El RUC del emisor es obligatorio y no puede estar vacío.');
+  }
+  if (!data.emisor.dv || data.emisor.dv.trim() === '') {
+    throw new Error('El dígito verificador (DV) del emisor es obligatorio y no puede estar vacío.');
+  }
+  if (!data.emisor.razonSocial || data.emisor.razonSocial.trim() === '') {
+    throw new Error('La razón social del emisor es obligatoria y no puede estar vacía.');
+  }
+  if (!data.emisor.direccion || data.emisor.direccion.trim() === '') {
+    throw new Error('La dirección del emisor es obligatoria y no puede estar vacía.');
+  }
+  
   const gEmis = gDGen.ele('gEmis');
   const gRucEmi = gEmis.ele('gRucEmi');
   gRucEmi.ele('dTipoRuc').txt(data.emisor.tipoRuc).up();
-  gRucEmi.ele('dRuc').txt(data.emisor.ruc).up();
-  gRucEmi.ele('dDV').txt(data.emisor.dv).up();
+  gRucEmi.ele('dRuc').txt(data.emisor.ruc.trim()).up(); // Asegurar sin espacios
+  gRucEmi.ele('dDV').txt(data.emisor.dv.trim()).up(); // Asegurar sin espacios
   gRucEmi.up();
   
-  gEmis.ele('dNombEm').txt(data.emisor.razonSocial).up();
-  if (data.emisor.nombreComercial) {
-    gEmis.ele('dNombComer').txt(data.emisor.nombreComercial).up();
+  gEmis.ele('dNombEm').txt(data.emisor.razonSocial.trim()).up(); // Asegurar sin espacios extra
+  if (data.emisor.nombreComercial && data.emisor.nombreComercial.trim() !== '') {
+    gEmis.ele('dNombComer').txt(data.emisor.nombreComercial.trim()).up();
   }
-  gEmis.ele('dSucEm').txt(data.emisor.codigoSucursal).up();
+  gEmis.ele('dSucEm').txt(data.emisor.codigoSucursal.trim()).up();
   gEmis.ele('dCoordEm').txt('').up(); // Coordenadas opcionales
-  gEmis.ele('dDirecEm').txt(data.emisor.direccion).up();
+  gEmis.ele('dDirecEm').txt(data.emisor.direccion.trim()).up(); // Asegurar sin espacios extra
   
   const gUbiEmi = gEmis.ele('gUbiEmi');
   gUbiEmi.ele('dCodUbi').txt(data.emisor.codigoUbicacion).up();
@@ -291,17 +318,31 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   // ============================================
   // DATOS DEL RECEPTOR
   // ============================================
+  // Validar campos críticos del receptor
+  if (!data.receptor.ruc || data.receptor.ruc.trim() === '') {
+    throw new Error('El RUC del receptor es obligatorio y no puede estar vacío.');
+  }
+  if (!data.receptor.dv || data.receptor.dv.trim() === '') {
+    throw new Error('El dígito verificador (DV) del receptor es obligatorio y no puede estar vacío.');
+  }
+  if (!data.receptor.razonSocial || data.receptor.razonSocial.trim() === '') {
+    throw new Error('El nombre del receptor es obligatorio y no puede estar vacío.');
+  }
+  if (!data.receptor.direccion || data.receptor.direccion.trim() === '') {
+    throw new Error('La dirección del receptor es obligatoria y no puede estar vacía.');
+  }
+  
   const gDatRec = gDGen.ele('gDatRec');
   gDatRec.ele('iTipoRec').txt(data.receptor.tipoCliente).up();
   
   const gRucRec = gDatRec.ele('gRucRec');
   gRucRec.ele('dTipoRuc').txt(data.receptor.tipoRuc).up();
-  gRucRec.ele('dRuc').txt(data.receptor.ruc).up();
-  gRucRec.ele('dDV').txt(data.receptor.dv).up();
+  gRucRec.ele('dRuc').txt(data.receptor.ruc.trim()).up(); // Asegurar sin espacios
+  gRucRec.ele('dDV').txt(data.receptor.dv.trim()).up(); // Asegurar sin espacios
   gRucRec.up();
   
-  gDatRec.ele('dNombRec').txt(data.receptor.razonSocial).up();
-  gDatRec.ele('dDirecRec').txt(data.receptor.direccion).up();
+  gDatRec.ele('dNombRec').txt(data.receptor.razonSocial.trim()).up(); // Asegurar sin espacios extra
+  gDatRec.ele('dDirecRec').txt(data.receptor.direccion.trim()).up(); // Asegurar sin espacios extra
   
   if (data.receptor.codigoUbicacion) {
     const gUbiRec = gDatRec.ele('gUbiRec');
@@ -326,19 +367,46 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   // ============================================
   // ITEMS DE LA FACTURA
   // ============================================
-  data.items.forEach((item) => {
+  // Validar que hay al menos un item
+  if (!data.items || data.items.length === 0) {
+    throw new Error('La factura debe tener al menos un item. No se pueden generar facturas sin items.');
+  }
+  
+  data.items.forEach((item, index) => {
+    // Validar campos críticos del item antes de generarlo
+    if (!item.descripcion || item.descripcion.trim() === '') {
+      throw new Error(`Item en posición ${index + 1} no tiene descripción. Todos los items deben tener descripción.`);
+    }
+    if (!item.codigo || item.codigo.trim() === '') {
+      throw new Error(`Item "${item.descripcion}" no tiene código. Todos los items deben tener código.`);
+    }
+    if (!item.cantidad || item.cantidad <= 0) {
+      throw new Error(`Item "${item.descripcion}" tiene cantidad inválida: ${item.cantidad}. La cantidad debe ser mayor a 0.`);
+    }
+    if (!item.precioUnitario || item.precioUnitario <= 0) {
+      throw new Error(`Item "${item.descripcion}" tiene precio unitario inválido: ${item.precioUnitario}. El precio debe ser mayor a 0.`);
+    }
+    if (!item.unidadMedida || item.unidadMedida.trim() === '') {
+      throw new Error(`Item "${item.descripcion}" no tiene unidad de medida. Debe especificar una unidad (ej: "und", "kg", "m").`);
+    }
+    
     const gItem = doc.ele('gItem');
     gItem.ele('dSecItem').txt(item.secuencia.toString()).up();
-    gItem.ele('dDescProd').txt(item.descripcion).up();
-    gItem.ele('dCodProd').txt(item.codigo).up();
+    gItem.ele('dDescProd').txt(item.descripcion.trim()).up(); // Asegurar sin espacios extra
+    gItem.ele('dCodProd').txt(item.codigo.trim()).up(); // Asegurar código válido
     
     if (item.codigoCPBS) {
       gItem.ele('dCodCPBScmp').txt(item.codigoCPBS).up();
       gItem.ele('cUnidadCPBS').txt(item.unidadMedida).up();
     }
     
-    gItem.ele('cUnidad').txt(item.unidadMedida).up();
+    gItem.ele('cUnidad').txt(item.unidadMedida.trim()).up(); // Asegurar unidad válida
     gItem.ele('dCantCodInt').txt(formatDecimal(item.cantidad)).up();
+    
+    // Validar que cantidad y precios sean números válidos
+    if (isNaN(item.cantidad) || isNaN(item.precioUnitario)) {
+      throw new Error(`Item "${item.descripcion}" tiene valores numéricos inválidos. Cantidad: ${item.cantidad}, Precio: ${item.precioUnitario}`);
+    }
     
     const gPrecios = gItem.ele('gPrecios');
     gPrecios.ele('dPrUnit').txt(formatDecimal(item.precioUnitario)).up();
