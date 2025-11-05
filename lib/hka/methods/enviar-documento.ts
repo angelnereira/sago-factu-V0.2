@@ -55,15 +55,74 @@ export async function enviarDocumento(
           }
         }
 
-        // Validar estructura mínima del XML (RUC/DV y al menos un item)
-        const hasRuc = /<dRuc>[^<]+<\/dRuc>/.test(xmlLimpio);
-        const hasDv = /<dDV>[^<]+<\/dDV>/.test(xmlLimpio);
-        // El generador usa múltiples nodos <gItem> (no un contenedor plural)
-        const hasItems = /<gItem>/.test(xmlLimpio);
-        if (!hasRuc || !hasDv || !hasItems) {
-          throw new Error(
-            'XML incompleto para HKA: faltan RUC/DV del emisor o no se encontraron ítems. Revisa datos del emisor/receptor e ítems.',
-          );
+        // ============================================
+        // VALIDACIÓN EXHAUSTIVA DEL XML ANTES DE ENVIAR
+        // ============================================
+        console.log('🔍 Validando estructura completa del XML antes de enviar a HKA...');
+        
+        // Validaciones de campos críticos
+        const validaciones: { campo: string; encontrado: boolean; regex: RegExp }[] = [
+          { campo: 'dRuc (Emisor)', encontrado: /<dRuc>[^<]+<\/dRuc>/.test(xmlLimpio), regex: /<dRuc>[^<]+<\/dRuc>/ },
+          { campo: 'dDV (Emisor)', encontrado: /<dDV>[^<]+<\/dDV>/.test(xmlLimpio), regex: /<dDV>[^<]+<\/dDV>/ },
+          { campo: 'dTipoRuc (Emisor)', encontrado: /<dTipoRuc>[^<]+<\/dTipoRuc>/.test(xmlLimpio), regex: /<dTipoRuc>[^<]+<\/dTipoRuc>/ },
+          { campo: 'dNombEm (Razón Social Emisor)', encontrado: /<dNombEm>[^<]+<\/dNombEm>/.test(xmlLimpio), regex: /<dNombEm>[^<]+<\/dNombEm>/ },
+          { campo: 'dDirEmi (Dirección Emisor)', encontrado: /<dDirEmi>[^<]+<\/dDirEmi>/.test(xmlLimpio), regex: /<dDirEmi>[^<]+<\/dDirEmi>/ },
+          { campo: 'dRucRe (RUC Receptor)', encontrado: /<dRucRe>[^<]+<\/dRucRe>/.test(xmlLimpio), regex: /<dRucRe>[^<]+<\/dRucRe>/ },
+          { campo: 'dDVRe (DV Receptor)', encontrado: /<dDVRe>[^<]+<\/dDVRe>/.test(xmlLimpio), regex: /<dDVRe>[^<]+<\/dDVRe>/ },
+          { campo: 'dNomRe (Nombre Receptor)', encontrado: /<dNomRe>[^<]+<\/dNomRe>/.test(xmlLimpio), regex: /<dNomRe>[^<]+<\/dNomRe>/ },
+          { campo: 'gItem (Items)', encontrado: /<gItem>/.test(xmlLimpio), regex: /<gItem>/ },
+          { campo: 'dTotNeto (Total Neto)', encontrado: /<dTotNeto>[^<]+<\/dTotNeto>/.test(xmlLimpio), regex: /<dTotNeto>[^<]+<\/dTotNeto>/ },
+          { campo: 'dVTot (Total Final)', encontrado: /<dVTot>[^<]+<\/dVTot>/.test(xmlLimpio), regex: /<dVTot>[^<]+<\/dVTot>/ },
+          { campo: 'dId (CUFE)', encontrado: /<dId>[^<]+<\/dId>/.test(xmlLimpio), regex: /<dId>[^<]+<\/dId>/ },
+        ];
+
+        // Log de validaciones
+        const faltantes: string[] = [];
+        validaciones.forEach(v => {
+          if (!v.encontrado) {
+            faltantes.push(v.campo);
+            console.error(`   ❌ Falta: ${v.campo}`);
+          } else {
+            const match = xmlLimpio.match(v.regex);
+            const valor = match ? match[0].substring(0, 50) : 'N/A';
+            console.log(`   ✅ ${v.campo}: ${valor}`);
+          }
+        });
+
+        // Si faltan campos críticos, lanzar error con detalles
+        if (faltantes.length > 0) {
+          const errorDetallado = `XML incompleto para HKA. Faltan campos críticos:\n${faltantes.map(f => `  - ${f}`).join('\n')}\n\nRevise los datos del emisor, receptor e ítems de la factura.`;
+          console.error('❌ Validación XML falló:', errorDetallado);
+          throw new Error(errorDetallado);
+        }
+
+        // Validar que los valores no estén vacíos
+        const valoresVacios: string[] = [];
+        validaciones.forEach(v => {
+          if (v.encontrado) {
+            const match = xmlLimpio.match(v.regex);
+            if (match) {
+              // Extraer el valor entre las etiquetas
+              const valor = match[0].replace(/<\/?[^>]+(>|$)/g, '').trim();
+              if (!valor || valor === '' || valor === 'null' || valor === 'undefined') {
+                valoresVacios.push(v.campo);
+                console.error(`   ⚠️  ${v.campo} está vacío o es null`);
+              }
+            }
+          }
+        });
+
+        if (valoresVacios.length > 0) {
+          const errorDetallado = `XML inválido para HKA. Campos con valores vacíos o null:\n${valoresVacios.map(f => `  - ${f}`).join('\n')}\n\nRevise que todos los campos tengan valores válidos.`;
+          console.error('❌ Validación XML falló:', errorDetallado);
+          throw new Error(errorDetallado);
+        }
+
+        console.log('✅ Validación XML completa: Todos los campos críticos están presentes y tienen valores válidos');
+        
+        // Guardar XML para debugging (solo si hay error después)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`📄 XML a enviar (primeros 500 chars): ${xmlLimpio.substring(0, 500)}...`);
         }
 
         // Parámetros para envío
