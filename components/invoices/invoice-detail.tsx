@@ -60,6 +60,21 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
   const status = statusConfig[invoice.status as keyof typeof statusConfig] || statusConfig.DRAFT
   const StatusIcon = status.icon
 
+  // Preparar datos para mostrar InvoiceSuccessResponse si la factura está certificada
+  const certifiedData = invoice.status === "CERTIFIED" && (invoice.cufe || invoice.cafe) ? {
+    invoiceId: invoice.id,
+    cufe: invoice.cufe,
+    cafe: invoice.cafe,
+    numeroDocumentoFiscal: invoice.numeroDocumentoFiscal,
+    qrUrl: invoice.qrUrl,
+    qrCode: invoice.qrCode,
+    protocoloAutorizacion: invoice.hkaProtocol,
+    fechaRecepcionDGI: invoice.hkaProtocolDate ? new Date(invoice.hkaProtocolDate).toISOString() : null,
+  } : null
+
+  // Mostrar successData si existe (después de enviar) o certifiedData si la factura ya está certificada
+  const displayData = successData || certifiedData
+
   const handleSendToHKA = async () => {
     setIsProcessing(true)
     setDownloadError(null)
@@ -159,21 +174,24 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
   return (
     <div className="space-y-6">
-      {/* Mostrar componente de respuesta exitosa si hay datos de éxito */}
-      {successData && (
+      {/* Mostrar componente de respuesta exitosa si hay datos de éxito O si la factura ya está certificada */}
+      {displayData && (
         <div className="mb-6">
-          <InvoiceSuccessResponse data={successData} />
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={() => {
-                setSuccessData(null)
-                router.refresh()
-              }}
-              className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-            >
-              Continuar
-            </button>
-          </div>
+          <InvoiceSuccessResponse data={displayData} />
+          {/* Solo mostrar botón "Continuar" si es successData (recién enviado) */}
+          {successData && (
+            <div className="mt-4 flex justify-center">
+              <button
+                onClick={() => {
+                  setSuccessData(null)
+                  router.refresh()
+                }}
+                className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+              >
+                Continuar
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -197,7 +215,7 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
         </div>
 
         <div className="flex items-center space-x-3">
-          {invoice.status === "CERTIFIED" && !successData && (
+          {invoice.status === "CERTIFIED" && !displayData && (
             <>
               <button
                 onClick={handleDownloadPDF}

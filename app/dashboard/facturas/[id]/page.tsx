@@ -25,13 +25,44 @@ export default async function InvoiceDetailPage({
     )
   }
 
-  // Obtener factura con todos los detalles
+  // Obtener factura con todos los detalles incluyendo campos de respuesta HKA
   const invoice = await prisma.invoice.findFirst({
     where: {
       id,
       organizationId, // Asegurar que pertenece a la organización
     },
-    include: {
+    select: {
+      id: true,
+      invoiceNumber: true,
+      status: true,
+      cufe: true,
+      cafe: true,
+      numeroDocumentoFiscal: true,
+      qrUrl: true,
+      qrCode: true,
+      hkaProtocol: true,
+      hkaProtocolDate: true,
+      hkaResponseMessage: true,
+      certifiedAt: true,
+      createdAt: true,
+      issueDate: true,
+      clientReferenceId: true,
+      currency: true,
+      subtotal: true,
+      discount: true,
+      itbms: true,
+      total: true,
+      notes: true,
+      issuerRuc: true,
+      issuerDv: true,
+      issuerName: true,
+      issuerAddress: true,
+      issuerEmail: true,
+      receiverName: true,
+      receiverRuc: true,
+      receiverDv: true,
+      receiverAddress: true,
+      receiverEmail: true,
       items: {
         orderBy: {
           lineNumber: "asc",
