@@ -280,49 +280,39 @@ export async function processInvoice(
         console.error(`   ❌ Error al enviar a HKA:`, hkaError);
         const errorMsg = hkaError instanceof Error ? hkaError.message : 'Error desconocido';
 
-        // Si estamos en DEMO, certificar de forma simulada para no bloquear el flujo
-        if (invoice.organization.hkaEnvironment === 'DEMO') {
-          console.log(`   ⚠️  Ambiente DEMO: certificación simulada por error de HKA`);
-          const demoCufe = result.cufe && result.cufe.length > 0 ? result.cufe : `DEMO-${Date.now()}`;
-          await prisma.invoice.update({
-            where: { id: invoiceId },
-            data: {
-              cufe: demoCufe,
-              status: 'CERTIFIED',
-              hkaStatus: '0200',
-              hkaMessage: `Certificación DEMO por fallback. Motivo: ${errorMsg}`,
-              certifiedAt: getPanamaTimestamp(),
-            } as any,
-          });
-          result.success = true;
-          result.sentToHKA = false;
-          result.cufe = demoCufe;
-          result.error = undefined;
-          return result;
-        }
+        // NO SIMULAR certificaciones - Solo respuestas reales de HKA
+        // Actualizar estado de la factura para reflejar el error real
+        await prisma.invoice.update({
+          where: { id: invoiceId },
+          data: {
+            status: 'ERROR',
+            hkaStatus: 'ERROR',
+            hkaMessage: `Error al enviar a HKA: ${errorMsg}`,
+          } as any,
+        });
 
-        // Producción u otros casos: propagar error
+        // Propagar error para que el usuario vea el problema real
         result.sentToHKA = false;
+        result.success = false;
         result.error = errorMsg;
         return result;
       }
     } else {
-      console.log('\n⏭️  PASO 5: Envío a HKA deshabilitado (modo demo/test)');
+      console.log('\n⏭️  PASO 5: Envío a HKA deshabilitado');
 
-      // Si no se envía a HKA (demo/simple sin credenciales), simulamos certificación
-      const demoCufe = result.cufe && result.cufe.length > 0 ? result.cufe : `DEMO-${Date.now()}`;
-
+      // NO SIMULAR certificaciones - La factura debe enviarse a HKA para ser certificada
+      // Si no se envía a HKA, mantenerla en estado DRAFT
       await prisma.invoice.update({
         where: { id: invoiceId },
         data: {
-          cufe: demoCufe,
-          status: 'CERTIFIED',
-        },
+          status: 'DRAFT', // Mantener como borrador hasta que se envíe realmente a HKA
+          hkaMessage: 'Factura generada pero no enviada a HKA. Configure credenciales HKA para enviar.',
+        } as any,
       });
 
-      result.success = true;
+      result.success = false;
       result.sentToHKA = false;
-      result.cufe = demoCufe;
+      result.error = 'Envío a HKA deshabilitado. Configure credenciales HKA para enviar la factura.';
     }
 
     // ============================================
