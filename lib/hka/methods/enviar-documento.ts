@@ -1,20 +1,87 @@
 import { getHKAClient } from '../soap/client';
-import { EnviarDocumentoParams, EnviarDocumentoResponse } from '../soap/types';
+import { EnviarDocumentoParams, EnviarDocumentoResponse, HKACredentials } from '../soap/types';
 import { prisma } from '@/lib/db';
 import { monitorHKACall } from '@/lib/monitoring/hka-monitor-wrapper';
 import { hkaTestModeWrapper } from '../utils/test-mode';
 import { validarRUCCompleto, generarRUCPrueba } from '../utils/ruc-validator';
 import { getPanamaTimestamp } from '@/lib/utils/date-timezone';
+import { decryptToken } from '@/lib/utils/encryption';
+
+/**
+ * Obtiene credenciales HKA priorizando BD sobre variables de entorno
+ * Si hay organización con credenciales en BD, las usa; si no, usa variables de entorno
+ */
+async function getHKACredentialsForInvoice(
+  organization: { hkaTokenUser: string | null; hkaTokenPassword: string | null; hkaEnvironment: string | null; plan: string } | null
+): Promise<HKACredentials> {
+  // Si hay organización con credenciales configuradas, usarlas
+  if (organization?.hkaTokenUser && organization?.hkaTokenPassword) {
+    console.log(`   🔑 Usando credenciales de BD (Plan: ${organization.plan})`);
+    const environment = (organization.hkaEnvironment || 'demo').toLowerCase();
+    
+    try {
+      const decryptedPassword = decryptToken(organization.hkaTokenPassword);
+      return {
+        tokenEmpresa: organization.hkaTokenUser,
+        tokenPassword: decryptedPassword,
+        usuario: organization.hkaTokenUser,
+      };
+    } catch (error) {
+      console.error(`   ⚠️  Error desencriptando password de BD, usando variables de entorno:`, error);
+      // Si hay error desencriptando, usar variables de entorno
+      const hkaClient = getHKAClient();
+      return hkaClient.getCredentials();
+    }
+  }
+
+  // Si no, usar credenciales de variables de entorno (fallback)
+  // Esto incluye las credenciales demo por defecto del .env
+  console.log(`   🔑 Usando credenciales de variables de entorno (demo por defecto)`);
+  const hkaClient = getHKAClient();
+  const envCredentials = hkaClient.getCredentials();
+  
+  // Validar que las credenciales de entorno existan
+  if (!envCredentials.tokenEmpresa || !envCredentials.tokenPassword) {
+    throw new Error(
+      'Credenciales HKA no configuradas. Configure credenciales en /simple/configuracion o en variables de entorno (.env):\n' +
+      '  HKA_DEMO_TOKEN_USER=walgofugiitj_ws_tfhka\n' +
+      '  HKA_DEMO_TOKEN_PASSWORD=Octopusp1oQs5'
+    );
+  }
+  
+  return envCredentials;
+}
 
 /**
  * Envía un documento electrónico a HKA (Factura, Nota Crédito, Nota Débito)
  */
 export async function enviarDocumento(
   xmlDocumento: string,
-  invoiceId: string
+  invoiceId: string,
+  organizationId?: string
 ): Promise<EnviarDocumentoResponse> {
   try {
     console.log(`📤 Enviando documento a HKA para invoice: ${invoiceId}`);
+
+    // Obtener organización para usar credenciales de BD si están disponibles
+    let organization = null;
+    if (organizationId) {
+      organization = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: {
+          id: true,
+          plan: true,
+          hkaTokenUser: true,
+          hkaTokenPassword: true,
+          hkaEnvironment: true,
+        },
+      });
+      
+      if (organization) {
+        console.log(`   📋 Organización: ${organization.id}, Plan: ${organization.plan}`);
+        console.log(`   🔑 Credenciales HKA configuradas: ${!!organization.hkaTokenUser}`);
+      }
+    }
 
     // Validar RUC en el XML antes de enviar
     const rucValidation = await validarRUCEnXML(xmlDocumento);
@@ -34,15 +101,18 @@ export async function enviarDocumento(
       invoiceId,
       async () => {
         // Método real de envío
-        const hkaClient = getHKAClient();
-        const credentials = hkaClient.getCredentials();
+        // Obtener credenciales: primero de BD, luego de variables de entorno
+        const credentials = await getHKACredentialsForInvoice(organization);
 
         // Validación defensiva de credenciales antes de invocar HKA
         if (!credentials?.tokenEmpresa || !credentials?.tokenPassword) {
-          throw new Error(
-            'Credenciales HKA ausentes o inválidas (tokenEmpresa/tokenPassword). Verifica configuración de la organización o del modo SIMPLE.',
-          );
+          const errorMsg = organization?.hkaTokenUser 
+            ? 'Credenciales HKA configuradas pero password inválido. Verifica la configuración.'
+            : 'Credenciales HKA ausentes. Configure credenciales en /simple/configuracion o en variables de entorno (.env)';
+          throw new Error(errorMsg);
         }
+
+        console.log(`   ✅ Credenciales válidas: ${credentials.tokenEmpresa.substring(0, 10)}...`);
 
         // HKA espera el XML como texto plano sin escapar
         // Remover la declaración XML del inicio si existe
@@ -74,8 +144,10 @@ export async function enviarDocumento(
           { campo: 'dDV (Receptor)', encontrado: /<gRucRec>[\s\S]*?<dDV>[^<]+<\/dDV>/.test(xmlLimpio), regex: /<gRucRec>[\s\S]*?<dDV>([^<]+)<\/dDV>/ },
           { campo: 'dNombRec (Nombre Receptor)', encontrado: /<dNombRec>[^<]+<\/dNombRec>/.test(xmlLimpio), regex: /<dNombRec>([^<]+)<\/dNombRec>/ },
           { campo: 'dDirecRec (Dirección Receptor)', encontrado: /<dDirecRec>[^<]+<\/dDirecRec>/.test(xmlLimpio), regex: /<dDirecRec>([^<]+)<\/dDirecRec>/ },
-          // Items y Totales
-          { campo: 'gItem (Items)', encontrado: /<gItem>/.test(xmlLimpio), regex: /<gItem>/ },
+          // Items y Totales - Verificar que gItem tenga contenido válido
+          // gItem debe tener al menos dDescProd (descripción) y dCantCodInt (cantidad)
+          { campo: 'gItem (Items con descripción)', encontrado: /<gItem>[\s\S]*?<dDescProd>[^<]+<\/dDescProd>/.test(xmlLimpio), regex: /<gItem>[\s\S]*?<dDescProd>([^<]+)<\/dDescProd>/ },
+          { campo: 'gItem (Items con cantidad)', encontrado: /<gItem>[\s\S]*?<dCantCodInt>[^<]+<\/dCantCodInt>/.test(xmlLimpio), regex: /<gItem>[\s\S]*?<dCantCodInt>([^<]+)<\/dCantCodInt>/ },
           { campo: 'dTotNeto (Total Neto)', encontrado: /<dTotNeto>[^<]+<\/dTotNeto>/.test(xmlLimpio), regex: /<dTotNeto>([^<]+)<\/dTotNeto>/ },
           { campo: 'dVTot (Total Final)', encontrado: /<dVTot>[^<]+<\/dVTot>/.test(xmlLimpio), regex: /<dVTot>([^<]+)<\/dVTot>/ },
           { campo: 'dId (CUFE)', encontrado: /<dId>[^<]+<\/dId>/.test(xmlLimpio), regex: /<dId>([^<]+)<\/dId>/ },
@@ -120,6 +192,26 @@ export async function enviarDocumento(
               if (!valor || valor === '' || valor === 'null' || valor === 'undefined') {
                 valoresVacios.push(v.campo);
                 console.error(`   ⚠️  ${v.campo} está vacío o es null`);
+              }
+            } else {
+              // Si no se encontró el match pero el campo estaba marcado como encontrado,
+              // puede ser que el regex no capturó correctamente
+              console.warn(`   ⚠️  ${v.campo}: regex no capturó valor aunque campo fue marcado como encontrado`);
+            }
+          } else {
+            // Para campos de items, verificar si hay al menos un gItem presente
+            if (v.campo.includes('gItem')) {
+              const hasAnyItem = /<gItem>/.test(xmlLimpio);
+              if (!hasAnyItem) {
+                console.error(`   ❌ No se encontraron ítems (gItem) en el XML`);
+                valoresVacios.push(v.campo);
+              } else {
+                // Verificar que el gItem tenga contenido
+                const itemContent = xmlLimpio.match(/<gItem>([\s\S]*?)<\/gItem>/);
+                if (!itemContent || itemContent[1].trim().length < 10) {
+                  console.error(`   ❌ Ítem encontrado pero sin contenido válido`);
+                  valoresVacios.push(v.campo);
+                }
               }
             }
           }

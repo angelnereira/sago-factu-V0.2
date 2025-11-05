@@ -199,8 +199,9 @@ export async function processInvoice(
 
       try {
         // Ejecutar el envío con las credenciales correctas según el plan (SIMPLE/ENTERPRISE)
+        // Pasar organizationId para que enviarDocumento use credenciales de BD si están disponibles
         const hkaResponse = await withHKACredentials(invoice.organizationId, async () => {
-          return enviarDocumento(xml, invoiceId);
+          return enviarDocumento(xml, invoiceId, invoice.organizationId);
         });
 
         console.log(`   ✅ Respuesta de HKA recibida`);
