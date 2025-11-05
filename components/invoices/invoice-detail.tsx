@@ -53,6 +53,14 @@ const statusConfig = {
 }
 
 export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
+  // LOG SÍNCRONO - Se ejecuta SIEMPRE al renderizar el componente
+  console.log('🚨 [InvoiceDetail] Componente renderizado!', {
+    invoiceId: invoice?.id,
+    status: invoice?.status,
+    hasCufe: !!invoice?.cufe,
+    timestamp: new Date().toISOString(),
+  })
+  
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
@@ -215,6 +223,22 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
   return (
     <div className="space-y-6">
+      {/* ALERTA VISIBLE - Siempre se muestra para verificar que el componente se renderiza */}
+      <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-500 rounded-lg">
+        <p className="text-sm text-red-800 dark:text-red-200 font-bold">
+          🔴 COMPONENTE InvoiceDetail CARGADO - Si ves esto, el componente funciona
+        </p>
+        <p className="text-xs text-red-700 dark:text-red-300 font-mono mt-2">
+          Invoice ID: {invoice?.id || 'NO DISPONIBLE'}
+        </p>
+        <p className="text-xs text-red-700 dark:text-red-300 font-mono">
+          Status: {invoice?.status || 'NO DISPONIBLE'}
+        </p>
+        <p className="text-xs text-red-700 dark:text-red-300 font-mono">
+          Timestamp: {new Date().toISOString()}
+        </p>
+      </div>
+
       {/* DEBUG: Mostrar siempre si está certificada para verificar renderizado */}
       {invoice.status === "CERTIFIED" && (
         <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg">
