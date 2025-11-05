@@ -114,24 +114,59 @@ export async function POST(
         },
       });
 
+      // 🔍 DEBUG: Logging estructurado antes de construir respuesta
+      console.group('🚨 [API] Construyendo respuesta exitosa');
+      console.log('📊 Invoice Updated:', {
+        id: invoiceUpdated?.id,
+        status: invoiceUpdated?.status,
+        hasCufe: !!invoiceUpdated?.cufe,
+        hasCafe: !!invoiceUpdated?.cafe,
+        hasQrUrl: !!invoiceUpdated?.qrUrl,
+        hasQrCode: !!invoiceUpdated?.qrCode,
+        hasNumeroFiscal: !!invoiceUpdated?.numeroDocumentoFiscal,
+        hasProtocol: !!invoiceUpdated?.hkaProtocol,
+        hasProtocolDate: !!invoiceUpdated?.hkaProtocolDate,
+      });
+      console.log('📦 Result from worker:', {
+        success: result.success,
+        sentToHKA: result.sentToHKA,
+        cufe: result.cufe,
+      });
+      console.groupEnd();
+
+      // Construir objeto de respuesta
+      const responseData = {
+        invoiceId: invoiceUpdated?.id || invoiceId,
+        cufe: invoiceUpdated?.cufe || result.cufe || undefined,
+        cafe: invoiceUpdated?.cafe || undefined,
+        numeroDocumentoFiscal: invoiceUpdated?.numeroDocumentoFiscal || undefined,
+        qrUrl: invoiceUpdated?.qrUrl || undefined,
+        qrCode: invoiceUpdated?.qrCode || undefined,
+        protocoloAutorizacion: invoiceUpdated?.hkaProtocol || undefined,
+        fechaRecepcionDGI: invoiceUpdated?.hkaProtocolDate 
+          ? invoiceUpdated.hkaProtocolDate.toISOString() 
+          : null,
+        status: invoiceUpdated?.status || (result.sentToHKA ? 'PROCESSING' : 'CERTIFIED'),
+      };
+
+      // 🔍 DEBUG: Validar que responseData tiene campos mínimos
+      const hasMinimumData = responseData.invoiceId && (responseData.cufe || responseData.cafe || responseData.status === 'CERTIFIED');
+      if (!hasMinimumData) {
+        console.warn('⚠️ [API] Response data no tiene campos mínimos:', responseData);
+      }
+
+      // 🔍 DEBUG: Logging de respuesta final
+      console.group('✅ [API] Respuesta final');
+      console.log('📤 Response Data:', responseData);
+      console.log('✅ Has Minimum Data:', hasMinimumData);
+      console.groupEnd();
+
       return NextResponse.json({
         success: true,
         message: result.sentToHKA 
           ? 'Factura procesada y enviada a HKA exitosamente' 
           : 'Factura procesada y certificada en modo DEMO',
-        data: {
-          invoiceId: invoiceUpdated?.id,
-          cufe: invoiceUpdated?.cufe || result.cufe,
-          cafe: invoiceUpdated?.cafe,
-          numeroDocumentoFiscal: invoiceUpdated?.numeroDocumentoFiscal,
-          qrUrl: invoiceUpdated?.qrUrl,
-          qrCode: invoiceUpdated?.qrCode, // QR en Base64 para mostrar como imagen
-          protocoloAutorizacion: invoiceUpdated?.hkaProtocol,
-          fechaRecepcionDGI: invoiceUpdated?.hkaProtocolDate 
-            ? invoiceUpdated.hkaProtocolDate.toISOString() 
-            : null,
-          status: invoiceUpdated?.status || (result.sentToHKA ? 'PROCESSING' : 'CERTIFIED'),
-        },
+        data: responseData,
       });
     } else {
       return NextResponse.json({

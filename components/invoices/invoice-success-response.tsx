@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Download, FileText, Copy, ExternalLink, QrCode as QrCodeIcon, Eye } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { formatPanamaDateReadable } from "@/lib/utils/date-timezone"
@@ -121,25 +121,37 @@ export function InvoiceSuccessResponse({ data }: InvoiceSuccessResponseProps) {
   // URL de consulta DGI (según ambiente)
   const consultaUrl = data.qrUrl || 'https://fe.dai.mef.gob.pa/consulta'
 
-  // Debug: Log para verificar datos recibidos (solo en desarrollo)
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    console.log('🔍 InvoiceSuccessResponse Debug:', {
+  // Debug: Log para verificar datos recibidos (SIEMPRE en desarrollo, también en producción si hay problemas)
+  useEffect(() => {
+    console.group('🔍 [InvoiceSuccessResponse] Componente renderizado');
+    console.log('📦 Props Data:', {
       invoiceId: data.invoiceId,
       hasCufe: !!data.cufe,
       hasCafe: !!data.cafe,
       hasQrCode: !!data.qrCode,
       hasQrUrl: !!data.qrUrl,
       numeroDocumentoFiscal: data.numeroDocumentoFiscal,
+      hasProtocol: !!data.protocoloAutorizacion,
+      hasFecha: !!data.fechaRecepcionDGI,
       consultaUrl,
-    })
-  }
+    });
+    console.log('✅ Componente se está renderizando correctamente');
+    console.groupEnd();
+  }, [data.invoiceId, data.cufe, data.cafe, data.qrCode, data.qrUrl, consultaUrl]);
 
   // Validación: Si no hay invoiceId, no renderizar
   if (!data.invoiceId) {
-    if (typeof window !== 'undefined') {
-      console.warn('⚠️ InvoiceSuccessResponse: Falta invoiceId', data)
-    }
-    return null
+    console.warn('⚠️ [InvoiceSuccessResponse] Falta invoiceId - No renderizando', data);
+    return (
+      <div className="p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-500 rounded-lg">
+        <p className="text-sm text-red-800 dark:text-red-200 font-bold">
+          ❌ Error: Falta invoiceId en los datos
+        </p>
+        <pre className="text-xs mt-2 text-red-700 dark:text-red-300 font-mono overflow-auto">
+          {JSON.stringify(data, null, 2)}
+        </pre>
+      </div>
+    );
   }
 
   // Mostrar componente incluso sin CUFE/CAFE, pero con mensaje informativo

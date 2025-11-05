@@ -86,9 +86,10 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
   // Debug: Log para verificar datos (SIEMPRE se ejecuta en el cliente)
   useEffect(() => {
-    const debugInfo = {
-      status: invoice.status,
-      invoiceId: invoice.id,
+    console.group('🔍 [InvoiceDetail] Debug State');
+    console.log('📊 Invoice Status:', invoice.status);
+    console.log('📦 Invoice Data:', {
+      id: invoice.id,
       hasCufe: !!invoice.cufe,
       cufe: invoice.cufe,
       hasCafe: !!invoice.cafe,
@@ -98,22 +99,31 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
       qrUrl: invoice.qrUrl,
       hasNumeroFiscal: !!invoice.numeroDocumentoFiscal,
       numeroDocumentoFiscal: invoice.numeroDocumentoFiscal,
-      certifiedData: certifiedData ? 'EXISTE' : 'NULL',
+      hasProtocol: !!invoice.hkaProtocol,
+      hasProtocolDate: !!invoice.hkaProtocolDate,
+    });
+    console.log('📦 State Data:', {
       successData: successData ? 'EXISTE' : 'NULL',
+      certifiedData: certifiedData ? 'EXISTE' : 'NULL',
       displayData: displayData ? 'EXISTE' : 'NULL',
       willShowComponent: !!displayData,
-    }
-    console.log('🔍 [InvoiceDetail] Debug (useEffect):', debugInfo)
-    console.log('✅ [InvoiceDetail] Componente renderizado correctamente')
+    });
     
     // Alert visual si está certificada pero no tiene displayData
     if (invoice.status === 'CERTIFIED' && !displayData) {
       console.warn('⚠️ [InvoiceDetail] Factura CERTIFIED pero sin displayData!', {
         certifiedData,
         successData,
-      })
+        invoiceFields: {
+          cufe: invoice.cufe,
+          cafe: invoice.cafe,
+          qrUrl: invoice.qrUrl,
+          qrCode: invoice.qrCode,
+        }
+      });
     }
-  }, [invoice.status, invoice.cufe, invoice.cafe, invoice.id, invoice.qrCode, invoice.qrUrl, invoice.numeroDocumentoFiscal, certifiedData, successData, displayData])
+    console.groupEnd();
+  }, [invoice.status, invoice.cufe, invoice.cafe, invoice.id, invoice.qrCode, invoice.qrUrl, invoice.numeroDocumentoFiscal, invoice.hkaProtocol, invoice.hkaProtocolDate, certifiedData, successData, displayData])
 
   const handleSendToHKA = async () => {
     setIsProcessing(true)
@@ -223,6 +233,60 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
   return (
     <div className="space-y-6">
+      {/* PANEL DE DEBUG VISUAL FIJO - Top Right */}
+      <div className="fixed top-4 right-4 z-50 bg-yellow-100 dark:bg-yellow-900/30 border-2 border-yellow-500 dark:border-yellow-600 p-4 rounded-lg shadow-xl max-w-xs max-h-96 overflow-auto">
+        <h3 className="font-bold text-sm mb-2 text-yellow-900 dark:text-yellow-200">🔍 Debug Panel</h3>
+        <div className="text-xs space-y-1 font-mono">
+          <div className="flex justify-between">
+            <span className="text-yellow-800 dark:text-yellow-300">Status:</span>
+            <code className="text-yellow-900 dark:text-yellow-100">{invoice.status}</code>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-yellow-800 dark:text-yellow-300">successData:</span>
+            <code className={successData ? 'text-green-600' : 'text-red-600'}>
+              {successData ? '✅' : '❌'}
+            </code>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-yellow-800 dark:text-yellow-300">certifiedData:</span>
+            <code className={certifiedData ? 'text-green-600' : 'text-red-600'}>
+              {certifiedData ? '✅' : '❌'}
+            </code>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-yellow-800 dark:text-yellow-300">displayData:</span>
+            <code className={displayData ? 'text-green-600' : 'text-red-600'}>
+              {displayData ? '✅' : '❌'}
+            </code>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-yellow-800 dark:text-yellow-300">Has CUFE:</span>
+            <code className={invoice.cufe ? 'text-green-600' : 'text-red-600'}>
+              {invoice.cufe ? '✅' : '❌'}
+            </code>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-yellow-800 dark:text-yellow-300">Has CAFE:</span>
+            <code className={invoice.cafe ? 'text-green-600' : 'text-red-600'}>
+              {invoice.cafe ? '✅' : '❌'}
+            </code>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-yellow-800 dark:text-yellow-300">Has QR URL:</span>
+            <code className={invoice.qrUrl ? 'text-green-600' : 'text-red-600'}>
+              {invoice.qrUrl ? '✅' : '❌'}
+            </code>
+          </div>
+          {displayData && (
+            <div className="mt-2 pt-2 border-t border-yellow-400">
+              <div className="text-green-700 dark:text-green-400 font-bold">
+                ✅ Componente Visible
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* ALERTA VISIBLE - Siempre se muestra para verificar que el componente se renderiza */}
       <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-500 rounded-lg">
         <p className="text-sm text-red-800 dark:text-red-200 font-bold">
@@ -261,7 +325,15 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
       {/* Mostrar componente de respuesta exitosa si hay datos de éxito O si la factura ya está certificada */}
       {displayData ? (
-        <div className="mb-6">
+        <div className="mb-6 border-4 border-green-500 dark:border-green-600 rounded-lg p-4 bg-green-50 dark:bg-green-900/20">
+          <div className="mb-2">
+            <p className="text-sm font-bold text-green-700 dark:text-green-300">
+              ✅ Componente InvoiceSuccessResponse Visible
+            </p>
+            <p className="text-xs text-green-600 dark:text-green-400 font-mono">
+              displayData tiene valor - Renderizando componente
+            </p>
+          </div>
           <InvoiceSuccessResponse data={displayData} />
           {/* Solo mostrar botón "Continuar" si es successData (recién enviado) */}
           {successData && (
@@ -280,14 +352,22 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
         </div>
       ) : invoice.status === "CERTIFIED" ? (
         // Fallback: Si está certificada pero no tiene displayData, mostrar mensaje
-        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            ⚠️ Factura certificada pero faltan datos de respuesta HKA. Recarga la página o contacta soporte.
+        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg">
+          <p className="text-sm font-bold text-yellow-800 dark:text-yellow-200">
+            ⚠️ Factura certificada pero faltan datos de respuesta HKA
           </p>
-          <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-2 font-mono">
-            Debug: status={invoice.status}, hasCufe={invoice.cufe ? 'sí' : 'no'}, hasCafe={invoice.cafe ? 'sí' : 'no'}, 
-            certifiedData={certifiedData ? 'EXISTE' : 'NULL'}
+          <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-2">
+            Recarga la página o contacta soporte.
           </p>
+          <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded text-xs font-mono">
+            <div>Status: <code>{invoice.status}</code></div>
+            <div>Has CUFE: <code>{invoice.cufe ? '✅ sí' : '❌ no'}</code></div>
+            <div>Has CAFE: <code>{invoice.cafe ? '✅ sí' : '❌ no'}</code></div>
+            <div>Has QR URL: <code>{invoice.qrUrl ? '✅ sí' : '❌ no'}</code></div>
+            <div>certifiedData: <code>{certifiedData ? '✅ EXISTE' : '❌ NULL'}</code></div>
+            <div>successData: <code>{successData ? '✅ EXISTE' : '❌ NULL'}</code></div>
+            <div>displayData: <code>{displayData ? '✅ EXISTE' : '❌ NULL'}</code></div>
+          </div>
         </div>
       ) : null}
 
