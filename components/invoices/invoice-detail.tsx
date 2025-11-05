@@ -196,24 +196,6 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
           </div>
         </div>
 
-        {/* Mostrar componente de respuesta exitosa si hay datos de éxito */}
-        {successData && (
-          <div className="mb-6">
-            <InvoiceSuccessResponse data={successData} />
-            <div className="mt-4 flex justify-center">
-              <button
-                onClick={() => {
-                  setSuccessData(null)
-                  router.refresh()
-                }}
-                className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-              >
-                Continuar
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="flex items-center space-x-3">
           {invoice.status === "CERTIFIED" && !successData && (
             <>
