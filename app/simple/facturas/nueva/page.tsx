@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { XMLUploader } from '@/components/invoices/xml-uploader'
+import { InvoiceSuccessResponse } from '@/components/invoices/invoice-success-response'
 import Link from 'next/link'
 
 interface ItemInput {
@@ -22,6 +23,7 @@ export default function NewSimpleInvoicePage() {
   const [success, setSuccess] = useState('')
   const [sendDirectOnImport, setSendDirectOnImport] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [successData, setSuccessData] = useState<any>(null) // Datos de respuesta HKA para mostrar InvoiceSuccessResponse
 
   const addItem = () => {
     setItems((prev) => [...prev, { description: '', quantity: 1, unitPrice: 0 }])
@@ -165,12 +167,20 @@ export default function NewSimpleInvoicePage() {
         throw new Error(details || 'Error al procesar factura')
       }
 
-      setSuccess('Factura creada y enviada correctamente')
-      // Limpiar formulario
-      setCustomerName('')
-      setCustomerRuc('')
-      setCustomerDv('')
-      setItems([{ description: '', quantity: 1, unitPrice: 0 }])
+      // Si hay datos de respuesta exitosa, guardarlos para mostrar InvoiceSuccessResponse
+      if (processData.success && processData.data) {
+        console.log('✅ [Simple] Respuesta HKA recibida:', processData.data)
+        setSuccessData(processData.data)
+        setSuccess('Factura creada y enviada correctamente')
+        // NO limpiar formulario aún, esperar a que el usuario vea la respuesta
+      } else {
+        setSuccess('Factura creada y enviada correctamente')
+        // Limpiar formulario solo si no hay datos de respuesta
+        setCustomerName('')
+        setCustomerRuc('')
+        setCustomerDv('')
+        setItems([{ description: '', quantity: 1, unitPrice: 0 }])
+      }
     } catch (e: any) {
       setError(e.message || 'Ocurrió un error')
     } finally {
@@ -327,31 +337,63 @@ export default function NewSimpleInvoicePage() {
         </div>
       </div>
 
-      {/* Mensajes */}
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-          {error}
+      {/* Mostrar InvoiceSuccessResponse si hay datos de respuesta HKA */}
+      {successData ? (
+        <div className="space-y-4">
+          <InvoiceSuccessResponse data={successData} />
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => {
+                setSuccessData(null)
+                setSuccess('')
+                // Limpiar formulario después de ver la respuesta
+                setCustomerName('')
+                setCustomerRuc('')
+                setCustomerDv('')
+                setItems([{ description: '', quantity: 1, unitPrice: 0 }])
+              }}
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+            >
+              Crear Nueva Factura
+            </button>
+            <Link href="/simple/facturas">
+              <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                Ver Todas las Facturas
+              </button>
+            </Link>
+          </div>
         </div>
-      )}
-      {success && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
-          {success}
-        </div>
+      ) : (
+        <>
+          {/* Mensajes */}
+          {error && (
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300">
+              {success}
+            </div>
+          )}
+        </>
       )}
 
-      {/* Acciones */}
-      <div className="flex justify-end gap-2">
-        <Link href="/simple">
-          <button className="px-4 py-2 border rounded-lg">Cancelar</button>
-        </Link>
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
-        >
-          {loading ? 'Enviando…' : 'Crear y Enviar'}
-        </button>
-      </div>
+      {/* Acciones - Solo mostrar si no hay successData */}
+      {!successData && (
+        <div className="flex justify-end gap-2">
+          <Link href="/simple">
+            <button className="px-4 py-2 border rounded-lg">Cancelar</button>
+          </Link>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
+          >
+            {loading ? 'Enviando…' : 'Crear y Enviar'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
