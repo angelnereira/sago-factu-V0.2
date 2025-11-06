@@ -5,7 +5,6 @@
 // Compatible con The Factory HKA
 
 import { create } from 'xmlbuilder2';
-import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import { formatPanamaISO } from '@/lib/utils/date-timezone';
 import { hkaLogger } from '../utils/logger';
 
@@ -190,6 +189,27 @@ export function generarCUFE(data: FacturaElectronicaInput): string {
 // ============================================
 // FUNCIONES AUXILIARES
 // ============================================
+
+/**
+ * Agrega un elemento XML solo si el valor no está vacío
+ * Evita generar tags vacíos que HKA rechaza
+ */
+const addElementIfNotEmpty = (
+  parent: { ele: (name: string) => { txt: (text: string) => { up: () => void } } },
+  tagName: string,
+  value: string | number | null | undefined
+): void => {
+  if (value === null || value === undefined || value === '') {
+    return; // No agregar elemento si está vacío
+  }
+  
+  const stringValue = String(value).trim();
+  if (stringValue === '' || stringValue === 'null' || stringValue === 'undefined') {
+    return; // No agregar si el string está vacío o es literal "null"/"undefined"
+  }
+  
+  parent.ele(tagName).txt(stringValue).up();
+};
 
 function formatFecha(fecha: Date): string {
   // Formato: YYYY-MM-DDTHH:mm:ss-05:00 (zona horaria de Panamá)
