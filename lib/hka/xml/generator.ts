@@ -503,11 +503,12 @@ export function validarDatosFactura(data: FacturaElectronicaInput): string[] {
   const errores: string[] = [];
   
   // Validar emisor
-  if (!data.emisor.ruc || data.emisor.ruc.length < 10) {
-    errores.push('RUC del emisor inválido');
+  // RUC debe tener entre 8-15 dígitos según especificación DGI Panamá
+  if (!data.emisor.ruc || !/^\d{8,15}$/.test(data.emisor.ruc.trim())) {
+    errores.push('RUC del emisor inválido. Debe contener solo números y tener entre 8-15 dígitos');
   }
-  if (!data.emisor.dv || data.emisor.dv.length < 1) {
-    errores.push('DV del emisor inválido');
+  if (!data.emisor.dv || !/^\d{1,2}$/.test(data.emisor.dv.trim())) {
+    errores.push('DV del emisor inválido. Debe ser numérico de 1-2 dígitos');
   }
   
   // Validar receptor

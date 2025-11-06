@@ -24,7 +24,7 @@ const config = {
   setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
   testTimeout: 30000, // 30 segundos para tests de integración
   verbose: true,
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
 };
