@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Building2, Users, FileText, Plug, Bell, Shield } from "lucide-react"
+import { Building2, Users, FileText, Plug, Bell, Shield, PenTool } from "lucide-react"
 import { OrganizationSettings } from "./organization-settings"
 import { UsersManagement } from "./users-management"
 import { InvoiceSettings } from "./invoice-settings"
 import { IntegrationSettings } from "./integration-settings"
 import { NotificationSettings } from "./notification-settings"
 import { SecuritySettings } from "./security-settings"
+import { CertificateManager } from "@/components/certificates/certificate-manager"
+import { DigitalSignatureSettings } from "@/components/certificates/digital-signature-settings"
 
 interface Organization {
   id: string
@@ -68,9 +70,40 @@ interface ConfigurationTabsProps {
   userRole: string
   userId: string
   isSuperAdmin?: boolean
+  certificates?: {
+    id: string
+    subject: string
+    issuer: string
+    validFrom: string
+    validUntil: string
+    ruc: string
+    dv: string
+  }[]
+  signatureConfig?: {
+    signatureMode: "ORGANIZATION" | "PERSONAL"
+    certificateId: string | null
+    autoSign: boolean
+    notifyOnExpiration: boolean
+  } | null
+  activeCertificate?: {
+    id: string
+    subject: string
+    issuer: string
+    validFrom: string
+    validUntil: string
+    ruc: string
+    dv: string
+  } | null
 }
 
-type TabId = "organization" | "users" | "invoicing" | "integration" | "notifications" | "security"
+type TabId =
+  | "organization"
+  | "users"
+  | "invoicing"
+  | "integration"
+  | "digitalSignature"
+  | "notifications"
+  | "security"
 
 interface Tab {
   id: TabId
@@ -103,6 +136,11 @@ const tabs: Tab[] = [
     roles: ["SUPER_ADMIN", "ADMIN"],
   },
   {
+    id: "digitalSignature",
+    name: "Firma digital",
+    icon: PenTool,
+  },
+  {
     id: "notifications",
     name: "Notificaciones",
     icon: Bell,
@@ -124,6 +162,9 @@ export function ConfigurationTabs({
   userRole,
   userId,
   isSuperAdmin = false,
+  certificates = [],
+  signatureConfig = null,
+  activeCertificate = null,
 }: ConfigurationTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("organization")
 
@@ -187,6 +228,12 @@ export function ConfigurationTabs({
             organizationId={organization.id}
             systemConfig={systemConfig}
           />
+        )}
+        {activeTab === "digitalSignature" && (
+          <div className="space-y-6">
+            <CertificateManager organizationId={organization.id} currentCertificate={activeCertificate} />
+            <DigitalSignatureSettings certificates={certificates} initialConfig={signatureConfig} />
+          </div>
         )}
         {activeTab === "notifications" && (
           <NotificationSettings
