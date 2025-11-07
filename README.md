@@ -128,6 +128,10 @@ HKA_SOAP_URL=""
 HKA_CLIENT_ID=""
 HKA_CLIENT_SECRET=""
 HKA_ENVIRONMENT="sandbox"
+
+# Certificados digitales (firma electrónica)
+CERTIFICATE_MASTER_KEY="tu_clave_hex_de_32_bytes"
+HKA_DEMO_USE_FAKE_SIGNATURE="true"
 ```
 
 ### 5. Ejecutar el Proyecto
@@ -139,6 +143,13 @@ npm run dev
 npm run build
 npm start
 ```
+
+### 6. Certificados de Firma Electrónica
+
+- Configura la variable `CERTIFICATE_MASTER_KEY` con una clave de 32 bytes en formato hexadecimal.
+- Desde el panel ve a **Dashboard → Configuración → Firma electrónica** para cargar el archivo `.pfx`/`.p12` y su contraseña.
+- En ambiente demo puedes habilitar `HKA_DEMO_USE_FAKE_SIGNATURE=true` para usar una firma simulada cuando no exista certificado.
+- Para producción carga el certificado emitido por la Dirección Nacional de Firma Electrónica de Panamá y verifica su vigencia.
 
 ## 📊 Scripts Disponibles
 

@@ -70,6 +70,7 @@ model Organization {
   systemConfigs SystemConfig[]
   customers     Customer[]
   apiLogs       ApiLog[]
+  certificates  Certificate[]
 
   @@index([slug])
   @@index([ruc])
@@ -167,6 +168,44 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+model Certificate {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Datos del certificado
+  certificateData   String   @db.Text
+  certificateIv     String
+  certificateTag    String
+  passwordEncrypted String   @db.Text
+  passwordIv        String
+  passwordTag       String
+
+  // Metadata del certificado
+  serialNumber String
+  issuer       String
+  subject      String
+  thumbprint   String
+
+  // RUC asociado al certificado
+  ruc String
+  dv  String
+
+  // Validez
+  validFrom DateTime
+  validUntil DateTime
+  isActive  Boolean  @default(true)
+
+  // Auditoría
+  uploadedBy String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([organizationId, isActive])
+  @@index([ruc, dv])
+  @@index([validUntil])
 }
 
 // ============================================

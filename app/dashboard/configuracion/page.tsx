@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { ConfigurationTabs } from "@/components/configuration/configuration-tabs"
+import { CertificateManager } from "@/components/certificates/certificate-manager"
 import { prismaServer as prisma } from "@/lib/prisma-server"
 
 export default async function ConfigurationPage() {
@@ -128,6 +129,16 @@ export default async function ConfigurationPage() {
     },
   })
 
+  const activeCertificate = organization
+    ? await prisma.certificate.findFirst({
+        where: {
+          organizationId: organization.id,
+          isActive: true,
+        },
+        orderBy: { createdAt: "desc" },
+      })
+    : null
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -159,6 +170,28 @@ export default async function ConfigurationPage() {
         userId={session.user.id}
         isSuperAdmin={isSuperAdmin}
       />
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-semibold text-white">Firma electrónica</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Carga y gestiona el certificado digital utilizado para firmar las facturas electrónicas.
+          </p>
+        </div>
+
+        <CertificateManager
+          organizationId={organization.id}
+          currentCertificate={activeCertificate ? {
+            id: activeCertificate.id,
+            subject: activeCertificate.subject,
+            issuer: activeCertificate.issuer,
+            validFrom: activeCertificate.validFrom.toISOString(),
+            validUntil: activeCertificate.validUntil.toISOString(),
+            ruc: activeCertificate.ruc,
+            dv: activeCertificate.dv,
+          } : null}
+        />
+      </section>
     </div>
   )
 }

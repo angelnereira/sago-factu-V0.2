@@ -10,6 +10,7 @@ import { validateXMLStructure, generateValidationReport } from '../validators/xm
 import { hkaLogger } from '../utils/logger';
 import { parseHKAResponse, validateMinimumResponse, toEnviarDocumentoResponse } from '../utils/response-parser';
 import { withRetryOrThrow } from '../utils/retry';
+import { XMLSigner } from '@/lib/certificates/xml-signer';
 
 /**
  * Obtiene credenciales HKA priorizando BD sobre variables de entorno
@@ -124,6 +125,29 @@ export async function enviarDocumento(
           organizationId: organization?.id,
         });
 
+        const environment = (organization?.hkaEnvironment || 'demo').toLowerCase();
+        const isDemoEnvironment = environment === 'demo';
+
+        if (organization?.id || organizationId) {
+          try {
+            const signer = new XMLSigner();
+            const signedXml = await signer.signXML(xmlDocumento, organization?.id ?? organizationId);
+            xmlDocumento = signedXml;
+          } catch (signatureError) {
+            if (!isDemoEnvironment) {
+              throw signatureError instanceof Error
+                ? signatureError
+                : new Error(String(signatureError));
+            }
+
+            await hkaLogger.warn('XML_SIGNATURE_PLACEHOLDER', 'No se pudo firmar con certificado, usando firma simulada en DEMO', {
+              invoiceId,
+              organizationId: organization?.id,
+              error: signatureError instanceof Error ? signatureError : new Error(String(signatureError)),
+            });
+          }
+        }
+
         // HKA espera el XML como texto plano sin escapar
         // Remover la declaración XML del inicio si existe
         let xmlLimpio = xmlDocumento.trim();
@@ -133,6 +157,41 @@ export async function enviarDocumento(
           if (endOfDeclaration !== -1) {
             xmlLimpio = xmlLimpio.substring(endOfDeclaration + 2).trim();
           }
+        }
+
+        const hasSignatureTag = /<ds:Signature|<Signature/i.test(xmlLimpio);
+
+        if (isDemoEnvironment && !hasSignatureTag && xmlLimpio.includes('</rFE>')) {
+          const demoSignature = `
+  <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:SignedInfo>
+      <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+      <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256" />
+      <ds:Reference URI="">
+        <ds:Transforms>
+          <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+        </ds:Transforms>
+        <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
+        <ds:DigestValue>DEMO_DIGEST_VALUE</ds:DigestValue>
+      </ds:Reference>
+    </ds:SignedInfo>
+    <ds:SignatureValue>DEMO_SIGNATURE_VALUE</ds:SignatureValue>
+    <ds:KeyInfo>
+      <ds:X509Data>
+        <ds:X509Certificate>DEMO_CERTIFICATE</ds:X509Certificate>
+      </ds:X509Data>
+    </ds:KeyInfo>
+  </ds:Signature>`;
+
+          xmlLimpio = xmlLimpio.replace('</rFE>', `${demoSignature}
+</rFE>`);
+          xmlDocumento = xmlDocumento.replace('</rFE>', `${demoSignature}
+</rFE>`);
+
+          await hkaLogger.warn('DEMO_SIGNATURE_PLACEHOLDER', 'Se agregó firma simulada para ambiente DEMO', {
+            invoiceId,
+            organizationId: organization?.id,
+          });
         }
 
         // ============================================

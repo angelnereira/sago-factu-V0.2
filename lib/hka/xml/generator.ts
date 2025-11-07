@@ -255,7 +255,12 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   
   // Crear documento XML
   const doc = create({ version: '1.0', encoding: 'UTF-8' })
-    .ele('rFE', { xmlns: 'http://dgi-fep.mef.gob.pa' });
+    .ele('rFE', {
+      xmlns: 'http://dgi-fep.mef.gob.pa',
+      'xmlns:ds': 'http://www.w3.org/2000/09/xmldsig#',
+    });
+
+  const isDemoAmbiente = data.ambiente === TipoAmbiente.DEMO;
   
   // ============================================
   // ENCABEZADO
@@ -480,6 +485,38 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
     gRef.up();
   }
   
+  if (isDemoAmbiente) {
+    const signature = doc.ele('ds:Signature');
+    const signedInfo = signature.ele('ds:SignedInfo');
+    signedInfo.ele('ds:CanonicalizationMethod', {
+      Algorithm: 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315',
+    }).up();
+    signedInfo.ele('ds:SignatureMethod', {
+      Algorithm: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
+    }).up();
+
+    const reference = signedInfo.ele('ds:Reference', { URI: '' });
+    const transforms = reference.ele('ds:Transforms');
+    transforms.ele('ds:Transform', {
+      Algorithm: 'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
+    }).up();
+    transforms.up();
+    reference.ele('ds:DigestMethod', {
+      Algorithm: 'http://www.w3.org/2001/04/xmlenc#sha256',
+    }).up();
+    reference.ele('ds:DigestValue').txt('DEMO_DIGEST_VALUE').up();
+    reference.up();
+    signedInfo.up();
+
+    signature.ele('ds:SignatureValue').txt('DEMO_SIGNATURE_VALUE').up();
+    const keyInfo = signature.ele('ds:KeyInfo');
+    const x509Data = keyInfo.ele('ds:X509Data');
+    x509Data.ele('ds:X509Certificate').txt('DEMO_CERTIFICATE').up();
+    x509Data.up();
+    keyInfo.up();
+    signature.up();
+  }
+
   // Generar XML como string
   const xmlString = doc.end({ prettyPrint: true });
   
