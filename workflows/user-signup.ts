@@ -1,15 +1,20 @@
 // Carga perezosa del paquete 'workflow' para evitar fallos si no está instalado
 function getWorkflow() {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    return require('workflow');
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    const req = eval('require') as ((moduleId: string) => any) | undefined;
+    if (typeof req === 'function') {
+      return req('workflow');
+    }
   } catch (_) {
-    return {
-      // No-ops por defecto para desarrollo sin paquete
-      sleep: async (_: string) => {},
-      FatalError: class FatalError extends Error {},
-    } as any;
+    // ignore
   }
+
+  return {
+    // No-ops por defecto para desarrollo sin paquete
+    sleep: async (_: string) => {},
+    FatalError: class FatalError extends Error {},
+  } as any;
 }
 
 export async function handleUserSignup(email: string) {

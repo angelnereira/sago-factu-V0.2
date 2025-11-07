@@ -3,9 +3,12 @@ import { NextResponse } from "next/server";
 // Arranque condicional del workflow para no romper si no está instalado
 let start: ((fn: any, args: any[]) => Promise<void>) | null = null;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  start = require('workflow/api').start;
-} catch (_) {
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+  const req = eval('require') as ((moduleId: string) => any) | undefined;
+  if (typeof req === 'function') {
+    start = req('workflow/api')?.start ?? null;
+  }
+} catch {
   start = null;
 }
 
