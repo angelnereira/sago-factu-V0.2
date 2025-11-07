@@ -1,15 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { type ChangeEvent, useRef, useState } from "react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { toast } from "sonner"
-
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 import {
   AlertCircle,
@@ -42,7 +35,15 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const notifyError = (message: string) => {
+    alert(message)
+  }
+
+  const notifySuccess = (message: string) => {
+    alert(message)
+  }
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) {
       setSelectedFile(null)
@@ -50,7 +51,7 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
     }
 
     if (!file.name.match(/\.(pfx|p12)$/i)) {
-      toast.error("Seleccione un archivo .pfx o .p12 válido")
+      notifyError("Seleccione un archivo .pfx o .p12 válido")
       event.target.value = ""
       return
     }
@@ -68,12 +69,12 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast.error("Seleccione un certificado para cargar")
+      notifyError("Seleccione un certificado para cargar")
       return
     }
 
     if (!password) {
-      toast.error("Ingrese la contraseña del certificado")
+      notifyError("Ingrese la contraseña del certificado")
       return
     }
 
@@ -96,11 +97,11 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
         throw new Error(result.error || "Error al guardar el certificado")
       }
 
-      toast.success("Certificado cargado correctamente")
+      notifySuccess("Certificado cargado correctamente")
       resetForm()
       window.location.reload()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Error inesperado al cargar el certificado")
+      notifyError(error instanceof Error ? error.message : "Error inesperado al cargar el certificado")
     } finally {
       setIsUploading(false)
     }
@@ -128,14 +129,14 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
+      <div className="rounded-lg border border-neutral-200 bg-white shadow-sm">
+        <div className="border-b border-neutral-200 px-4 py-3">
+          <div className="flex items-center gap-2 text-lg font-semibold text-neutral-900">
             <Shield className="h-5 w-5" />
             Estado del certificado
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </div>
+        </div>
+        <div className="px-4 py-5">
           {currentCertificate ? (
             <div
               className={`rounded-lg border p-4 ${
@@ -181,48 +182,43 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
                   </div>
 
                   {isExpired && (
-                    <Alert className="mt-2">
-                      <AlertDescription>
-                        El certificado ha expirado. Cargue un nuevo certificado para continuar emitiendo facturas.
-                      </AlertDescription>
-                    </Alert>
+                    <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                      El certificado ha expirado. Cargue un nuevo certificado para continuar emitiendo facturas.
+                    </div>
                   )}
 
                   {isExpiringSoon && !isExpired && (
-                    <Alert className="mt-2">
-                      <AlertDescription>
-                        El certificado expira pronto. Renueve el certificado para evitar interrupciones en la emisión de
-                        facturas.
-                      </AlertDescription>
-                    </Alert>
+                    <div className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
+                      El certificado expira pronto. Renueve el certificado para evitar interrupciones en la emisión de facturas.
+                    </div>
                   )}
                 </div>
               </div>
             </div>
           ) : (
-            <Alert>
-              <AlertDescription>
-                No hay certificado cargado. Cargue un certificado válido para firmar las facturas electrónicas.
-              </AlertDescription>
-            </Alert>
+            <div className="rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
+              No hay certificado cargado. Cargue un certificado válido para firmar las facturas electrónicas.
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Cargar certificado (.pfx o .p12)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="rounded-lg border border-neutral-200 bg-white shadow-sm">
+        <div className="border-b border-neutral-200 px-4 py-3">
+          <h3 className="text-lg font-semibold text-neutral-900">Cargar certificado (.pfx o .p12)</h3>
+        </div>
+        <div className="space-y-4 px-4 py-5">
           <div>
-            <Label htmlFor="certificate-file">Certificado</Label>
-            <Input
+            <label className="block text-sm font-medium text-neutral-700" htmlFor="certificate-file">
+              Certificado
+            </label>
+            <input
               ref={fileInputRef}
               id="certificate-file"
               type="file"
               accept=".pfx,.p12"
               onChange={handleFileChange}
-              className="mt-1"
+              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
             />
             {selectedFile && (
               <p className="mt-1 text-xs text-neutral-500">Archivo seleccionado: {selectedFile.name}</p>
@@ -230,41 +226,34 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
           </div>
 
           <div>
-            <Label htmlFor="certificate-password">Contraseña del certificado</Label>
-            <Input
+            <label className="block text-sm font-medium text-neutral-700" htmlFor="certificate-password">
+              Contraseña del certificado
+            </label>
+            <input
               id="certificate-password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Contraseña del archivo PFX/P12"
-              className="mt-1"
+              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
             />
           </div>
 
-          <Button
+          <button
+            type="button"
             onClick={handleUpload}
             disabled={isUploading || !selectedFile || !password}
-            className="w-full"
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
           >
-            {isUploading ? (
-              <>
-                <Upload className="mr-2 h-4 w-4 animate-spin" /> Cargando...
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" /> Cargar certificado
-              </>
-            )}
-          </Button>
+            <Upload className={`h-4 w-4 ${isUploading ? "animate-spin" : ""}`} />
+            {isUploading ? "Cargando..." : "Cargar certificado"}
+          </button>
 
-          <Alert>
-            <AlertDescription className="text-xs text-neutral-600">
-              Los certificados se almacenan cifrados con AES-256-GCM y solo se desencriptan temporalmente al firmar
-              una factura.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+          <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            Los certificados se almacenan cifrados con AES-256-GCM y solo se desencriptan temporalmente al firmar una factura.
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

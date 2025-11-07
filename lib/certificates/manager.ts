@@ -5,7 +5,7 @@ import prismaServer from "@/lib/prisma-server"
 
 import { CertificateEncryption } from "./encryption"
 
-interface UploadResult extends CertificateRecord {}
+type UploadResult = CertificateRecord
 
 export class CertificateManager {
   private readonly encryption: CertificateEncryption
