@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { ConfigurationTabs } from "@/components/configuration/configuration-tabs"
 import { CertificateManager } from "@/components/certificates/certificate-manager"
+import { DigitalSignatureSettings } from "@/components/certificates/digital-signature-settings"
 import { prismaServer as prisma } from "@/lib/prisma-server"
 
 export default async function ConfigurationPage() {
@@ -139,6 +140,20 @@ export default async function ConfigurationPage() {
       })
     : null
 
+  const availableCertificates = organization
+    ? await prisma.certificate.findMany({
+        where: {
+          organizationId: organization.id,
+          isActive: true,
+        },
+        orderBy: { createdAt: "desc" },
+      })
+    : []
+
+  const userSignatureConfig = await prisma.userSignatureConfig.findUnique({
+    where: { userId: session.user.id },
+  })
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -171,26 +186,51 @@ export default async function ConfigurationPage() {
         isSuperAdmin={isSuperAdmin}
       />
 
-      <section className="space-y-4">
+      <section className="space-y-6">
         <div>
           <h2 className="text-2xl font-semibold text-white">Firma electrónica</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Carga y gestiona el certificado digital utilizado para firmar las facturas electrónicas.
+            Carga y gestiona el certificado digital utilizado para firmar las facturas electrónicas y define tus
+            preferencias personales de firma.
           </p>
         </div>
 
-        <CertificateManager
-          organizationId={organization.id}
-          currentCertificate={activeCertificate ? {
-            id: activeCertificate.id,
-            subject: activeCertificate.subject,
-            issuer: activeCertificate.issuer,
-            validFrom: activeCertificate.validFrom.toISOString(),
-            validUntil: activeCertificate.validUntil.toISOString(),
-            ruc: activeCertificate.ruc,
-            dv: activeCertificate.dv,
-          } : null}
-        />
+        <div className="space-y-6">
+          <CertificateManager
+            organizationId={organization.id}
+            currentCertificate={activeCertificate
+              ? {
+                  id: activeCertificate.id,
+                  subject: activeCertificate.subject,
+                  issuer: activeCertificate.issuer,
+                  validFrom: activeCertificate.validFrom.toISOString(),
+                  validUntil: activeCertificate.validUntil.toISOString(),
+                  ruc: activeCertificate.ruc,
+                  dv: activeCertificate.dv,
+                }
+              : null}
+          />
+
+          <DigitalSignatureSettings
+            certificates={availableCertificates.map(certificate => ({
+              id: certificate.id,
+              subject: certificate.subject,
+              issuer: certificate.issuer,
+              validFrom: certificate.validFrom.toISOString(),
+              validUntil: certificate.validUntil.toISOString(),
+              ruc: certificate.ruc,
+              dv: certificate.dv,
+            }))}
+            initialConfig={userSignatureConfig
+              ? {
+                  signatureMode: userSignatureConfig.signatureMode,
+                  certificateId: userSignatureConfig.certificateId,
+                  autoSign: userSignatureConfig.autoSign,
+                  notifyOnExpiration: userSignatureConfig.notifyOnExpiration,
+                }
+              : null}
+          />
+        </div>
       </section>
     </div>
   )

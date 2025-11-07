@@ -71,6 +71,7 @@ model Organization {
   customers     Customer[]
   apiLogs       ApiLog[]
   certificates  Certificate[]
+  signatureConfigs UserSignatureConfig[]
 
   @@index([slug])
   @@index([ruc])
@@ -121,6 +122,7 @@ model User {
   apiLogs       ApiLog[]
   monitors      Monitor[]
   collections   Collection[]
+  signatureConfig UserSignatureConfig?
   environments  Environment[]
 
   @@index([organizationId])
@@ -203,9 +205,38 @@ model Certificate {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  userConfigs UserSignatureConfig[]
+
   @@index([organizationId, isActive])
   @@index([ruc, dv])
   @@index([validUntil])
+}
+
+model UserSignatureConfig {
+  id             String   @id @default(cuid())
+
+  userId String   @unique
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  signatureMode SignatureMode @default(ORGANIZATION)
+  certificateId String?
+  certificate   Certificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
+
+  autoSign           Boolean @default(true)
+  notifyOnExpiration Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([certificateId])
+}
+
+enum SignatureMode {
+  ORGANIZATION
+  PERSONAL
 }
 
 // ============================================
