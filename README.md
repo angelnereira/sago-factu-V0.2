@@ -1,305 +1,150 @@
-# SAGO-FACTU - Plataforma Intermediaria PAC
+# SAGO FACTU — Plataforma SaaS de Facturación Electrónica para Panamá
 
-Sistema Multi-Tenant de Facturación Electrónica para Panamá
+![SAGO FACTU Banner](public/sago-factu-logo.png)
 
-## 📋 Información del Proyecto
+<p align="center">
+  <a href="https://github.com/angelnereira/sago-factu-V0.2/actions"><img alt="Build" src="https://img.shields.io/badge/build-passing-00c853?style=flat-square"></a>
+  <a href="./CHANGELOG.md"><img alt="Versión" src="https://img.shields.io/badge/version-0.7.0-blue?style=flat-square"></a>
+  <a href="./LICENSE"><img alt="Licencia" src="https://img.shields.io/badge/license-MIT-ff9800?style=flat-square"></a>
+  <a href="https://nextjs.org"><img alt="Next.js" src="https://img.shields.io/badge/Next.js-15.5.6-000000?logo=next.js&style=flat-square"></a>
+  <a href="https://www.prisma.io/"><img alt="Prisma" src="https://img.shields.io/badge/Prisma-6.17.1-2D3748?logo=prisma&style=flat-square"></a>
+</p>
 
-- **Nombre**: SAGO-FACTU
-- **Tipo**: SaaS Multi-Tenant
-- **Stack**: Next.js 15 + TypeScript + Prisma ORM + PostgreSQL
-- **PAC**: The Factory HKA (Panamá)
+## Tabla de Contenidos
 
-## 🎯 Descripción
+- [Resumen Ejecutivo](#resumen-ejecutivo)
+- [Características Clave](#características-clave)
+- [Stack Tecnológico](#stack-tecnológico)
+- [Demo y Capturas](#demo-y-capturas)
+- [Quick Start](#quick-start)
+- [Entorno y Configuración](#entorno-y-configuración)
+- [Arquitectura](#arquitectura)
+- [Guías de Uso](#guías-de-uso)
+- [Deployment](#deployment)
+- [Roadmap](#roadmap)
+- [Contribuir](#contribuir)
+- [Licencia](#licencia)
 
-Plataforma SaaS que actúa como intermediario entre clientes finales y The Factory HKA, permitiendo la gestión, distribución y monitoreo de folios de facturación electrónica en Panamá.
+## Resumen Ejecutivo
 
-### Modelo de Negocio
-```
-The Factory HKA → SAGO-FACTU (Nosotros) → Clientes Finales
-   [60,000 folios]    [Redistribución]      [Consumo]
-```
+SAGO FACTU es una plataforma multi-tenant que centraliza la administración de folios y la emisión de facturas electrónicas para empresas panameñas mediante la integración directa con el Proveedor Autorizado de Certificación (PAC) **The Factory HKA**. El proyecto está pensado para entornos enterprise y soporta onboarding rápido, monitoreo en tiempo real y procesamiento asíncrono de documentos.
 
-### Roles de Usuario
-- **Super Admin**: Gestión de plataforma y compra de folios a HKA
-- **Admin Empresa**: Gestión de su organización y usuarios
-- **Usuario Final**: Emisión y consulta de facturas
+## Características Clave
 
-## 🏗️ Arquitectura del Sistema
+- 🚀 **Multi-tenant completo** con aislamiento por organización y roles granularizados.
+- 🧾 **Generación y envío de facturas rFE** a HKA, incluyendo validaciones avanzadas y seguimiento.
+- 📦 **Gestión de folios**: compra, asignación y consumo con métricas en dashboard.
+- 🔐 **Seguridad enterprise**: NextAuth v5, hashing bcrypt, cifrado de certificados digitales.
+- ⚙️ **Procesamiento asíncrono** con BullMQ + Redis para jobs de certificación.
+- 📊 **Dashboards y reportes** en tiempo real con gráficas y status detallados.
+- ✉️ **Notificaciones automáticas** vía Resend y almacenamiento de XML/PDF en AWS S3.
 
-### Stack Tecnológico
-- **Frontend & Backend**: Next.js 15 (App Router), TypeScript 5+, React 19
-- **Base de Datos**: PostgreSQL 15+, Prisma ORM 6+
-- **Autenticación**: NextAuth.js v5, JWT + Session Tokens
-- **UI/UX**: Tailwind CSS 4, shadcn/ui components
-- **Integración HKA**: node-soap para SOAP client
-- **Background Jobs**: BullMQ + Redis
-- **Storage**: AWS S3 para XML/PDF
-- **Email**: Resend para notificaciones
+## Stack Tecnológico
 
-## 🚀 Configuración del Proyecto
+| Capa | Tecnología | Detalles |
+|------|------------|----------|
+| Frontend & Backend | Next.js 15 App Router, React 19, TypeScript 5 | Componentes shadcn/ui, Tailwind CSS 4 |
+| Base de datos | PostgreSQL 15 (Neon Serverless) | Prisma ORM 6.17 con extensiones Accelerate, cifrado de campos |
+| Autenticación | NextAuth.js v5 (Credentials) | JWT, callbacks personalizadas, roles multi-tenant |
+| Integraciones | node-soap, AWS SDK v3, Resend | Cliente SOAP HKA, gestión de certificados p12/pfx |
+| Jobs & Caché | BullMQ 5 + Redis | Workers para certificación y sincronizaciones |
+| DevOps | Docker, Docker Compose, GitHub Actions (blueprint) | Scripts de setup y diagnostico |
 
-### Prerrequisitos
-- Node.js 18+ (recomendado 20+)
-- PostgreSQL 15+
-- Redis (para BullMQ)
-- npm o yarn
+Consulta la documentación ampliada en `docs/architecture/overview.md`.
 
-### 1. Instalación
+## Demo y Capturas
+
+> Añade tus capturas oficiales en `public/screenshots/` y enlázalas aquí para personalizar la demo visual del proyecto.
+
+## Quick Start
+
 ```bash
-# Clonar el repositorio
-git clone <repository-url>
+git clone https://github.com/angelnereira/sago-factu-V0.2.git
 cd sago-factu
-
-# Instalar dependencias
 npm install
-```
-
-### 2. Configuración Inicial Automática
-```bash
-# Ejecutar script de configuración automática
-npm run setup
-
-# Esto generará automáticamente:
-# - Archivo .env con NEXTAUTH_SECRET y SUPER_ADMIN_PASSWORD
-# - Variables de entorno configuradas
-```
-
-### 3. Configuración de Variables de Entorno
-```bash
-# Copiar template de variables de entorno
-cp env.template .env
-
-# Editar .env con tus credenciales reales
-# IMPORTANTE: NUNCA subir .env a Git
-nano .env
-```
-
-Variables principales:
-```bash
-# Base de datos (Neon PostgreSQL)
-DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
-
-# NextAuth.js (generar con: openssl rand -base64 32)
-NEXTAUTH_SECRET="tu-secret-generado"
-
-# HKA Demo (solicitar credenciales a The Factory HKA)
-HKA_DEMO_TOKEN_USER="tu-token"
-HKA_DEMO_TOKEN_PASSWORD="tu-password"
-```
-
-Ver `env.template` para la lista completa de variables.
-
-### 4. Configuración de Base de Datos
-```bash
-# Generar cliente de Prisma
-npm run db:generate
-
-# Aplicar migraciones
-npm run db:migrate
-
-# Poblar base de datos con datos iniciales
-npm run db:seed
-```
-
-### 4. Variables de Entorno Requeridas
-
-```env
-# Database
-DATABASE_URL="postgresql://username:password@localhost:5432/sago_factu?schema=public"
-
-# NextAuth.js
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key-here"
-
-# Redis (para BullMQ)
-REDIS_URL="redis://localhost:6379"
-
-# AWS S3
-AWS_ACCESS_KEY_ID=""
-AWS_SECRET_ACCESS_KEY=""
-AWS_REGION="us-east-1"
-AWS_S3_BUCKET="sago-factu-storage"
-
-# Email Service
-RESEND_API_KEY=""
-
-# HKA Integration
-HKA_SOAP_URL=""
-HKA_CLIENT_ID=""
-HKA_CLIENT_SECRET=""
-HKA_ENVIRONMENT="sandbox"
-
-# Certificados digitales (firma electrónica)
-CERTIFICATE_MASTER_KEY="tu_clave_hex_de_32_bytes"
-HKA_DEMO_USE_FAKE_SIGNATURE="true"
-```
-
-### 5. Ejecutar el Proyecto
-```bash
-# Desarrollo
+cp .env.example .env
+npm run setup && npm run db:migrate && npm run db:seed
 npm run dev
-
-# Producción
-npm run build
-npm start
 ```
 
-### 6. Certificados de Firma Electrónica
-
-- Configura la variable `CERTIFICATE_MASTER_KEY` con una clave de 32 bytes en formato hexadecimal.
-- Desde el panel ve a **Dashboard → Configuración → Firma electrónica** para cargar el archivo `.pfx`/`.p12` y su contraseña.
-- En ambiente demo puedes habilitar `HKA_DEMO_USE_FAKE_SIGNATURE=true` para usar una firma simulada cuando no exista certificado.
-- Para producción carga el certificado emitido por la Dirección Nacional de Firma Electrónica de Panamá y verifica su vigencia.
-
-## 📊 Scripts Disponibles
-
-```bash
-# Desarrollo
-npm run dev          # Servidor de desarrollo
-npm run build        # Construir para producción
-npm run start        # Servidor de producción
-npm run lint         # Linter
-
-# Base de Datos
-npm run db:generate  # Generar cliente Prisma
-npm run db:push      # Sincronizar esquema con DB
-npm run db:migrate   # Ejecutar migraciones
-npm run db:studio    # Abrir Prisma Studio
-npm run db:seed      # Poblar datos iniciales
-```
-
-## 🔐 Credenciales de Acceso (Desarrollo)
-
-Después de ejecutar `npm run db:seed`:
+Credenciales demo tras el seed:
 
 - **Super Admin**: `admin@sago-factu.com` / `admin123`
 - **Usuario Demo**: `usuario@empresa.com` / `usuario123`
 
-## 📁 Estructura del Proyecto
+## Entorno y Configuración
 
-```
-sago-factu/
-├── app/                    # Next.js App Router
-│   ├── api/               # API Routes
-│   ├── auth/              # Páginas de autenticación
-│   ├── dashboard/         # Dashboard principal
-│   └── globals.css        # Estilos globales
-├── lib/                   # Utilidades y configuración
-│   ├── auth.ts           # Configuración NextAuth
-│   └── prisma.ts         # Cliente Prisma
-├── prisma/               # Esquema y migraciones
-│   ├── schema.prisma     # Esquema de base de datos
-│   └── seed.ts           # Datos iniciales
-├── types/                # Tipos TypeScript
-└── middleware.ts         # Middleware de autenticación
-```
+1. Requisitos mínimos: Node.js 20, Docker 24, PostgreSQL 15, Redis 7.
+2. Revisa `.env.example` y ajusta las variables obligatorias.
+3. Para scripts de automatización consulta `docs/guides/development-workflow.md`.
+4. Guías de setup detallado en:
+   - `docs/setup/installation.md`
+   - `docs/setup/environment-setup.md`
+   - `docs/setup/database-setup.md`
 
-## 🗄️ Esquema de Base de Datos
+## Arquitectura
 
-### Modelos Principales
-- **User**: Usuarios del sistema
-- **Organization**: Organizaciones multi-tenant
-- **OrganizationMember**: Membresías de usuarios
-- **Folio**: Folios de facturación
-- **Invoice**: Facturas electrónicas
-- **InvoiceItem**: Items de facturas
-- **Notification**: Sistema de notificaciones
+- **Monolito Next.js** con server actions, rutas API y middleware para control de acceso.
+- **Capas principales**: `app/*` (UI y APIs), `lib/*` (servicios y utilidades), `components/*` (UI reusables), `prisma/*` (schema y seeds).
+- **Integración HKA** encapsulada en `lib/hka/*` con transformers, clientes SOAP y validadores XML.
+- **Jobs** (`lib/queue`, `lib/workers`) manejan la certificación y procesos intensivos.
+- **Monitorización** vía módulos en `lib/monitoring` y paneles en `app/dashboard`.
 
-### Características Multi-Tenant
-- Aislamiento completo por organización
-- Roles y permisos granulares
-- Configuración personalizada por tenant
-- Folios y facturas segregados
+Consulta `docs/architecture/overview.md` y `docs/architecture/tech-decisions.md` para diagramas y decisiones clave.
 
-## 🔄 Flujo de Emisión de Factura
+## Guías de Uso
 
-1. **Usuario** llena formulario de factura
-2. **Sistema** valida datos con Zod
-3. **Sistema** verifica folios disponibles
-4. **Sistema** crea invoice con status QUEUED
-5. **Worker** procesa job en background
-6. **Worker** envía XML a HKA via SOAP
-7. **HKA** responde con CUFE y XML certificado
-8. **Sistema** actualiza status a CERTIFIED
-9. **Sistema** guarda archivos en S3
-10. **Sistema** envía notificación por email
+- **Workflow de desarrollo**: `docs/guides/development-workflow.md`
+- **API HTTP + Webhooks**: `docs/guides/api-documentation.md`
+- **Testing (unit + integration + E2E)**: `docs/guides/testing.md`
+- **Migraciones y seeds**: `docs/database/migrations.md` y `docs/database/seeds.md`
+- **Backup & restore**: `docs/database/backup-restore.md`
 
-## 🛠️ Desarrollo
+## Deployment
 
-### Agregar Nuevas Funcionalidades
-1. Crear migración de Prisma si es necesario
-2. Actualizar esquema en `prisma/schema.prisma`
-3. Ejecutar `npm run db:migrate`
-4. Implementar lógica en Server Actions
-5. Crear componentes UI con Tailwind
+| Plataforma | Documento | Contenido |
+|------------|-----------|-----------|
+| Docker | `docs/deployment/docker.md` | Imágenes multi-stage, docker-compose, healthchecks |
+| Oracle Cloud | `docs/deployment/oracle-cloud.md` | Configuración de compute, redes, CI/CD |
+| Google Cloud | `docs/deployment/google-cloud.md` | Cloud Run / Compute Engine, Cloud SQL, IAM |
 
-### Integración con HKA
-- Configurar credenciales en variables de entorno
-- Implementar cliente SOAP en `lib/hka-client.ts`
-- Crear workers para procesamiento asíncrono
-- Manejar respuestas y errores de HKA
+Scripts de despliegue adicionales en `vercel-build.sh` y `scripts/`.
 
-## 📈 Monitoreo y Analytics
+## Roadmap
 
-- **Error Tracking**: Sentry (opcional)
-- **Analytics**: Vercel Analytics
-- **Logs**: Console logs + Prisma logging
-- **Métricas**: Folios usados, facturas procesadas, errores
+- [x] Multi-tenancy con roles avanzados
+- [x] Generación y certificación XML rFE
+- [x] Dashboard de monitoreo de folios y facturas
+- [ ] Integración directa con pasarelas de pago
+- [ ] Portal de clientes auto-servicio
+- [ ] Pipeline CI/CD en GitHub Actions
+- [ ] Alertas en tiempo real con WebSockets
 
-## 🚀 Deployment
+Consulta el detalle en `CHANGELOG.md` y abre un issue para proponer nuevas funcionalidades.
 
-### Vercel (Recomendado)
-1. Conectar repositorio a Vercel
-2. Configurar variables de entorno
-3. Configurar PostgreSQL (Vercel Postgres o externo)
-4. Configurar Redis (Upstash)
-5. Configurar AWS S3
+## Contribuir
 
-### Variables de Entorno de Producción
-```env
-DATABASE_URL="postgresql://..."
-NEXTAUTH_URL="https://your-domain.com"
-NEXTAUTH_SECRET="production-secret"
-REDIS_URL="redis://..."
-AWS_ACCESS_KEY_ID="..."
-AWS_SECRET_ACCESS_KEY="..."
-RESEND_API_KEY="..."
+Aceptamos contribuciones externas siguiendo la guía oficial:
+
+- Lee `CONTRIBUTING.md` para conocer estándares de código, convenios de commits y flujo de PR.
+- Usa `docs/contributing/code-style.md` para formateo y patrones aceptados.
+- Aplica la plantilla `docs/contributing/pull-request-template.md` al abrir un PR.
+
+### Scripts útiles
+
+```bash
+npm run lint             # Linting con ESLint + reglas personalizadas
+npm run test             # Suite completa (unit + integration)
+npm run test:unit        # Validaciones y utilidades
+npm run test:integration # Importación de Excel y flujos críticos
+npm run db:reset         # Reset completo + seed demo
 ```
 
-## 📚 Documentación
+## Licencia
 
-Toda la documentación técnica está organizada en el directorio [`docs/`](docs/):
-
-### 📖 Documentos Clave
-- **[Índice de Documentación](docs/INDEX.md)** - Índice completo
-- **[Guía de Despliegue](docs/DESPLIEGUE-VERCEL.md)** - Deployment en Vercel
-- **[Resumen Ejecutivo](docs/RESUMEN-EJECUTIVO-FINAL.md)** - Estado del proyecto
-- **[Integración HKA](docs/INTEGRACION-HKA-COMPLETADA-FINAL.md)** - Integración completa
-- **[Quick Start](docs/QUICKSTART.md)** - Inicio rápido
-
-### 📁 Categorías
-```
-docs/
-├── 🚀 Inicio Rápido (QUICKSTART.md)
-├── 🎯 Resúmenes Ejecutivos
-├── 🔧 Documentación Técnica
-├── 🔌 Integración HKA
-├── 🚀 Deployment
-├── 🗄️ Base de Datos
-└── 🎨 Frontend
-```
-
-**Ver el índice completo**: [`docs/INDEX.md`](docs/INDEX.md)
+Este proyecto se distribuye bajo licencia [MIT](./LICENSE). Consulta el documento para conocer los términos completos.
 
 ---
 
-## 📞 Soporte
-
-Para soporte técnico o consultas sobre el proyecto:
-- Revisar documentación en [`docs/`](docs/)
-- Ver guías de troubleshooting
-- Contactar al equipo de desarrollo
-
----
-
-**Desarrollado con ❤️ para la facturación electrónica en Panamá**
+**SAGO FACTU** — Enterprise Billing Platform for Panamá  
+Construido con ❤️ por el equipo de UbicSystem. Para soporte escribe a `soporte@sago-factu.com`.
