@@ -20,6 +20,11 @@ export default async function InvoicesPage({
   }
 
   const organizationId = session.user.organizationId
+  const userRole = session.user.role as string
+  const userId = session.user.id
+
+  const privilegedRoles = new Set(["SUPER_ADMIN", "ORG_ADMIN"])
+  const canViewAllFromOrganization = privilegedRoles.has(userRole)
 
   if (!organizationId) {
     return (
@@ -36,6 +41,9 @@ export default async function InvoicesPage({
 
   // Construir filtros
   const where: any = { organizationId }
+  if (!canViewAllFromOrganization) {
+    where.createdBy = userId
+  }
   if (status && status !== "ALL") {
     where.status = status
   }
@@ -56,12 +64,46 @@ export default async function InvoicesPage({
         status: true,
         createdAt: true,
         issueDate: true,
+        createdBy: true,
+        pdfBase64: true,
+        pdfUrl: true,
+        rawXml: true,
+        xmlContent: true,
       },
     }),
     prisma.invoice.count({ where }),
   ])
 
   const totalPages = Math.ceil(totalCount / perPage)
+
+  const serializedInvoices = invoices.map((invoice) => {
+    const total =
+      typeof invoice.total === "number"
+        ? invoice.total
+        : typeof invoice.total === "string"
+          ? Number(invoice.total)
+          : Number(invoice.total?.toString?.() ?? 0)
+
+    const canDelete =
+      privilegedRoles.has(userRole) || invoice.createdBy === userId
+
+    const hasPdf = Boolean(invoice.pdfUrl || invoice.pdfBase64)
+    const hasXml = Boolean(invoice.rawXml || invoice.xmlContent)
+
+    return {
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      receiverName: invoice.receiverName,
+      receiverRuc: invoice.receiverRuc,
+      total,
+      status: invoice.status,
+      createdAt: invoice.createdAt.toISOString(),
+      issueDate: invoice.issueDate ? invoice.issueDate.toISOString() : null,
+      canDelete,
+      hasPdf,
+      hasXml,
+    }
+  })
 
   return (
     <div className="space-y-6">
@@ -84,7 +126,7 @@ export default async function InvoicesPage({
 
       {/* Lista de facturas */}
       <InvoiceList
-        invoices={invoices}
+        invoices={serializedInvoices}
         currentPage={page}
         totalPages={totalPages}
         currentStatus={status}

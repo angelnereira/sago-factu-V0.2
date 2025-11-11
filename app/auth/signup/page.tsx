@@ -3,6 +3,61 @@ import Link from "next/link"
 import { prismaServer as prisma } from "@/lib/prisma-server"
 import bcrypt from "bcryptjs"
 
+function slugify(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 48);
+}
+
+async function createOrganizationForUser(name: string, email: string) {
+  const baseValue = name || email.split("@")[0] || "organizacion";
+  const baseSlug = slugify(baseValue) || `org-${Date.now()}`;
+
+  let slugCandidate = baseSlug;
+  let suffix = 1;
+
+  // Garantizar unicidad del slug
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const existing = await prisma.organization.findUnique({
+      where: { slug: slugCandidate },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      break;
+    }
+
+    slugCandidate = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+
+  const organizationName =
+    name?.trim().length ? `${name.trim()} (Organización)` : `Cuenta ${email}`;
+
+  return prisma.organization.create({
+    data: {
+      slug: slugCandidate,
+      name: organizationName,
+      email,
+      hkaEnabled: false,
+      maxUsers: 5,
+      isActive: true,
+      metadata: {
+        theme: "light",
+        timezone: "America/Panama",
+        currency: "PAB",
+        language: "es",
+        createdFromSignup: true,
+      },
+    },
+  });
+}
+
 async function handleSignUp(formData: FormData) {
   "use server"
 
@@ -48,41 +103,11 @@ async function handleSignUp(formData: FormData) {
     }
 
     console.log("✅ [SIGNUP] Usuario no existe, continuando...")
-    console.log("🏢 [SIGNUP] Buscando organización demo...")
-    
-    let organization = await prisma.organization.findFirst({
-      where: { slug: "empresa-demo" }
-    })
+    console.log("🏢 [SIGNUP] Creando organización propia para el usuario...")
 
-    if (!organization) {
-      console.log("⚠️  [SIGNUP] Organización no existe, creando...")
-      
-      organization = await prisma.organization.create({
-        data: {
-          slug: "empresa-demo",
-          name: "Empresa Demo S.A.",
-          ruc: "123456789-1",
-          dv: "1",
-          email: "demo@empresa.com",
-          phone: "+507 1234-5678",
-          address: "Panamá, Panamá",
-          hkaEnabled: true,
-          maxUsers: 100,
-          maxFolios: 10000,
-          isActive: true,
-          metadata: {
-            theme: "light",
-            timezone: "America/Panama",
-            currency: "PAB",
-            language: "es"
-          }
-        }
-      })
-      
-      console.log("✅ [SIGNUP] Organización creada:", organization.id)
-    } else {
-      console.log("✅ [SIGNUP] Organización encontrada:", organization.id)
-    }
+    const organization = await createOrganizationForUser(name, email)
+
+    console.log("✅ [SIGNUP] Organización creada:", organization.id)
 
     console.log("🔐 [SIGNUP] Hasheando contraseña...")
     const hashedPassword = await bcrypt.hash(password, 12)
@@ -93,7 +118,7 @@ async function handleSignUp(formData: FormData) {
         email,
         name,
         password: hashedPassword,
-        role: "USER",
+        role: "ORG_ADMIN",
         organizationId: organization.id,
         isActive: true
       }

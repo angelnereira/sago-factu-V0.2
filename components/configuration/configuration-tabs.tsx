@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Building2, Users, FileText, Plug, Bell, Shield, PenTool } from "lucide-react"
+import { Building2, Users, FileText, Plug, Bell, Shield, PenTool, UserCircle } from "lucide-react"
 import { OrganizationSettings } from "./organization-settings"
 import { UsersManagement } from "./users-management"
 import { InvoiceSettings } from "./invoice-settings"
@@ -10,6 +10,7 @@ import { NotificationSettings } from "./notification-settings"
 import { SecuritySettings } from "./security-settings"
 import { CertificateManager } from "@/components/certificates/certificate-manager"
 import { DigitalSignatureSettings } from "@/components/certificates/digital-signature-settings"
+import { ProfileSettings } from "./profile-settings"
 
 interface Organization {
   id: string
@@ -69,6 +70,15 @@ interface ConfigurationTabsProps {
   folioStats: FolioStats
   userRole: string
   userId: string
+  currentUser: {
+    id: string
+    name: string | null
+    email: string
+    phone: string | null
+    language: string
+    timezone: string
+    emailNotifications: boolean
+  }
   isSuperAdmin?: boolean
   certificates?: {
     id: string
@@ -97,6 +107,7 @@ interface ConfigurationTabsProps {
 }
 
 type TabId =
+  | "profile"
   | "organization"
   | "users"
   | "invoicing"
@@ -114,26 +125,33 @@ interface Tab {
 
 const tabs: Tab[] = [
   {
+    id: "profile",
+    name: "Perfil",
+    icon: UserCircle,
+  },
+  {
     id: "organization",
     name: "Organización",
     icon: Building2,
+    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
   },
   {
     id: "users",
     name: "Usuarios",
     icon: Users,
-    roles: ["SUPER_ADMIN", "ADMIN"],
+    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
   },
   {
     id: "invoicing",
     name: "Facturación",
     icon: FileText,
+    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
   },
   {
     id: "integration",
     name: "Integración HKA",
     icon: Plug,
-    roles: ["SUPER_ADMIN", "ADMIN"],
+    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
   },
   {
     id: "digitalSignature",
@@ -149,7 +167,7 @@ const tabs: Tab[] = [
     id: "security",
     name: "Seguridad",
     icon: Shield,
-    roles: ["SUPER_ADMIN", "ADMIN"],
+    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
   },
 ]
 
@@ -161,18 +179,28 @@ export function ConfigurationTabs({
   folioStats,
   userRole,
   userId,
+  currentUser,
   isSuperAdmin = false,
   certificates = [],
   signatureConfig = null,
   activeCertificate = null,
 }: ConfigurationTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("organization")
+  const canManageOrganization = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN"
 
-  // Filtrar tabs según rol
   const visibleTabs = tabs.filter((tab) => {
     if (!tab.roles) return true
     return tab.roles.includes(userRole)
   })
+
+  const defaultTabId = (visibleTabs[0]?.id ?? "profile") as TabId
+  const [activeTab, setActiveTab] = useState<TabId>(defaultTabId)
+
+  const ensureValidTab = (current: TabId): TabId => {
+    const exists = visibleTabs.some((tab) => tab.id === current)
+    return exists ? current : defaultTabId
+  }
+
+  const activeTabSafe = ensureValidTab(activeTab)
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
@@ -181,7 +209,7 @@ export function ConfigurationTabs({
         <nav className="flex space-x-8 px-6" aria-label="Tabs">
           {visibleTabs.map((tab) => {
             const Icon = tab.icon
-            const isActive = activeTab === tab.id
+            const isActive = activeTabSafe === tab.id
 
             return (
               <button
@@ -206,10 +234,16 @@ export function ConfigurationTabs({
 
       {/* Tab Content */}
       <div className="p-6">
-        {activeTab === "organization" && (
+        {activeTabSafe === "profile" && (
+          <ProfileSettings
+            user={currentUser}
+            organizationName={organization?.name}
+          />
+        )}
+        {activeTabSafe === "organization" && (
           <OrganizationSettings organization={organization} />
         )}
-        {activeTab === "users" && (
+        {activeTabSafe === "users" && (
           <UsersManagement 
             users={users} 
             organizationId={organization.id}
@@ -217,31 +251,33 @@ export function ConfigurationTabs({
             isSuperAdmin={isSuperAdmin}
           />
         )}
-        {activeTab === "invoicing" && (
+        {activeTabSafe === "invoicing" && (
           <InvoiceSettings
             organizationId={organization.id}
             folioStats={folioStats}
           />
         )}
-        {activeTab === "integration" && (
+        {activeTabSafe === "integration" && (
           <IntegrationSettings
             organizationId={organization.id}
             systemConfig={systemConfig}
           />
         )}
-        {activeTab === "digitalSignature" && (
+        {activeTabSafe === "digitalSignature" && (
           <div className="space-y-6">
-            <CertificateManager organizationId={organization.id} currentCertificate={activeCertificate} />
+            {canManageOrganization && (
+              <CertificateManager organizationId={organization.id} currentCertificate={activeCertificate} />
+            )}
             <DigitalSignatureSettings certificates={certificates} initialConfig={signatureConfig} />
           </div>
         )}
-        {activeTab === "notifications" && (
+        {activeTabSafe === "notifications" && (
           <NotificationSettings
             organizationId={organization.id}
             userId={userId}
           />
         )}
-        {activeTab === "security" && (
+        {activeTabSafe === "security" && (
           <SecuritySettings organizationId={organization.id} />
         )}
       </div>

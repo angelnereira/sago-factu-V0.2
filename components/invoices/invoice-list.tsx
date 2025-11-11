@@ -1,9 +1,16 @@
 "use client"
 
-import { FileText, Eye, Download, Search } from "lucide-react"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import {
+  Download,
+  Eye,
+  FileDown,
+  FileText,
+  Search,
+  Trash2,
+} from "lucide-react"
 import { formatPanamaDateShortMonth } from "@/lib/utils/date-timezone"
 
 interface Invoice {
@@ -11,10 +18,13 @@ interface Invoice {
   invoiceNumber: string | null
   receiverName: string
   receiverRuc: string | null
-  total: any
+  total: number
   status: string
-  createdAt: Date
-  issueDate: Date | null
+  createdAt: string
+  issueDate: string | null
+  canDelete: boolean
+  hasPdf: boolean
+  hasXml: boolean
 }
 
 interface InvoiceListProps {
@@ -24,28 +34,36 @@ interface InvoiceListProps {
   currentStatus?: string
 }
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-800",
-  PENDING: "bg-yellow-100 text-yellow-800",
+  QUEUED: "bg-amber-100 text-amber-800",
   PROCESSING: "bg-blue-100 text-blue-800",
-  APPROVED: "bg-green-100 text-green-800",
+  CERTIFIED: "bg-green-100 text-green-800",
   REJECTED: "bg-red-100 text-red-800",
   CANCELLED: "bg-gray-100 text-gray-800",
+  ERROR: "bg-orange-100 text-orange-800",
 }
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   DRAFT: "Borrador",
-  PENDING: "Pendiente",
+  QUEUED: "En cola",
   PROCESSING: "Procesando",
-  APPROVED: "Aprobada",
+  CERTIFIED: "Certificada",
   REJECTED: "Rechazada",
   CANCELLED: "Cancelada",
+  ERROR: "Error",
 }
+
+type DownloadType = "pdf" | "xml"
 
 export function InvoiceList({ invoices, currentPage, totalPages, currentStatus }: InvoiceListProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState("")
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [downloadType, setDownloadType] = useState<DownloadType | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; message: string } | null>(null)
 
   // Filtrar por estado
   const handleStatusFilter = (status: string) => {
@@ -73,8 +91,107 @@ export function InvoiceList({ invoices, currentPage, totalPages, currentStatus }
     invoice.receiverRuc?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const handleDownload = async (invoiceId: string, type: DownloadType, fileNameHint: string | null) => {
+    try {
+      setStatusMessage(null)
+      setDownloadingId(invoiceId)
+      setDownloadType(type)
+
+      const response = await fetch(`/api/invoices/${invoiceId}/${type}`, {
+        method: "GET",
+      })
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null)
+        const message =
+          (errorPayload && (errorPayload.error || errorPayload.message)) ||
+          `No se pudo descargar el ${type === "pdf" ? "PDF" : "XML"}`
+        throw new Error(message)
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      const extension = type === "pdf" ? "pdf" : "xml"
+      const filename = fileNameHint
+        ? `${fileNameHint}.${extension}`
+        : `factura-${invoiceId}.${extension}`
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("[InvoiceList] Error downloading file", error)
+      setStatusMessage({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error desconocido al intentar descargar el archivo",
+      })
+    } finally {
+      setDownloadingId(null)
+      setDownloadType(null)
+    }
+  }
+
+  const handleDelete = async (invoiceId: string) => {
+    const confirmMessage =
+      "¿Seguro que deseas eliminar esta factura? Esta acción no se puede deshacer."
+    if (!window.confirm(confirmMessage)) {
+      return
+    }
+
+    try {
+      setStatusMessage(null)
+      setDeletingId(invoiceId)
+
+      const response = await fetch(`/api/invoices/${invoiceId}`, {
+        method: "DELETE",
+      })
+
+      const payload = await response.json().catch(() => null)
+
+      if (!response.ok || !payload?.success) {
+        const message = payload?.error || "No se pudo eliminar la factura"
+        throw new Error(message)
+      }
+
+      setStatusMessage({
+        type: "success",
+        message: "Factura eliminada correctamente.",
+      })
+      router.refresh()
+    } catch (error) {
+      console.error("[InvoiceList] Error deleting invoice", error)
+      setStatusMessage({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error desconocido al eliminar la factura.",
+      })
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {statusMessage && (
+        <div
+          className={`rounded-md border px-4 py-3 text-sm ${
+            statusMessage.type === "success"
+              ? "border-green-200 bg-green-50 text-green-700"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {statusMessage.message}
+        </div>
+      )}
+
       {/* Filtros */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <div className="flex flex-col md:flex-row gap-4">
@@ -175,7 +292,11 @@ export function InvoiceList({ invoices, currentPage, totalPages, currentStatus }
                       {formatPanamaDateShortMonth(invoice.issueDate || invoice.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      ${typeof invoice.total === 'number' ? invoice.total.toFixed(2) : invoice.total.toString()}
+                      {invoice.total.toLocaleString("es-PA", {
+                        style: "currency",
+                        currency: "PAB",
+                        minimumFractionDigits: 2,
+                      })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -196,12 +317,42 @@ export function InvoiceList({ invoices, currentPage, totalPages, currentStatus }
                         >
                           <Eye className="h-4 w-4" />
                         </Link>
-                        {invoice.status === "APPROVED" && (
+                        {invoice.hasPdf && (
                           <button
-                            className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
-                            title="Descargar PDF"
+                            onClick={() => handleDownload(invoice.id, "pdf", invoice.invoiceNumber)}
+                            disabled={downloadingId === invoice.id}
+                            className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Descargar factura (PDF)"
                           >
-                            <Download className="h-4 w-4" />
+                            <Download
+                              className={`h-4 w-4 ${
+                                downloadingId === invoice.id && downloadType === "pdf" ? "animate-spin" : ""
+                              }`}
+                            />
+                          </button>
+                        )}
+                        {invoice.hasXml && (
+                          <button
+                            onClick={() => handleDownload(invoice.id, "xml", invoice.invoiceNumber)}
+                            disabled={downloadingId === invoice.id}
+                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Descargar documento DGI (XML)"
+                          >
+                            <FileDown
+                              className={`h-4 w-4 ${
+                                downloadingId === invoice.id && downloadType === "xml" ? "animate-spin" : ""
+                              }`}
+                            />
+                          </button>
+                        )}
+                        {invoice.canDelete && (
+                          <button
+                            onClick={() => handleDelete(invoice.id)}
+                            disabled={deletingId === invoice.id}
+                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Eliminar factura"
+                          >
+                            <Trash2 className={`h-4 w-4 ${deletingId === invoice.id ? "animate-spin" : ""}`} />
                           </button>
                         )}
                       </div>

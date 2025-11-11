@@ -10,24 +10,12 @@ export default async function ConfigurationPage() {
     redirect("/")
   }
 
-  // Solo SUPER_ADMIN y ORG_ADMIN pueden acceder a configuración
-  const isSuperAdmin = session.user.role === "SUPER_ADMIN"
-  const isOrgAdmin = session.user.role === "ORG_ADMIN"
-
-  if (!isSuperAdmin && !isOrgAdmin) {
-    redirect("/dashboard")
-  }
-
   const organizationId = session.user.organizationId
+  const userRole = session.user.role as string
 
-  // Si no es SUPER_ADMIN, necesita tener organización asignada
-  if (!isSuperAdmin && !organizationId) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-600">Usuario sin organización asignada</p>
-      </div>
-    )
-  }
+  const isSuperAdmin = userRole === "SUPER_ADMIN"
+  const isOrgAdmin = userRole === "ORG_ADMIN"
+  const canManageOrganization = isSuperAdmin || isOrgAdmin
 
   // Obtener datos de la organización (o la primera si es SUPER_ADMIN sin org)
   let organization = null
@@ -49,7 +37,6 @@ export default async function ConfigurationPage() {
     )
   }
 
-  // Obtener todas las organizaciones (solo para SUPER_ADMIN)
   const organizations = isSuperAdmin
     ? await prisma.organization.findMany({
         select: {
@@ -61,74 +48,80 @@ export default async function ConfigurationPage() {
       })
     : []
 
-  // Obtener usuarios de la organización (o todos si es SUPER_ADMIN)
-  const users = await prisma.user.findMany({
-    where: isSuperAdmin ? {} : { organizationId: organization.id },
-    include: {
-      organization: {
-        select: {
-          id: true,
-          name: true,
-          ruc: true,
+  let usersWithFolios: any[] = []
+  let folioStats = {
+    _sum: {
+      assignedAmount: 0,
+      consumedAmount: 0,
+    },
+  }
+  let systemConfig: Awaited<ReturnType<typeof prisma.systemConfig.findFirst>> = null
+
+  if (canManageOrganization) {
+    const users = await prisma.user.findMany({
+      where: isSuperAdmin ? {} : { organizationId: organization.id },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            ruc: true,
+          },
+        },
+        invoices: {
+          select: {
+            id: true,
+          },
         },
       },
-      invoices: {
-        select: {
-          id: true,
+      orderBy: { createdAt: "desc" },
+    })
+
+    const folioAssignmentsByUser = await prisma.folioAssignment.groupBy({
+      by: ["organizationId"],
+      where: {
+        organizationId: {
+          in: users.map((user) => user.organizationId).filter(Boolean) as string[],
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  })
-
-  // Obtener estadísticas de folios por usuario
-  const userIds = users.map(u => u.id)
-  const folioAssignmentsByUser = await prisma.folioAssignment.groupBy({
-    by: ['organizationId'],
-    where: {
-      organizationId: {
-        in: users.map(u => u.organizationId).filter(Boolean) as string[],
+      _sum: {
+        assignedAmount: true,
+        consumedAmount: true,
       },
-    },
-    _sum: {
-      assignedAmount: true,
-      consumedAmount: true,
-    },
-  })
+    })
 
-  // Crear un mapa de folios por organización
-  const foliosByOrg = new Map(
-    folioAssignmentsByUser.map(item => [
-      item.organizationId,
-      {
-        assigned: item._sum.assignedAmount || 0,
-        consumed: item._sum.consumedAmount || 0,
-      }
-    ])
-  )
+    const foliosByOrg = new Map(
+      folioAssignmentsByUser.map((item) => [
+        item.organizationId,
+        {
+          assigned: item._sum.assignedAmount || 0,
+          consumed: item._sum.consumedAmount || 0,
+        },
+      ]),
+    )
 
-  // Agregar estadísticas de folios a cada usuario
-  const usersWithFolios = users.map(user => ({
-    ...user,
-    folioStats: user.organizationId ? foliosByOrg.get(user.organizationId) || { assigned: 0, consumed: 0 } : { assigned: 0, consumed: 0 },
-    invoiceCount: user.invoices.length,
-  }))
+    usersWithFolios = users.map((user) => ({
+      ...user,
+      folioStats: user.organizationId
+        ? foliosByOrg.get(user.organizationId) || { assigned: 0, consumed: 0 }
+        : { assigned: 0, consumed: 0 },
+      invoiceCount: user.invoices.length,
+    }))
 
-  // Obtener configuraciones del sistema (si existen)
-  const systemConfig = await prisma.systemConfig.findFirst({
-    where: { organizationId },
-  })
+    systemConfig = await prisma.systemConfig.findFirst({
+      where: { organizationId: organization.id },
+    })
 
-  // Obtener estadísticas de folios
-  const folioStats = await prisma.folioAssignment.aggregate({
-    where: { organizationId },
-    _sum: {
-      assignedAmount: true,
-      consumedAmount: true,
-    },
-  })
+    folioStats = await prisma.folioAssignment.aggregate({
+      where: { organizationId: organization.id },
+      _sum: {
+        assignedAmount: true,
+        consumedAmount: true,
+      },
+    })
+  }
 
-  const activeCertificate = organization
+  const activeCertificate = canManageOrganization
     ? await prisma.certificate.findFirst({
         where: {
           organizationId: organization.id,
@@ -138,7 +131,7 @@ export default async function ConfigurationPage() {
       })
     : null
 
-  const availableCertificates = organization
+  const availableCertificates = canManageOrganization
     ? await prisma.certificate.findMany({
         where: {
           organizationId: organization.id,
@@ -151,6 +144,27 @@ export default async function ConfigurationPage() {
   const userSignatureConfig = await prisma.userSignatureConfig.findUnique({
     where: { userId: session.user.id },
   })
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      language: true,
+      timezone: true,
+      emailNotifications: true,
+    },
+  })
+
+  if (!currentUser) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600">No se pudo cargar tu perfil de usuario</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -181,8 +195,9 @@ export default async function ConfigurationPage() {
         }}
         userRole={session.user.role as string}
         userId={session.user.id}
+        currentUser={currentUser}
         isSuperAdmin={isSuperAdmin}
-        certificates={availableCertificates.map(certificate => ({
+        certificates={availableCertificates.map((certificate) => ({
           id: certificate.id,
           subject: certificate.subject,
           issuer: certificate.issuer,
