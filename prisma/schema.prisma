@@ -91,6 +91,8 @@ model User {
   name          String
   phone         String?
   image         String?
+  ruc           String?
+  dv            String?
 
   // Multi-tenant
   organizationId String
@@ -124,6 +126,7 @@ model User {
   collections   Collection[]
   signatureConfig UserSignatureConfig?
   environments  Environment[]
+  userCertificates DigitalCertificate[]
 
   @@index([organizationId])
   @@index([email])
@@ -174,8 +177,10 @@ model Session {
 
 model DigitalCertificate {
   id                  String   @id @default(cuid())
-  organizationId      String
-  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId      String?
+  organization        Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId              String?
+  user                User? @relation(fields: [userId], references: [id], onDelete: Cascade)
   certificateP12      Bytes
   certificatePem      String?  @db.Text
   certificateChainPem String?  @db.Text
@@ -200,7 +205,9 @@ model DigitalCertificate {
   userSignatureConfigs UserSignatureConfig[]
 
   @@unique([organizationId, ruc])
+  @@unique([userId, ruc])
   @@index([organizationId])
+  @@index([userId])
   @@index([validTo])
   @@map("digital_certificates")
 }

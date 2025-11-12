@@ -131,6 +131,13 @@ export default async function ConfigurationPage() {
       })
     : []
 
+  const personalCertificates = await prisma.digitalCertificate.findMany({
+    where: {
+      userId: session.user.id,
+    },
+    orderBy: { uploadedAt: "desc" },
+  })
+
   const userSignatureConfig = await prisma.userSignatureConfig.findUnique({
     where: { userId: session.user.id },
   })
@@ -188,6 +195,14 @@ export default async function ConfigurationPage() {
         currentUser={currentUser}
         isSuperAdmin={isSuperAdmin}
         initialCertificates={availableCertificates.map((certificate) => ({
+          id: certificate.id,
+          subject: certificate.subject,
+          issuer: certificate.issuer,
+          validFrom: certificate.validFrom.toISOString(),
+          validTo: certificate.validTo.toISOString(),
+          ruc: certificate.ruc,
+        }))}
+        initialPersonalCertificates={personalCertificates.map((certificate) => ({
           id: certificate.id,
           subject: certificate.subject,
           issuer: certificate.issuer,

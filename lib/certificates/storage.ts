@@ -11,31 +11,57 @@ export async function storeCertificate(input: CertificateUploadInput): Promise<s
     throw new Error("El certificado proporcionado ya expiró")
   }
 
-  const organization = await prisma.organization.findUnique({
-    where: { id: input.tenantId },
-    select: { ruc: true },
-  })
+  let targetRuc: string | null = null
 
-  if (!organization || !organization.ruc) {
-    throw new Error("La organización no tiene RUC configurado")
+  if (input.userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: input.userId },
+      select: { ruc: true },
+    })
+
+    if (!user?.ruc) {
+      throw new Error("El usuario no tiene RUC configurado en su perfil.")
+    }
+
+    targetRuc = user.ruc
+  } else {
+    const organization = await prisma.organization.findUnique({
+      where: { id: input.tenantId },
+      select: { ruc: true },
+    })
+
+    if (!organization || !organization.ruc) {
+      throw new Error("La organización no tiene RUC configurado")
+    }
+
+    targetRuc = organization.ruc
   }
 
-  if (!parsed.info.ruc || !organization.ruc.includes(parsed.info.ruc.split("-")[0])) {
-    throw new Error("El RUC del certificado no coincide con el RUC registrado de la organización")
+  if (!parsed.info.ruc || !targetRuc.includes(parsed.info.ruc.split("-")[0])) {
+    throw new Error(
+      input.userId
+        ? "El RUC del certificado no coincide con el RUC registrado en tu perfil."
+        : "El RUC del certificado no coincide con el RUC registrado de la organización.",
+    )
   }
 
   const encryptedPin = encryptPin(input.pin)
 
   if (activate) {
     await prisma.digitalCertificate.updateMany({
-      where: { organizationId: input.tenantId, isActive: true },
+      where: {
+        organizationId: input.userId ? undefined : input.tenantId,
+        userId: input.userId ?? undefined,
+        isActive: true,
+      },
       data: { isActive: false },
     })
   }
 
   const created = await prisma.digitalCertificate.create({
     data: {
-      organizationId: input.tenantId,
+      organizationId: input.userId ? null : input.tenantId,
+      userId: input.userId ?? null,
       certificateP12: input.p12File,
       certificatePem: parsed.certificatePem,
       certificateChainPem: parsed.certificateChain.length ? parsed.certificateChain.join("\n") : null,
@@ -86,10 +112,38 @@ export async function listCertificates(tenantId: string) {
   }))
 }
 
+export async function listUserCertificates(userId: string) {
+  const certificates = await prisma.digitalCertificate.findMany({
+    where: { userId },
+    orderBy: { uploadedAt: "desc" },
+    select: {
+      id: true,
+      ruc: true,
+      issuer: true,
+      subject: true,
+      serialNumber: true,
+      validFrom: true,
+      validTo: true,
+      uploadedAt: true,
+      lastUsedAt: true,
+      isActive: true,
+      certificateThumbprint: true,
+    },
+  })
+
+  return certificates.map((certificate) => ({
+    ...certificate,
+    daysUntilExpiration: Math.floor(
+      (certificate.validTo.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+    ),
+  }))
+}
+
 export async function getCertificateForSigning(tenantId: string): Promise<SigningCertificate | null> {
   const certificate = await prisma.digitalCertificate.findFirst({
     where: {
       organizationId: tenantId,
+      userId: null,
       isActive: true,
       validTo: { gt: new Date() },
     },

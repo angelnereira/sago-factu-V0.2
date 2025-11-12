@@ -87,6 +87,14 @@ interface ConfigurationTabsProps {
     validTo: string
     ruc: string
   }[]
+  initialPersonalCertificates?: {
+    id: string
+    subject: string
+    issuer: string
+    validFrom: string
+    validTo: string
+    ruc: string
+  }[]
   signatureConfig?: {
     signatureMode: "ORGANIZATION" | "PERSONAL"
     digitalCertificateId: string | null
@@ -171,6 +179,7 @@ export function ConfigurationTabs({
   currentUser,
   isSuperAdmin = false,
   initialCertificates = [],
+  initialPersonalCertificates = [],
   signatureConfig = null,
 }: ConfigurationTabsProps) {
   const visibleTabs = tabs.filter((tab) => {
@@ -252,6 +261,7 @@ export function ConfigurationTabs({
         {activeTabSafe === "digitalSignature" && (
           <DigitalSignaturePanel
             initialCertificates={initialCertificates}
+            initialPersonalCertificates={initialPersonalCertificates}
             initialConfig={signatureConfig}
           />
         )}

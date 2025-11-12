@@ -1,5 +1,6 @@
 export interface CertificateUploadInput {
   tenantId: string
+  userId?: string
   p12File: Buffer
   pin: string
   uploadedBy: string

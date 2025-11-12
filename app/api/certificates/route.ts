@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { auth } from "@/lib/auth"
 import { prismaServer as prisma } from "@/lib/prisma-server"
-import { storeCertificate, listCertificates } from "@/lib/certificates/storage"
+import { storeCertificate, listCertificates, listUserCertificates } from "@/lib/certificates/storage"
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,9 +27,15 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const certificates = await listCertificates(organizationId)
+    const [orgCertificates, userCertificates] = await Promise.all([
+      listCertificates(organizationId),
+      listUserCertificates(session.user.id),
+    ])
 
-    return NextResponse.json(certificates)
+    return NextResponse.json({
+      organization: orgCertificates,
+      personal: userCertificates,
+    })
   } catch (error) {
     console.error("[API] Error obteniendo certificados:", error)
     return NextResponse.json(
@@ -54,6 +60,7 @@ export async function POST(request: NextRequest) {
     const activateValue = formData.get("activate")
     const activate =
       typeof activateValue === "string" ? activateValue.toLowerCase() !== "false" : true
+    const scope = (formData.get("scope") as string | null) ?? "organization"
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json({ error: "Archivo de certificado requerido" }, { status: 400 })
@@ -67,12 +74,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Formato inválido. Seleccione un archivo .p12 o .pfx" }, { status: 400 })
     }
 
-    const organizationId =
+    let organizationId =
       requestedOrganizationId && session.user.role === "SUPER_ADMIN"
         ? requestedOrganizationId
         : session.user.organizationId
 
-    if (!organizationId) {
+    if (scope === "organization" && !organizationId) {
       return NextResponse.json({ error: "Organización no especificada" }, { status: 400 })
     }
 
@@ -99,14 +106,19 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
 
     const certificateId = await storeCertificate({
-      tenantId: organizationId,
+      tenantId: organizationId ?? session.user.organizationId!,
+      userId: scope === "personal" ? session.user.id : undefined,
       p12File: buffer,
       pin,
       uploadedBy: session.user.id,
       activate,
     })
 
-    return NextResponse.json({ success: true, certificateId })
+    return NextResponse.json({
+      success: true,
+      certificateId,
+      scope,
+    })
   } catch (error) {
     console.error("[API] Error subiendo certificado:", error)
 

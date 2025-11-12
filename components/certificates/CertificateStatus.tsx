@@ -11,10 +11,19 @@ interface ActiveCertificate {
   validTo: string
   validFrom: string
   daysUntilExpiration: number
+  scope: "organization" | "personal"
+}
+
+interface StatusResponse {
+  organization: ActiveCertificate | null
+  personal: ActiveCertificate | null
 }
 
 export function CertificateStatus({ refreshToken }: { refreshToken?: number }) {
-  const [activeCertificate, setActiveCertificate] = useState<ActiveCertificate | null>(null)
+  const [activeCertificate, setActiveCertificate] = useState<StatusResponse>({
+    organization: null,
+    personal: null,
+  })
 
   useEffect(() => {
     void fetchActiveCertificate()
@@ -22,24 +31,47 @@ export function CertificateStatus({ refreshToken }: { refreshToken?: number }) {
 
   const fetchActiveCertificate = async () => {
     const response = await fetch("/api/certificates")
-    const list = await response.json()
+    const data = await response.json()
 
-    if (Array.isArray(list)) {
-      const active = list.find((cert) => cert.isActive)
-      setActiveCertificate(active ?? null)
+    if (data?.organization || data?.personal) {
+      const organizationActive =
+        data.organization?.find((cert: any) => cert.isActive) ?? null
+      const personalActive =
+        data.personal?.find((cert: any) => cert.isActive) ?? null
+      setActiveCertificate({
+        organization: organizationActive
+          ? { ...organizationActive, scope: "organization" }
+          : null,
+        personal: personalActive ? { ...personalActive, scope: "personal" } : null,
+      })
     }
   }
 
-  if (!activeCertificate) {
+  const hasOrg = Boolean(activeCertificate.organization)
+  const hasPersonal = Boolean(activeCertificate.personal)
+
+  if (!hasOrg && !hasPersonal) {
     return (
       <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-700">
-        Actualmente no hay un certificado activo. Carga un certificado válido para firmar las facturas.
+        Actualmente no hay certificados activos. Carga un certificado válido para firmar las facturas.
       </div>
     )
   }
 
-  const expiresSoon = activeCertificate.daysUntilExpiration < 30
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      {activeCertificate.organization && (
+        <CertificateCard certificate={activeCertificate.organization} title="Organización" />
+      )}
+      {activeCertificate.personal && (
+        <CertificateCard certificate={activeCertificate.personal} title="Personal" />
+      )}
+    </div>
+  )
+}
 
+function CertificateCard({ certificate, title }: { certificate: ActiveCertificate; title: string }) {
+  const expiresSoon = certificate.daysUntilExpiration < 30
   return (
     <div
       className={`rounded-lg border p-4 text-sm ${
@@ -51,12 +83,12 @@ export function CertificateStatus({ refreshToken }: { refreshToken?: number }) {
       <div className="flex items-center gap-2">
         {expiresSoon ? <AlertTriangle className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
         <span className="font-medium">
-          Certificado activo: {activeCertificate.subject} (RUC {activeCertificate.ruc})
+          Certificado activo ({title}): {certificate.subject} (RUC {certificate.ruc})
         </span>
       </div>
       <p className="mt-2 text-xs">
-        Vigencia: {new Date(activeCertificate.validFrom).toLocaleDateString()} -{" "}
-        {new Date(activeCertificate.validTo).toLocaleDateString()} ({activeCertificate.daysUntilExpiration} días restantes)
+        Vigencia: {new Date(certificate.validFrom).toLocaleDateString()} -{" "}
+        {new Date(certificate.validTo).toLocaleDateString()} ({certificate.daysUntilExpiration} días restantes)
       </p>
     </div>
   )

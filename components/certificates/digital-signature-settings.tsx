@@ -22,6 +22,7 @@ interface InitialConfig {
 
 interface DigitalSignatureSettingsProps {
   initialCertificates: CertificateOption[]
+  initialPersonalCertificates: CertificateOption[]
   initialConfig: InitialConfig | null
   refreshToken?: number
 }
@@ -33,6 +34,7 @@ interface StatusMessage {
 
 export function DigitalSignatureSettings({
   initialCertificates,
+  initialPersonalCertificates,
   initialConfig,
   refreshToken,
 }: DigitalSignatureSettingsProps) {
@@ -46,7 +48,10 @@ export function DigitalSignatureSettings({
   const [notifyOnExpiration, setNotifyOnExpiration] = useState<boolean>(
     initialConfig?.notifyOnExpiration ?? true,
   )
-  const [certificates, setCertificates] = useState<CertificateOption[]>(initialCertificates)
+  const [orgCertificates, setOrgCertificates] = useState<CertificateOption[]>(initialCertificates)
+  const [personalCertificates, setPersonalCertificates] = useState<CertificateOption[]>(
+    initialPersonalCertificates,
+  )
   const [status, setStatus] = useState<StatusMessage>({ type: null, message: null })
   const [isSaving, setIsSaving] = useState(false)
 
@@ -59,9 +64,22 @@ export function DigitalSignatureSettings({
         throw new Error(data?.error ?? "No se pudieron obtener los certificados")
       }
 
-      if (Array.isArray(data)) {
-        setCertificates(
-          data.map((certificate: any) => ({
+      if (data?.organization) {
+        setOrgCertificates(
+          data.organization.map((certificate: any) => ({
+            id: certificate.id,
+            subject: certificate.subject,
+            issuer: certificate.issuer,
+            validFrom: certificate.validFrom,
+            validTo: certificate.validTo,
+            ruc: certificate.ruc,
+          })),
+        )
+      }
+
+      if (data?.personal) {
+        setPersonalCertificates(
+          data.personal.map((certificate: any) => ({
             id: certificate.id,
             subject: certificate.subject,
             issuer: certificate.issuer,
@@ -83,10 +101,11 @@ export function DigitalSignatureSettings({
   }, [refreshToken, fetchCertificates])
 
   useEffect(() => {
-    if (selectedCertificate && !certificates.some((certificate) => certificate.id === selectedCertificate)) {
+    const activeList = signatureMode === "PERSONAL" ? personalCertificates : orgCertificates
+    if (selectedCertificate && !activeList.some((certificate) => certificate.id === selectedCertificate)) {
       setSelectedCertificate(null)
     }
-  }, [certificates, selectedCertificate])
+  }, [signatureMode, personalCertificates, orgCertificates, selectedCertificate])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -202,13 +221,13 @@ export function DigitalSignatureSettings({
               className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
             >
               <option value="">Selecciona un certificado</option>
-              {certificates.map((certificate) => (
+              {(signatureMode === "PERSONAL" ? personalCertificates : orgCertificates).map((certificate) => (
                 <option key={certificate.id} value={certificate.id}>
                   {certificate.subject} · Vence {new Date(certificate.validTo).toLocaleDateString("es-PA")}
                 </option>
               ))}
             </select>
-            {certificates.length === 0 && (
+            {personalCertificates.length === 0 && (
               <p className="text-xs text-red-600">
                 No hay certificados activos disponibles. Carga uno en la sección de “Firma electrónica”.
               </p>
@@ -251,11 +270,50 @@ export function DigitalSignatureSettings({
 
         <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
           <p className="font-medium text-neutral-700">Certificados disponibles</p>
-          {certificates.length === 0 ? (
-            <p>No hay certificados activos registrados para esta organización.</p>
+          {orgCertificates.length === 0 && personalCertificates.length === 0 ? (
+            <p>No hay certificados activos registrados aún.</p>
           ) : (
             <ul className="mt-2 space-y-2">
-              {certificates.map((certificate) => (
+              {orgCertificates.length > 0 && (
+                <li className="rounded border border-neutral-200 bg-white px-3 py-2">
+                  <p className="font-medium text-neutral-800">Certificados de la organización</p>
+                  <ul className="mt-2 space-y-2">
+                    {orgCertificates.map((certificate) => (
+                      <li key={certificate.id} className="rounded border border-neutral-200 bg-neutral-50 px-3 py-2">
+                        <p className="font-medium text-neutral-800">{certificate.subject}</p>
+                        <p className="text-neutral-600">
+                          Emisor: {certificate.issuer} · RUC {certificate.ruc}
+                        </p>
+                        <p className="text-neutral-600">
+                          Vigencia: {new Date(certificate.validFrom).toLocaleDateString("es-PA")} -{" "}
+                          {new Date(certificate.validTo).toLocaleDateString("es-PA")}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              )}
+
+              {personalCertificates.length > 0 && (
+                <li className="rounded border border-neutral-200 bg-white px-3 py-2">
+                  <p className="font-medium text-neutral-800">Tus certificados personales</p>
+                  <ul className="mt-2 space-y-2">
+                    {personalCertificates.map((certificate) => (
+                      <li key={certificate.id} className="rounded border border-neutral-200 bg-neutral-50 px-3 py-2">
+                        <p className="font-medium text-neutral-800">{certificate.subject}</p>
+                        <p className="text-neutral-600">
+                          Emisor: {certificate.issuer} · RUC {certificate.ruc}
+                        </p>
+                        <p className="text-neutral-600">
+                          Vigencia: {new Date(certificate.validFrom).toLocaleDateString("es-PA")} -{" "}
+                          {new Date(certificate.validTo).toLocaleDateString("es-PA")}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              )}
+
                 <li key={certificate.id} className="rounded border border-neutral-200 bg-white px-3 py-2">
                   <p className="font-medium text-neutral-800">{certificate.subject}</p>
                   <p className="text-neutral-600">

@@ -17,6 +17,7 @@ export function CertificateUploader({ onUploaded }: CertificateUploaderProps) {
   const [primaryFile, setPrimaryFile] = useState<File | null>(null)
   const [backupFile, setBackupFile] = useState<File | null>(null)
   const [pin, setPin] = useState("")
+  const [scope, setScope] = useState<"organization" | "personal">("organization")
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<UploadResult[]>([])
@@ -61,6 +62,7 @@ export function CertificateUploader({ onUploaded }: CertificateUploaderProps) {
     formData.append("certificate", file)
     formData.append("pin", pin)
     formData.append("activate", String(activate))
+    formData.append("scope", scope)
 
     const response = await fetch("/api/certificates", {
       method: "POST",
@@ -94,7 +96,10 @@ export function CertificateUploader({ onUploaded }: CertificateUploaderProps) {
       filesToUpload.push({
         file: primaryFile,
         activate: true,
-        label: `Certificado principal (${primaryFile.name})`,
+        label:
+          scope === "organization"
+            ? `Certificado principal de la organización (${primaryFile.name})`
+            : `Certificado personal principal (${primaryFile.name})`,
       })
     }
 
@@ -102,7 +107,10 @@ export function CertificateUploader({ onUploaded }: CertificateUploaderProps) {
       filesToUpload.push({
         file: backupFile,
         activate: false,
-        label: `Certificado de contingencia (${backupFile.name})`,
+        label:
+          scope === "organization"
+            ? `Certificado de contingencia de la organización (${backupFile.name})`
+            : `Certificado personal de respaldo (${backupFile.name})`,
       })
     }
 
@@ -162,6 +170,54 @@ export function CertificateUploader({ onUploaded }: CertificateUploaderProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-6">
+        <div className="grid gap-4 md:grid-cols-2">
+          <fieldset className="rounded-md border border-neutral-200 p-4">
+            <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              ¿Dónde se aplicará este certificado?
+            </legend>
+            <div className="space-y-2 text-sm text-neutral-600">
+              <label className="flex cursor-pointer items-start gap-3 rounded-md border border-neutral-200 px-3 py-2 transition hover:border-indigo-300">
+                <input
+                  type="radio"
+                  name="certificate-scope"
+                  value="organization"
+                  checked={scope === "organization"}
+                  onChange={() => setScope("organization")}
+                />
+                <span>
+                  <span className="font-medium text-neutral-900">Certificado de la organización</span>
+                  <span className="block text-xs text-neutral-500">
+                    Se utilizará como certificado oficial de la empresa para todos los usuarios.
+                  </span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-3 rounded-md border border-neutral-200 px-3 py-2 transition hover:border-indigo-300">
+                <input
+                  type="radio"
+                  name="certificate-scope"
+                  value="personal"
+                  checked={scope === "personal"}
+                  onChange={() => setScope("personal")}
+                />
+                <span>
+                  <span className="font-medium text-neutral-900">Certificado personal</span>
+                  <span className="block text-xs text-neutral-500">
+                    Solo firmará los documentos que envíes tú. Ideal si cada firmante tiene su propio P12/PFX.
+                  </span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+            <p className="font-semibold uppercase tracking-wide">Recordatorio</p>
+            <p className="mt-2">
+              - Configura tu <strong>RUC personal</strong> en tu perfil antes de subir certificados personales.
+            </p>
+            <p>- El certificado personal se prioriza si tu modo de firma es “PERSONAL”.</p>
+            <p>- Puedes alternar entre certificado organizacional o personal desde “Preferencias de firma”.</p>
+          </div>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <fieldset className="rounded-md border border-neutral-200 p-4">
             <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
@@ -273,14 +329,16 @@ export function CertificateUploader({ onUploaded }: CertificateUploaderProps) {
                 <strong>F-*</strong> (contingencia). Ambos comparten el mismo PIN.
               </li>
               <li>
-                Sube el archivo <strong>A-</strong> en el primer recuadro. Se activará para firmar toda la emisión.
+                Sube el archivo <strong>A-</strong> en el primer recuadro. Se activará para firmar toda la emisión si
+                eliges “Organización”, o solo tus documentos si elegiste “Personal”.
               </li>
               <li>
                 (Opcional) Sube el archivo <strong>F-</strong> en el segundo recuadro. Quedará almacenado como
                 respaldo y podrás activarlo desde la lista de certificados si el principal expira.
               </li>
               <li>
-                Verifica que el RUC del certificado coincida exactamente con el RUC registrado en SAGO-FACTU.
+                Verifica que el RUC del certificado coincida con el RUC registrado en SAGO-FACTU. Si eliges ficha
+                personal, debe coincidir con el RUC configurado en “Mi perfil”.
               </li>
             </ol>
           </div>

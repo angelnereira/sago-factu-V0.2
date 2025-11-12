@@ -16,6 +16,7 @@ interface CertificateOption {
 
 interface DigitalSignaturePanelProps {
   initialCertificates: CertificateOption[]
+  initialPersonalCertificates: CertificateOption[]
   initialConfig: {
     signatureMode: "ORGANIZATION" | "PERSONAL"
     digitalCertificateId: string | null
@@ -26,6 +27,7 @@ interface DigitalSignaturePanelProps {
 
 export function DigitalSignaturePanel({
   initialCertificates,
+  initialPersonalCertificates,
   initialConfig,
 }: DigitalSignaturePanelProps) {
   const [refreshToken, setRefreshToken] = useState(0)
@@ -42,6 +44,7 @@ export function DigitalSignaturePanel({
       />
       <DigitalSignatureSettings
         initialCertificates={initialCertificates}
+        initialPersonalCertificates={initialPersonalCertificates}
         initialConfig={initialConfig}
         refreshToken={refreshToken}
       />
