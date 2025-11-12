@@ -31,7 +31,7 @@ const defaultSidebarItems: SidebarItem[] = [
   { name: "Facturas", href: "/dashboard/facturas", icon: FileText },
   { name: "Clientes", href: "/dashboard/clientes", icon: Users },
   { name: "Reportes", href: "/dashboard/reportes", icon: BarChart3 },
-  { name: "Configuración", href: "/dashboard/configuracion", icon: Settings, roles: ["SUPER_ADMIN", "ORG_ADMIN"] },
+  { name: "Configuración", href: "/dashboard/configuracion", icon: Settings },
 ]
 
 // Menú minimalista para SIMPLE_USER
