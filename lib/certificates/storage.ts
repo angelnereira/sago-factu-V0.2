@@ -4,6 +4,7 @@ import { decryptPin, encryptPin } from "./encryption"
 import { parseP12Certificate } from "./parser"
 
 export async function storeCertificate(input: CertificateUploadInput): Promise<string> {
+  const activate = input.activate ?? true
   const parsed = await parseP12Certificate(input.p12File, input.pin)
 
   if (parsed.info.validTo <= new Date()) {
@@ -25,10 +26,12 @@ export async function storeCertificate(input: CertificateUploadInput): Promise<s
 
   const encryptedPin = encryptPin(input.pin)
 
-  await prisma.digitalCertificate.updateMany({
-    where: { organizationId: input.tenantId, isActive: true },
-    data: { isActive: false },
-  })
+  if (activate) {
+    await prisma.digitalCertificate.updateMany({
+      where: { organizationId: input.tenantId, isActive: true },
+      data: { isActive: false },
+    })
+  }
 
   const created = await prisma.digitalCertificate.create({
     data: {
@@ -49,7 +52,7 @@ export async function storeCertificate(input: CertificateUploadInput): Promise<s
       validTo: parsed.info.validTo,
       uploadedBy: input.uploadedBy,
       lastUsedAt: null,
-      isActive: true,
+      isActive: activate,
     },
   })
 

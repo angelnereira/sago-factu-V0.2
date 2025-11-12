@@ -73,6 +73,16 @@ export async function parseP12Certificate(
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error desconocido"
+    if (message.includes("PKCS#12 MAC could not be verified")) {
+      throw new Error(
+        "PIN incorrecto. Verifica la contraseña proporcionada para el certificado digital.",
+      )
+    }
+    if (message.includes("asn1") || message.includes("Too few bytes to read")) {
+      throw new Error(
+        "El archivo no parece ser un certificado .p12/.pfx válido emitido por la DNF.",
+      )
+    }
     throw new Error(`No fue posible procesar el certificado: ${message}`)
   }
 }

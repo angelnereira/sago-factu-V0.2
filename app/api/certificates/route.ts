@@ -51,6 +51,9 @@ export async function POST(request: NextRequest) {
     const file = formData.get("certificate")
     const pin = formData.get("pin")
     const requestedOrganizationId = formData.get("organizationId") as string | null
+    const activateValue = formData.get("activate")
+    const activate =
+      typeof activateValue === "string" ? activateValue.toLowerCase() !== "false" : true
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json({ error: "Archivo de certificado requerido" }, { status: 400 })
@@ -100,14 +103,26 @@ export async function POST(request: NextRequest) {
       p12File: buffer,
       pin,
       uploadedBy: session.user.id,
+      activate,
     })
 
     return NextResponse.json({ success: true, certificateId })
   } catch (error) {
     console.error("[API] Error subiendo certificado:", error)
+
+    const message =
+      error instanceof Error ? error.message : "Error al procesar el certificado"
+
+    const isUserError =
+      message.includes("PIN incorrecto") ||
+      message.includes("contraseña") ||
+      message.includes("PAC") ||
+      message.includes("coincide") ||
+      message.includes("ya expiró")
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Error al procesar el certificado" },
-      { status: 500 },
+      { error: message },
+      { status: isUserError ? 400 : 500 },
     )
   }
 }

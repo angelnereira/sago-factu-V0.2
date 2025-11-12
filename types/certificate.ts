@@ -3,6 +3,7 @@ export interface CertificateUploadInput {
   p12File: Buffer
   pin: string
   uploadedBy: string
+  activate?: boolean
 }
 
 export interface CertificateInfo {
