@@ -313,18 +313,6 @@ export function DigitalSignatureSettings({
                   </ul>
                 </li>
               )}
-
-                <li key={certificate.id} className="rounded border border-neutral-200 bg-white px-3 py-2">
-                  <p className="font-medium text-neutral-800">{certificate.subject}</p>
-                  <p className="text-neutral-600">
-                    Emisor: {certificate.issuer} · RUC {certificate.ruc}
-                  </p>
-                  <p className="text-neutral-600">
-                    Vigencia: {new Date(certificate.validFrom).toLocaleDateString("es-PA")} -{" "}
-                    {new Date(certificate.validTo).toLocaleDateString("es-PA")}
-                  </p>
-                </li>
-              ))}
             </ul>
           )}
         </div>
