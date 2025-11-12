@@ -47,8 +47,10 @@ export function ProfileSettings({ user, organizationName }: ProfileSettingsProps
     const { name, value, type, checked } = event.target
     setFormState((prev) => ({
       ...prev,
-      [name]:
-        type === "checkbox"
+      [name]: type === "checkbox" ? checked : value,
+    }))
+  }
+
   const handleRucChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value.toUpperCase()
     setFormState((prev) => ({
@@ -62,10 +64,6 @@ export function ProfileSettings({ user, organizationName }: ProfileSettingsProps
     setFormState((prev) => ({
       ...prev,
       dv: numeric,
-    }))
-  }
-          ? checked
-          : value,
     }))
   }
 
