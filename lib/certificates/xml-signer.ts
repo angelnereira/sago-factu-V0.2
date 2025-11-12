@@ -6,11 +6,12 @@ import { CertificateManager } from "./manager"
 const DEMO_SIGNATURE_TEMPLATE = `
 <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
   <ds:SignedInfo>
-    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" />
     <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256" />
     <ds:Reference URI="">
       <ds:Transforms>
         <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+        <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" />
       </ds:Transforms>
       <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
       <ds:DigestValue>DEMO_DIGEST_VALUE</ds:DigestValue>
@@ -55,13 +56,13 @@ export class XMLSigner {
 
       const signedXml = new SignedXml()
       signedXml.signatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
-      signedXml.canonicalizationAlgorithm = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315"
+      signedXml.canonicalizationAlgorithm = "http://www.w3.org/2001/10/xml-exc-c14n#"
 
       signedXml.addReference(
-        "//*[local-name()='rFE']",
+        "",
         [
           "http://www.w3.org/2000/09/xmldsig#enveloped-signature",
-          "http://www.w3.org/TR/2001/REC-xml-c14n-20010315",
+          "http://www.w3.org/2001/10/xml-exc-c14n#",
         ],
         "http://www.w3.org/2001/04/xmlenc#sha256",
       )
@@ -69,10 +70,10 @@ export class XMLSigner {
       signedXml.signingKey = privateKeyPem
       signedXml.keyInfoProvider = {
         getKeyInfo: () =>
-          `<X509Data><X509Certificate>${certificatePem
+          `<ds:X509Data><ds:X509Certificate>${certificatePem
             .replace("-----BEGIN CERTIFICATE-----", "")
             .replace("-----END CERTIFICATE-----", "")
-            .replace(/\r?\n/g, "")}</X509Certificate></X509Data>`,
+            .replace(/\r?\n/g, "")}</ds:X509Certificate></ds:X509Data>`,
       }
 
       signedXml.computeSignature(unsignedXml, {

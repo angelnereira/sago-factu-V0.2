@@ -51,6 +51,24 @@ export class CertificateManager {
         throw new Error("El archivo PFX no contiene clave privada")
       }
 
+      const privateKey = keyBags[0]?.key as forge.pki.PrivateKey | undefined
+      const publicKey = certificate.publicKey as forge.pki.rsa.PublicKey | undefined
+
+      if (!privateKey || !("n" in privateKey) || typeof privateKey.n?.bitLength !== "function") {
+        throw new Error("La clave privada debe ser un RSA válido")
+      }
+
+      if (!publicKey || !("n" in publicKey) || typeof publicKey.n?.bitLength !== "function") {
+        throw new Error("El certificado debe incluir una clave pública RSA válida")
+      }
+
+      const privateKeyBits = privateKey.n.bitLength()
+      const publicKeyBits = publicKey.n.bitLength()
+
+      if (privateKeyBits < 2048 || publicKeyBits < 2048) {
+        throw new Error("El certificado debe usar claves RSA de al menos 2048 bits")
+      }
+
       const subjectCN = certificate.subject.getField("CN")?.value || "Certificado sin CN"
       const issuerCN = certificate.issuer.getField("CN")?.value || "Desconocido"
 
