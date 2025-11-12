@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Formato inválido. Seleccione un archivo .p12 o .pfx" }, { status: 400 })
     }
 
-    let organizationId =
+    const organizationId =
       requestedOrganizationId && session.user.role === "SUPER_ADMIN"
         ? requestedOrganizationId
         : session.user.organizationId
