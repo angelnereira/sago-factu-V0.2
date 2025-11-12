@@ -32,7 +32,7 @@ interface CertificateManagerProps {
 export function CertificateManager({ organizationId, currentCertificate }: CertificateManagerProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [password, setPassword] = useState("")
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const notifyError = (message: string) => {
@@ -44,32 +44,57 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
   }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) {
-      setSelectedFile(null)
+    const files = Array.from(event.target.files ?? [])
+    if (!files.length) {
+      setSelectedFiles([])
       return
     }
 
-    if (!file.name.match(/\.(pfx|p12)$/i)) {
-      notifyError("Seleccione un archivo .pfx o .p12 válido")
+    const nextFiles: File[] = []
+
+    for (const file of files) {
+      if (!file.name.match(/\.(pfx|p12)$/i)) {
+        notifyError(`El archivo "${file.name}" no es válido. Seleccione archivos .p12 o .pfx.`)
+        continue
+      }
+
+      nextFiles.push(file)
+    }
+
+    const combined = [...selectedFiles, ...nextFiles].slice(0, 2)
+
+    if (combined.length === 0) {
       event.target.value = ""
+      setSelectedFiles([])
       return
     }
 
-    setSelectedFile(file)
+    if (combined.length < selectedFiles.length + nextFiles.length) {
+      notifyError("Solo se permiten dos archivos de certificado por carga.")
+    }
+
+    setSelectedFiles(combined)
+  }
+
+  const removeFile = (index: number) => {
+    const updated = selectedFiles.filter((_, idx) => idx !== index)
+    setSelectedFiles(updated)
+    if (fileInputRef.current && updated.length === 0) {
+      fileInputRef.current.value = ""
+    }
   }
 
   const resetForm = () => {
     setPassword("")
-    setSelectedFile(null)
+    setSelectedFiles([])
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
   }
 
   const handleUpload = async () => {
-    if (!selectedFile) {
-      notifyError("Seleccione un certificado para cargar")
+    if (selectedFiles.length === 0) {
+      notifyError("Seleccione al menos un certificado para cargar")
       return
     }
 
@@ -81,27 +106,37 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
     setIsUploading(true)
 
     try {
-      const formData = new FormData()
-      formData.append("certificate", selectedFile)
-      formData.append("password", password)
-      formData.append("organizationId", organizationId)
+      const results = []
 
-      const response = await fetch("/api/certificates/upload", {
-        method: "POST",
-        body: formData,
-      })
+      for (const file of selectedFiles) {
+        const formData = new FormData()
+        formData.append("certificate", file)
+        formData.append("password", password)
+        formData.append("organizationId", organizationId)
 
-      const result = await response.json()
+        const response = await fetch("/api/certificates/upload", {
+          method: "POST",
+          body: formData,
+        })
 
-      if (!response.ok) {
-        throw new Error(result.error || "Error al guardar el certificado")
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.error || `Error al guardar el certificado ${file.name}`)
+        }
+
+        results.push(result)
       }
 
-      notifySuccess("Certificado cargado correctamente")
+      notifySuccess(
+        results.length === 1
+          ? "Certificado cargado correctamente"
+          : `${results.length} certificados cargados correctamente`,
+      )
       resetForm()
       window.location.reload()
     } catch (error) {
-      notifyError(error instanceof Error ? error.message : "Error inesperado al cargar el certificado")
+      notifyError(error instanceof Error ? error.message : "Error inesperado al cargar los certificados")
     } finally {
       setIsUploading(false)
     }
@@ -205,29 +240,49 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
 
       <div className="rounded-lg border border-neutral-200 bg-white shadow-sm">
         <div className="border-b border-neutral-200 px-4 py-3">
-          <h3 className="text-lg font-semibold text-neutral-900">Cargar certificado (.pfx o .p12)</h3>
+          <h3 className="text-lg font-semibold text-neutral-900">Cargar certificados (.p12 / .pfx)</h3>
+          <p className="mt-1 text-sm text-neutral-600">
+            Puedes subir hasta dos archivos de firma digital (principal y respaldo). Ambos deben compartir la misma contraseña.
+          </p>
         </div>
         <div className="space-y-4 px-4 py-5">
           <div>
             <label className="block text-sm font-medium text-neutral-700" htmlFor="certificate-file">
-              Certificado
+              Seleccionar certificados
             </label>
             <input
               ref={fileInputRef}
               id="certificate-file"
               type="file"
               accept=".pfx,.p12"
+              multiple
               onChange={handleFileChange}
               className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
             />
-            {selectedFile && (
-              <p className="mt-1 text-xs text-neutral-500">Archivo seleccionado: {selectedFile.name}</p>
+            {selectedFiles.length > 0 && (
+              <ul className="mt-2 space-y-1 text-xs text-neutral-600">
+                {selectedFiles.map((file, index) => (
+                  <li key={`${file.name}-${index}`} className="flex items-center justify-between rounded border border-neutral-200 bg-neutral-50 px-2 py-1">
+                    <span>{file.name}</span>
+                    <button
+                      type="button"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={() => removeFile(index)}
+                    >
+                      Quitar
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {selectedFiles.length === 0 && (
+              <p className="mt-1 text-xs text-neutral-500">Selecciona uno o dos archivos .p12 /.pfx.</p>
             )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-neutral-700" htmlFor="certificate-password">
-              Contraseña del certificado
+              Contraseña de los certificados
             </label>
             <input
               id="certificate-password"
@@ -237,16 +292,19 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
               placeholder="Contraseña del archivo PFX/P12"
               className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
             />
+            <p className="mt-1 text-xs text-neutral-500">
+              La contraseña se usará para cada archivo seleccionado.
+            </p>
           </div>
 
           <button
             type="button"
             onClick={handleUpload}
-            disabled={isUploading || !selectedFile || !password}
+            disabled={isUploading || selectedFiles.length === 0 || !password}
             className="flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
           >
             <Upload className={`h-4 w-4 ${isUploading ? "animate-spin" : ""}`} />
-            {isUploading ? "Cargando..." : "Cargar certificado"}
+            {isUploading ? "Cargando certificados..." : `Cargar ${selectedFiles.length > 1 ? "certificados" : "certificado"}`}
           </button>
 
           <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
