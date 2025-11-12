@@ -265,9 +265,7 @@ export function ConfigurationTabs({
         )}
         {activeTabSafe === "digitalSignature" && (
           <div className="space-y-6">
-            {canManageOrganization && (
-              <CertificateManager organizationId={organization.id} currentCertificate={activeCertificate} />
-            )}
+            <CertificateManager organizationId={organization.id} currentCertificate={activeCertificate} />
             <DigitalSignatureSettings certificates={certificates} initialConfig={signatureConfig} />
           </div>
         )}
