@@ -25,12 +25,12 @@ export async function GET() {
         organization: true,
         signatureConfig: {
           include: {
-            certificate: {
+            digitalCertificate: {
               select: {
                 id: true,
                 subject: true,
                 issuer: true,
-                validUntil: true,
+                validTo: true,
                 isActive: true,
               },
             },
@@ -50,7 +50,7 @@ export async function GET() {
       )
     }
 
-    const certificates = await prisma.certificate.findMany({
+    const certificates = await prisma.digitalCertificate.findMany({
       where: {
         organizationId: user.organizationId,
         isActive: true,
@@ -61,9 +61,8 @@ export async function GET() {
         subject: true,
         issuer: true,
         validFrom: true,
-        validUntil: true,
+        validTo: true,
         ruc: true,
-        dv: true,
       },
     })
 
@@ -71,16 +70,16 @@ export async function GET() {
       config: user.signatureConfig
         ? {
             signatureMode: user.signatureConfig.signatureMode,
-            certificateId: user.signatureConfig.certificateId,
+            certificateId: user.signatureConfig.digitalCertificateId,
             autoSign: user.signatureConfig.autoSign,
             notifyOnExpiration: user.signatureConfig.notifyOnExpiration,
             certificate:
-              user.signatureConfig.certificate && user.signatureConfig.certificate.isActive
+              user.signatureConfig.digitalCertificate && user.signatureConfig.digitalCertificate.isActive
                 ? {
-                    id: user.signatureConfig.certificate.id,
-                    subject: user.signatureConfig.certificate.subject,
-                    issuer: user.signatureConfig.certificate.issuer,
-                    validUntil: user.signatureConfig.certificate.validUntil,
+                    id: user.signatureConfig.digitalCertificate.id,
+                    subject: user.signatureConfig.digitalCertificate.subject,
+                    issuer: user.signatureConfig.digitalCertificate.issuer,
+                    validTo: user.signatureConfig.digitalCertificate.validTo,
                   }
                 : null,
           }
@@ -133,7 +132,7 @@ export async function PUT(request: Request) {
         )
       }
 
-      const certificate = await prisma.certificate.findFirst({
+      const certificate = await prisma.digitalCertificate.findFirst({
         where: {
           id: certificateId,
           organizationId: user.organizationId,
@@ -157,13 +156,13 @@ export async function PUT(request: Request) {
         userId: user.id,
         organizationId: user.organizationId,
         signatureMode: data.signatureMode,
-        certificateId,
+        digitalCertificateId: certificateId,
         autoSign: data.autoSign ?? true,
         notifyOnExpiration: data.notifyOnExpiration ?? true,
       },
       update: {
         signatureMode: data.signatureMode,
-        certificateId,
+        digitalCertificateId: certificateId,
         autoSign: typeof data.autoSign === "boolean" ? data.autoSign : undefined,
         notifyOnExpiration:
           typeof data.notifyOnExpiration === "boolean" ? data.notifyOnExpiration : undefined,

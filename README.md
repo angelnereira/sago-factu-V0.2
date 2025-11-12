@@ -33,6 +33,7 @@ SAGO FACTU es una plataforma multi-tenant que centraliza la administración de f
 
 - 🚀 **Multi-tenant completo** con aislamiento por organización y roles granularizados.
 - 🧾 **Generación y envío de facturas rFE** a HKA, incluyendo validaciones avanzadas y seguimiento.
+- 🖋️ **Firma digital XMLDSig multi-tenant** con certificados P12/PFX y PIN cifrado.
 - 📦 **Gestión de folios**: compra, asignación y consumo con métricas en dashboard.
 - 🔐 **Seguridad enterprise**: NextAuth v5, hashing bcrypt, cifrado de certificados digitales.
 - ⚙️ **Procesamiento asíncrono** con BullMQ + Redis para jobs de certificación.

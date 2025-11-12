@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-import { XMLSigner } from '@/lib/certificates/xml-signer';
+import { signInvoiceXml } from '@/services/invoice/signer';
 
 async function main() {
   try {
@@ -18,9 +18,7 @@ async function main() {
     }
 
     const xmlContent = fs.readFileSync(xmlPath, 'utf-8');
-    const signer = new XMLSigner();
-
-    const signedXml = await signer.signXML(xmlContent, orgId);
+    const signedXml = await signInvoiceXml(xmlContent, orgId);
     const outputPath = `/tmp/signed-invoice-${Date.now()}.xml`;
     fs.writeFileSync(outputPath, signedXml, 'utf-8');
 

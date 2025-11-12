@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 type SignatureMode = "ORGANIZATION" | "PERSONAL"
 
@@ -9,21 +9,21 @@ interface CertificateOption {
   subject: string
   issuer: string
   validFrom: string
-  validUntil: string
+  validTo: string
   ruc: string
-  dv: string
 }
 
 interface InitialConfig {
   signatureMode: SignatureMode
-  certificateId: string | null
+  digitalCertificateId: string | null
   autoSign: boolean
   notifyOnExpiration: boolean
 }
 
 interface DigitalSignatureSettingsProps {
-  certificates: CertificateOption[]
+  initialCertificates: CertificateOption[]
   initialConfig: InitialConfig | null
+  refreshToken?: number
 }
 
 interface StatusMessage {
@@ -31,19 +31,62 @@ interface StatusMessage {
   message: string | null
 }
 
-export function DigitalSignatureSettings({ certificates, initialConfig }: DigitalSignatureSettingsProps) {
+export function DigitalSignatureSettings({
+  initialCertificates,
+  initialConfig,
+  refreshToken,
+}: DigitalSignatureSettingsProps) {
   const [signatureMode, setSignatureMode] = useState<SignatureMode>(
     initialConfig?.signatureMode ?? "ORGANIZATION",
   )
   const [selectedCertificate, setSelectedCertificate] = useState<string | null>(
-    initialConfig?.certificateId ?? null,
+    initialConfig?.digitalCertificateId ?? null,
   )
   const [autoSign, setAutoSign] = useState<boolean>(initialConfig?.autoSign ?? true)
   const [notifyOnExpiration, setNotifyOnExpiration] = useState<boolean>(
     initialConfig?.notifyOnExpiration ?? true,
   )
+  const [certificates, setCertificates] = useState<CertificateOption[]>(initialCertificates)
   const [status, setStatus] = useState<StatusMessage>({ type: null, message: null })
   const [isSaving, setIsSaving] = useState(false)
+
+  const fetchCertificates = useCallback(async () => {
+    try {
+      const response = await fetch("/api/certificates")
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data?.error ?? "No se pudieron obtener los certificados")
+      }
+
+      if (Array.isArray(data)) {
+        setCertificates(
+          data.map((certificate: any) => ({
+            id: certificate.id,
+            subject: certificate.subject,
+            issuer: certificate.issuer,
+            validFrom: certificate.validFrom,
+            validTo: certificate.validTo,
+            ruc: certificate.ruc,
+          })),
+        )
+      }
+    } catch (error) {
+      console.error("[DigitalSignatureSettings] Error al refrescar certificados:", error)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof refreshToken === "number") {
+      void fetchCertificates()
+    }
+  }, [refreshToken, fetchCertificates])
+
+  useEffect(() => {
+    if (selectedCertificate && !certificates.some((certificate) => certificate.id === selectedCertificate)) {
+      setSelectedCertificate(null)
+    }
+  }, [certificates, selectedCertificate])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -155,13 +198,13 @@ export function DigitalSignatureSettings({ certificates, initialConfig }: Digita
             <select
               id="personal-certificate"
               value={selectedCertificate ?? ""}
-              onChange={event => setSelectedCertificate(event.target.value || null)}
+              onChange={(event) => setSelectedCertificate(event.target.value || null)}
               className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
             >
               <option value="">Selecciona un certificado</option>
-              {certificates.map(certificate => (
+              {certificates.map((certificate) => (
                 <option key={certificate.id} value={certificate.id}>
-                  {certificate.subject} · Vence {new Date(certificate.validUntil).toLocaleDateString("es-PA")}
+                  {certificate.subject} · Vence {new Date(certificate.validTo).toLocaleDateString("es-PA")}
                 </option>
               ))}
             </select>
@@ -179,7 +222,7 @@ export function DigitalSignatureSettings({ certificates, initialConfig }: Digita
             <input
               type="checkbox"
               checked={autoSign}
-              onChange={event => setAutoSign(event.target.checked)}
+              onChange={(event) => setAutoSign(event.target.checked)}
             />
             Firmar automáticamente las facturas que envíe
           </label>
@@ -187,7 +230,7 @@ export function DigitalSignatureSettings({ certificates, initialConfig }: Digita
             <input
               type="checkbox"
               checked={notifyOnExpiration}
-              onChange={event => setNotifyOnExpiration(event.target.checked)}
+              onChange={(event) => setNotifyOnExpiration(event.target.checked)}
             />
             Recibir alertas cuando el certificado esté próximo a vencer
           </label>
@@ -212,16 +255,15 @@ export function DigitalSignatureSettings({ certificates, initialConfig }: Digita
             <p>No hay certificados activos registrados para esta organización.</p>
           ) : (
             <ul className="mt-2 space-y-2">
-              {certificates.map(certificate => (
+              {certificates.map((certificate) => (
                 <li key={certificate.id} className="rounded border border-neutral-200 bg-white px-3 py-2">
                   <p className="font-medium text-neutral-800">{certificate.subject}</p>
                   <p className="text-neutral-600">
-                    Emisor: {certificate.issuer} · RUC {certificate.ruc}-{certificate.dv}
+                    Emisor: {certificate.issuer} · RUC {certificate.ruc}
                   </p>
                   <p className="text-neutral-600">
-                    Vigencia: {new Date(certificate.validFrom).toLocaleDateString("es-PA")} -
-                    {" "}
-                    {new Date(certificate.validUntil).toLocaleDateString("es-PA")}
+                    Vigencia: {new Date(certificate.validFrom).toLocaleDateString("es-PA")} -{" "}
+                    {new Date(certificate.validTo).toLocaleDateString("es-PA")}
                   </p>
                 </li>
               ))}

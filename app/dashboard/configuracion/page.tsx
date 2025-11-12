@@ -121,23 +121,13 @@ export default async function ConfigurationPage() {
     })
   }
 
-  const activeCertificate = canManageOrganization
-    ? await prisma.certificate.findFirst({
-        where: {
-          organizationId: organization.id,
-          isActive: true,
-        },
-        orderBy: { createdAt: "desc" },
-      })
-    : null
-
   const availableCertificates = canManageOrganization
-    ? await prisma.certificate.findMany({
+    ? await prisma.digitalCertificate.findMany({
         where: {
           organizationId: organization.id,
           isActive: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { uploadedAt: "desc" },
       })
     : []
 
@@ -197,32 +187,20 @@ export default async function ConfigurationPage() {
         userId={session.user.id}
         currentUser={currentUser}
         isSuperAdmin={isSuperAdmin}
-        certificates={availableCertificates.map((certificate) => ({
+        initialCertificates={availableCertificates.map((certificate) => ({
           id: certificate.id,
           subject: certificate.subject,
           issuer: certificate.issuer,
           validFrom: certificate.validFrom.toISOString(),
-          validUntil: certificate.validUntil.toISOString(),
+          validTo: certificate.validTo.toISOString(),
           ruc: certificate.ruc,
-          dv: certificate.dv,
         }))}
         signatureConfig={userSignatureConfig
           ? {
               signatureMode: userSignatureConfig.signatureMode,
-              certificateId: userSignatureConfig.certificateId,
+              digitalCertificateId: userSignatureConfig.digitalCertificateId,
               autoSign: userSignatureConfig.autoSign,
               notifyOnExpiration: userSignatureConfig.notifyOnExpiration,
-            }
-          : null}
-        activeCertificate={activeCertificate
-          ? {
-              id: activeCertificate.id,
-              subject: activeCertificate.subject,
-              issuer: activeCertificate.issuer,
-              validFrom: activeCertificate.validFrom.toISOString(),
-              validUntil: activeCertificate.validUntil.toISOString(),
-              ruc: activeCertificate.ruc,
-              dv: activeCertificate.dv,
             }
           : null}
       />

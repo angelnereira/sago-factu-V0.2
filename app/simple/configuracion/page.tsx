@@ -1,8 +1,7 @@
 import { auth } from '@/lib/auth';
 import { prismaServer as prisma } from '@/lib/prisma-server';
 import HKACredentialsForm from '@/components/simple/hka-credentials-form';
-import { CertificateManager } from '@/components/certificates/certificate-manager';
-import { DigitalSignatureSettings } from '@/components/certificates/digital-signature-settings';
+import { DigitalSignaturePanel } from '@/components/certificates/digital-signature-panel';
 
 export default async function ConfiguracionPage() {
   const session = await auth();
@@ -26,15 +25,7 @@ export default async function ConfiguracionPage() {
 
   const organization = user.organization;
 
-  const activeCertificate = await prisma.certificate.findFirst({
-    where: {
-      organizationId: organization.id,
-      isActive: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  const availableCertificates = await prisma.certificate.findMany({
+  const availableCertificates = await prisma.digitalCertificate.findMany({
     where: {
       organizationId: organization.id,
       isActive: true,
@@ -110,35 +101,19 @@ export default async function ConfiguracionPage() {
           </p>
         </div>
 
-        <CertificateManager
-          organizationId={organization.id}
-          currentCertificate={activeCertificate
-            ? {
-                id: activeCertificate.id,
-                subject: activeCertificate.subject,
-                issuer: activeCertificate.issuer,
-                validFrom: activeCertificate.validFrom.toISOString(),
-                validUntil: activeCertificate.validUntil.toISOString(),
-                ruc: activeCertificate.ruc,
-                dv: activeCertificate.dv,
-              }
-            : null}
-        />
-
-        <DigitalSignatureSettings
-          certificates={availableCertificates.map(certificate => ({
+        <DigitalSignaturePanel
+          initialCertificates={availableCertificates.map((certificate) => ({
             id: certificate.id,
             subject: certificate.subject,
             issuer: certificate.issuer,
             validFrom: certificate.validFrom.toISOString(),
-            validUntil: certificate.validUntil.toISOString(),
+            validTo: certificate.validTo.toISOString(),
             ruc: certificate.ruc,
-            dv: certificate.dv,
           }))}
           initialConfig={signatureConfig
             ? {
                 signatureMode: signatureConfig.signatureMode,
-                certificateId: signatureConfig.certificateId,
+                digitalCertificateId: signatureConfig.digitalCertificateId,
                 autoSign: signatureConfig.autoSign,
                 notifyOnExpiration: signatureConfig.notifyOnExpiration,
               }

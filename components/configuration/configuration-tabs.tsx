@@ -8,9 +8,8 @@ import { InvoiceSettings } from "./invoice-settings"
 import { IntegrationSettings } from "./integration-settings"
 import { NotificationSettings } from "./notification-settings"
 import { SecuritySettings } from "./security-settings"
-import { CertificateManager } from "@/components/certificates/certificate-manager"
-import { DigitalSignatureSettings } from "@/components/certificates/digital-signature-settings"
 import { ProfileSettings } from "./profile-settings"
+import { DigitalSignaturePanel } from "@/components/certificates/digital-signature-panel"
 
 interface Organization {
   id: string
@@ -80,29 +79,19 @@ interface ConfigurationTabsProps {
     emailNotifications: boolean
   }
   isSuperAdmin?: boolean
-  certificates?: {
+  initialCertificates?: {
     id: string
     subject: string
     issuer: string
     validFrom: string
-    validUntil: string
+    validTo: string
     ruc: string
-    dv: string
   }[]
   signatureConfig?: {
     signatureMode: "ORGANIZATION" | "PERSONAL"
-    certificateId: string | null
+    digitalCertificateId: string | null
     autoSign: boolean
     notifyOnExpiration: boolean
-  } | null
-  activeCertificate?: {
-    id: string
-    subject: string
-    issuer: string
-    validFrom: string
-    validUntil: string
-    ruc: string
-    dv: string
   } | null
 }
 
@@ -181,12 +170,9 @@ export function ConfigurationTabs({
   userId,
   currentUser,
   isSuperAdmin = false,
-  certificates = [],
+  initialCertificates = [],
   signatureConfig = null,
-  activeCertificate = null,
 }: ConfigurationTabsProps) {
-  const canManageOrganization = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN"
-
   const visibleTabs = tabs.filter((tab) => {
     if (!tab.roles) return true
     return tab.roles.includes(userRole)
@@ -264,10 +250,10 @@ export function ConfigurationTabs({
           />
         )}
         {activeTabSafe === "digitalSignature" && (
-          <div className="space-y-6">
-            <CertificateManager organizationId={organization.id} currentCertificate={activeCertificate} />
-            <DigitalSignatureSettings certificates={certificates} initialConfig={signatureConfig} />
-          </div>
+          <DigitalSignaturePanel
+            initialCertificates={initialCertificates}
+            initialConfig={signatureConfig}
+          />
         )}
         {activeTabSafe === "notifications" && (
           <NotificationSettings

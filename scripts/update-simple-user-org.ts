@@ -39,7 +39,7 @@ async function main() {
         certificate: {
           ruc: '155738031-2-2023',
           dv: '20',
-          validUntil: '2027-09-08T16:41:13',
+          validTo: '2027-09-08T16:41:13',
         },
         country: 'Panamá',
         secondaryPhone: null,

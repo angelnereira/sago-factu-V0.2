@@ -70,7 +70,7 @@ model Organization {
   systemConfigs SystemConfig[]
   customers     Customer[]
   apiLogs       ApiLog[]
-  certificates  Certificate[]
+  digitalCertificates DigitalCertificate[]
   signatureConfigs UserSignatureConfig[]
 
   @@index([slug])
@@ -172,44 +172,37 @@ model Session {
   @@map("sessions")
 }
 
-model Certificate {
-  id             String   @id @default(cuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+model DigitalCertificate {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  certificateP12      Bytes
+  certificatePem      String?  @db.Text
+  certificateChainPem String?  @db.Text
+  certificateThumbprint String?
+  encryptedPin        String   @db.Text
+  pinSalt             String
+  pinIv               String
+  pinAuthTag          String
+  ruc                 String
+  issuer              String
+  subject             String
+  serialNumber        String
+  validFrom           DateTime
+  validTo             DateTime
+  isActive            Boolean  @default(true)
+  uploadedBy          String
+  uploadedAt          DateTime @default(now())
+  lastUsedAt          DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  // Datos del certificado
-  certificateData   String   @db.Text
-  certificateIv     String
-  certificateTag    String
-  passwordEncrypted String   @db.Text
-  passwordIv        String
-  passwordTag       String
+  userSignatureConfigs UserSignatureConfig[]
 
-  // Metadata del certificado
-  serialNumber String
-  issuer       String
-  subject      String
-  thumbprint   String
-
-  // RUC asociado al certificado
-  ruc String
-  dv  String
-
-  // Validez
-  validFrom DateTime
-  validUntil DateTime
-  isActive  Boolean  @default(true)
-
-  // Auditoría
-  uploadedBy String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  userConfigs UserSignatureConfig[]
-
-  @@index([organizationId, isActive])
-  @@index([ruc, dv])
-  @@index([validUntil])
+  @@unique([organizationId, ruc])
+  @@index([organizationId])
+  @@index([validTo])
+  @@map("digital_certificates")
 }
 
 model UserSignatureConfig {
@@ -222,8 +215,8 @@ model UserSignatureConfig {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   signatureMode SignatureMode @default(ORGANIZATION)
-  certificateId String?
-  certificate   Certificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
+  digitalCertificateId String?
+  digitalCertificate   DigitalCertificate? @relation(fields: [digitalCertificateId], references: [id], onDelete: SetNull)
 
   autoSign           Boolean @default(true)
   notifyOnExpiration Boolean @default(true)
@@ -231,7 +224,7 @@ model UserSignatureConfig {
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
-  @@index([certificateId])
+  @@index([digitalCertificateId])
 }
 
 enum SignatureMode {

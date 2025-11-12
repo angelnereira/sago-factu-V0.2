@@ -26,6 +26,7 @@ cp .env.example .env
 | `AWS_S3_BUCKET` | Bucket para XML/PDF certificados | Prod |
 | `RESEND_API_KEY` | API key de Resend para notificaciones | Prod |
 | `CERTIFICATE_MASTER_KEY` | Clave hex de 32 bytes para cifrar certificados (.pfx) | Dev/Prod |
+| `CERTIFICATE_ENCRYPTION_KEY` | Clave hex de 32 bytes para cifrar el PIN de los certificados | Dev/Prod |
 | `HKA_SOAP_URL` | URL WSDL de HKA (`https://demo.thefactoryhka.com.pa/...`) | Dev/Prod |
 | `HKA_CLIENT_ID` / `HKA_CLIENT_SECRET` | Credenciales emitidas por HKA | Prod |
 

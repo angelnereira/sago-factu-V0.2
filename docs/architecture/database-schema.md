@@ -13,7 +13,7 @@ El esquema Prisma (`prisma/schema.prisma`) modela un sistema multi-tenant con co
 | `FolioPool` | Pools globales comprados al PAC. | `totalFolios`, `purchaseAmount` |
 | `FolioAssignment` | Asignación de folios por organización. | `assignedAmount`, `alertThreshold` |
 | `FolioConsumption` | Registro de consumo de folios por factura. | `invoiceId`, `folioNumber` |
-| `Certificate` | Certificados digitales (.pfx/.p12) cifrados. | `certificateData`, `validUntil` |
+| `DigitalCertificate` | Certificados digitales (.pfx/.p12) cifrados. | `certificateP12`, `validTo`, `certificateThumbprint`, `encryptedPin` |
 | `Monitor` | Configuración de monitores HKA/colas. | `type`, `threshold`, `status` |
 | `Notification` | Bandeja de notificaciones internas. | `type`, `payload`, `readAt` |
 

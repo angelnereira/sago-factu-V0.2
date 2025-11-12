@@ -86,6 +86,16 @@ En caso de error se retorna `error` con código y mensaje.
 - `POST /documentos/enviar`: envía documento ad-hoc a HKA.
 - `POST /documentos/anular`: solicita anulación (si el PAC lo soporta).
 
+## Certificados digitales
+
+- `GET /certificates`: lista certificados del tenant (incluye días hasta expiración).
+- `POST /certificates`: sube un certificado `.p12/.pfx` y su PIN (ambos cifrados en servidor).
+- `GET /certificates/{id}`: detalles de un certificado específico.
+- `PUT /certificates/{id}`: activación/desactivación del certificado.
+- `DELETE /certificates/{id}`: elimina un certificado (solo admins o super admins).
+- `GET /certificates/{id}/validate`: valida estructura, vigencia y RUC del certificado.
+- `POST /certificates/test-signature`: firma un XML de prueba y devuelve el resultado firmado.
+
 ## Monitoreo
 
 - `GET /monitors/list`: listado de monitores configurados.
