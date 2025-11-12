@@ -204,8 +204,6 @@ model DigitalCertificate {
 
   userSignatureConfigs UserSignatureConfig[]
 
-  @@unique([organizationId, ruc])
-  @@unique([userId, ruc])
   @@index([organizationId])
   @@index([userId])
   @@index([validTo])

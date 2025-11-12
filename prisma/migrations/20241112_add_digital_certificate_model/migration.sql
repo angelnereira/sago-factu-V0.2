@@ -43,11 +43,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS "digital_certificates_organizationId_ruc_key" 
 
 -- Foreign key to organizations
 ALTER TABLE "digital_certificates"
-  ADD CONSTRAINT IF NOT EXISTS "digital_certificates_organizationId_fkey"
+  DROP CONSTRAINT IF EXISTS "digital_certificates_organizationId_fkey";
+
+ALTER TABLE "digital_certificates"
+  ADD CONSTRAINT "digital_certificates_organizationId_fkey"
   FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Recreate foreign key from signature config to digital certificates
 CREATE INDEX IF NOT EXISTS "UserSignatureConfig_digitalCertificateId_idx" ON "UserSignatureConfig" ("digitalCertificateId");
 ALTER TABLE "UserSignatureConfig"
-  ADD CONSTRAINT IF NOT EXISTS "UserSignatureConfig_digitalCertificateId_fkey"
+  DROP CONSTRAINT IF EXISTS "UserSignatureConfig_digitalCertificateId_fkey";
+
+ALTER TABLE "UserSignatureConfig"
+  ADD CONSTRAINT "UserSignatureConfig_digitalCertificateId_fkey"
   FOREIGN KEY ("digitalCertificateId") REFERENCES "digital_certificates"("id") ON DELETE SET NULL ON UPDATE CASCADE;
