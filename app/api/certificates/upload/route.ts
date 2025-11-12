@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('certificate');
     const password = formData.get('password');
+    const activateFlag = formData.get('activate');
     const organizationId = (formData.get('organizationId') as string | null) ?? session.user.organizationId;
 
     if (!file || !(file instanceof File)) {
@@ -48,12 +49,18 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
+    const activate =
+      typeof activateFlag === 'string'
+        ? activateFlag.toLowerCase() !== 'false'
+        : true;
+
     const manager = new CertificateManager();
     const certificate = await manager.uploadCertificate(
       organizationId,
       buffer,
       password,
       session.user.id,
+      { activate },
     );
 
     return NextResponse.json({
@@ -66,6 +73,7 @@ export async function POST(request: NextRequest) {
         validUntil: certificate.validUntil,
         ruc: certificate.ruc,
         dv: certificate.dv,
+        isActive: certificate.isActive,
       },
     });
   } catch (error) {

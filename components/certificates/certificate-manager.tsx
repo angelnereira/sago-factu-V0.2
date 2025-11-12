@@ -32,8 +32,10 @@ interface CertificateManagerProps {
 export function CertificateManager({ organizationId, currentCertificate }: CertificateManagerProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [password, setPassword] = useState("")
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [primaryFile, setPrimaryFile] = useState<File | null>(null)
+  const [backupFile, setBackupFile] = useState<File | null>(null)
+  const primaryInputRef = useRef<HTMLInputElement | null>(null)
+  const backupInputRef = useRef<HTMLInputElement | null>(null)
 
   const notifyError = (message: string) => {
     alert(message)
@@ -43,57 +45,59 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
     alert(message)
   }
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? [])
-    if (!files.length) {
-      setSelectedFiles([])
-      return
-    }
-
-    const nextFiles: File[] = []
-
-    for (const file of files) {
-      if (!file.name.match(/\.(pfx|p12)$/i)) {
-        notifyError(`El archivo "${file.name}" no es válido. Seleccione archivos .p12 o .pfx.`)
-        continue
+  const validateAndSetFile = (file: File | null, setter: (file: File | null) => void, inputRef: React.RefObject<HTMLInputElement>) => {
+    if (!file) {
+      setter(null)
+      if (inputRef.current) {
+        inputRef.current.value = ""
       }
-
-      nextFiles.push(file)
-    }
-
-    const combined = [...selectedFiles, ...nextFiles].slice(0, 2)
-
-    if (combined.length === 0) {
-      event.target.value = ""
-      setSelectedFiles([])
       return
     }
 
-    if (combined.length < selectedFiles.length + nextFiles.length) {
-      notifyError("Solo se permiten dos archivos de certificado por carga.")
+    if (!file.name.match(/\.(pfx|p12)$/i)) {
+      notifyError(`El archivo "${file.name}" no es válido. Seleccione archivos .p12 o .pfx.`)
+      setter(null)
+      if (inputRef.current) {
+        inputRef.current.value = ""
+      }
+      return
     }
 
-    setSelectedFiles(combined)
+    setter(file)
   }
 
-  const removeFile = (index: number) => {
-    const updated = selectedFiles.filter((_, idx) => idx !== index)
-    setSelectedFiles(updated)
-    if (fileInputRef.current && updated.length === 0) {
-      fileInputRef.current.value = ""
+  const handlePrimaryChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null
+    validateAndSetFile(file, setPrimaryFile, primaryInputRef)
+  }
+
+  const handleBackupChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null
+    validateAndSetFile(file, setBackupFile, backupInputRef)
+  }
+
+  const clearPrimary = () => {
+    setPrimaryFile(null)
+    if (primaryInputRef.current) {
+      primaryInputRef.current.value = ""
+    }
+  }
+
+  const clearBackup = () => {
+    setBackupFile(null)
+    if (backupInputRef.current) {
+      backupInputRef.current.value = ""
     }
   }
 
   const resetForm = () => {
     setPassword("")
-    setSelectedFiles([])
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
+    clearPrimary()
+    clearBackup()
   }
 
   const handleUpload = async () => {
-    if (selectedFiles.length === 0) {
+    if (!primaryFile && !backupFile) {
       notifyError("Seleccione al menos un certificado para cargar")
       return
     }
@@ -106,13 +110,24 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
     setIsUploading(true)
 
     try {
+      const queue: { file: File; activate: boolean; label: string }[] = []
+
+      if (primaryFile) {
+        queue.push({ file: primaryFile, activate: true, label: "principal" })
+      }
+
+      if (backupFile) {
+        queue.push({ file: backupFile, activate: false, label: "de respaldo" })
+      }
+
       const results = []
 
-      for (const file of selectedFiles) {
+      for (const { file, activate, label } of queue) {
         const formData = new FormData()
         formData.append("certificate", file)
         formData.append("password", password)
         formData.append("organizationId", organizationId)
+        formData.append("activate", activate ? "true" : "false")
 
         const response = await fetch("/api/certificates/upload", {
           method: "POST",
@@ -122,16 +137,16 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
         const result = await response.json()
 
         if (!response.ok) {
-          throw new Error(result.error || `Error al guardar el certificado ${file.name}`)
+          throw new Error(result.error || `Error al guardar el certificado ${label} (${file.name})`)
         }
 
-        results.push(result)
+        results.push({ label, name: file.name, activate })
       }
 
       notifySuccess(
         results.length === 1
-          ? "Certificado cargado correctamente"
-          : `${results.length} certificados cargados correctamente`,
+          ? `Certificado ${results[0].label} cargado correctamente`
+          : "Certificados principal y de respaldo cargados correctamente",
       )
       resetForm()
       window.location.reload()
@@ -242,41 +257,66 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
         <div className="border-b border-neutral-200 px-4 py-3">
           <h3 className="text-lg font-semibold text-neutral-900">Cargar certificados (.p12 / .pfx)</h3>
           <p className="mt-1 text-sm text-neutral-600">
-            Puedes subir hasta dos archivos de firma digital (principal y respaldo). Ambos deben compartir la misma contraseña.
+            Sube tu archivo de firma principal y, opcionalmente, un certificado de respaldo. Ambos deben compartir la misma
+            contraseña.
           </p>
         </div>
         <div className="space-y-4 px-4 py-5">
           <div>
-            <label className="block text-sm font-medium text-neutral-700" htmlFor="certificate-file">
-              Seleccionar certificados
+            <label className="block text-sm font-medium text-neutral-700" htmlFor="certificate-primary-file">
+              Certificado principal
             </label>
             <input
-              ref={fileInputRef}
-              id="certificate-file"
+              ref={primaryInputRef}
+              id="certificate-primary-file"
               type="file"
               accept=".pfx,.p12"
-              multiple
-              onChange={handleFileChange}
+              onChange={handlePrimaryChange}
               className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
             />
-            {selectedFiles.length > 0 && (
-              <ul className="mt-2 space-y-1 text-xs text-neutral-600">
-                {selectedFiles.map((file, index) => (
-                  <li key={`${file.name}-${index}`} className="flex items-center justify-between rounded border border-neutral-200 bg-neutral-50 px-2 py-1">
-                    <span>{file.name}</span>
-                    <button
-                      type="button"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => removeFile(index)}
-                    >
-                      Quitar
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            {primaryFile ? (
+              <div className="mt-2 flex items-center justify-between rounded border border-neutral-200 bg-neutral-50 px-2 py-1 text-xs text-neutral-600">
+                <span>{primaryFile.name}</span>
+                <button
+                  type="button"
+                  className="text-red-500 hover:text-red-600"
+                  onClick={clearPrimary}
+                >
+                  Quitar
+                </button>
+              </div>
+            ) : (
+              <p className="mt-1 text-xs text-neutral-500">Selecciona el certificado principal (.p12 / .pfx).</p>
             )}
-            {selectedFiles.length === 0 && (
-              <p className="mt-1 text-xs text-neutral-500">Selecciona uno o dos archivos .p12 /.pfx.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700" htmlFor="certificate-backup-file">
+              Certificado de respaldo (opcional)
+            </label>
+            <input
+              ref={backupInputRef}
+              id="certificate-backup-file"
+              type="file"
+              accept=".pfx,.p12"
+              onChange={handleBackupChange}
+              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            />
+            {backupFile ? (
+              <div className="mt-2 flex items-center justify-between rounded border border-neutral-200 bg-neutral-50 px-2 py-1 text-xs text-neutral-600">
+                <span>{backupFile.name}</span>
+                <button
+                  type="button"
+                  className="text-red-500 hover:text-red-600"
+                  onClick={clearBackup}
+                >
+                  Quitar
+                </button>
+              </div>
+            ) : (
+              <p className="mt-1 text-xs text-neutral-500">
+                Puedes dejarlo vacío si solo necesitas un certificado activo.
+              </p>
             )}
           </div>
 
@@ -293,18 +333,18 @@ export function CertificateManager({ organizationId, currentCertificate }: Certi
               className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
             />
             <p className="mt-1 text-xs text-neutral-500">
-              La contraseña se usará para cada archivo seleccionado.
+              La contraseña se aplicará a ambos certificados.
             </p>
           </div>
 
           <button
             type="button"
             onClick={handleUpload}
-            disabled={isUploading || selectedFiles.length === 0 || !password}
+            disabled={isUploading || (!primaryFile && !backupFile) || !password}
             className="flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
           >
             <Upload className={`h-4 w-4 ${isUploading ? "animate-spin" : ""}`} />
-            {isUploading ? "Cargando certificados..." : `Cargar ${selectedFiles.length > 1 ? "certificados" : "certificado"}`}
+            {isUploading ? "Cargando certificados..." : "Cargar certificados"}
           </button>
 
           <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">

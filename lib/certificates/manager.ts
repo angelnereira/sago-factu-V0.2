@@ -24,8 +24,11 @@ export class CertificateManager {
     certificateBuffer: Buffer,
     password: string,
     uploadedBy: string,
+    options: { activate?: boolean } = {},
   ): Promise<UploadResult> {
     try {
+      const activate = options.activate ?? true
+
       const asn1 = forge.asn1.fromDer(
         forge.util.createBuffer(certificateBuffer.toString("binary"), "binary"),
       )
@@ -71,10 +74,12 @@ export class CertificateManager {
       const encryptedCertificate = this.encryption.encrypt(certificateBuffer)
       const encryptedPassword = this.encryption.encrypt(Buffer.from(password, "utf-8"))
 
-      await prismaServer.certificate.updateMany({
-        where: { organizationId, isActive: true },
-        data: { isActive: false },
-      })
+      if (activate) {
+        await prismaServer.certificate.updateMany({
+          where: { organizationId, isActive: true },
+          data: { isActive: false },
+        })
+      }
 
       const createdCertificate = await prismaServer.certificate.create({
         data: {
@@ -93,7 +98,7 @@ export class CertificateManager {
           dv,
           validFrom: certificate.validity.notBefore,
           validUntil: certificate.validity.notAfter,
-          isActive: true,
+          isActive: activate,
           uploadedBy,
         },
       })
