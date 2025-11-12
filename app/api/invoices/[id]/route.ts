@@ -10,7 +10,7 @@ export async function DELETE(
   {
     params,
   }: {
-    params: Promise<{ invoiceId: string }>
+    params: Promise<{ id: string }>
   },
 ) {
   const session = await auth()
@@ -19,7 +19,8 @@ export async function DELETE(
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
-  const { invoiceId } = await params
+  const { id } = await params
+  const invoiceId = id
 
   try {
     const invoice = await prisma.invoice.findUnique({
