@@ -12,6 +12,8 @@ interface ProfileSettingsProps {
     language: string
     timezone: string
     emailNotifications: boolean
+    ruc: string | null
+    dv: string | null
   }
   organizationName?: string | null
 }
@@ -35,6 +37,8 @@ export function ProfileSettings({ user, organizationName }: ProfileSettingsProps
     language: user.language ?? "es",
     timezone: user.timezone ?? "America/Panama",
     emailNotifications: user.emailNotifications,
+    ruc: user.ruc ?? "",
+    dv: user.dv ?? "",
   })
   const [isSaving, setIsSaving] = useState(false)
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null)
@@ -45,6 +49,21 @@ export function ProfileSettings({ user, organizationName }: ProfileSettingsProps
       ...prev,
       [name]:
         type === "checkbox"
+  const handleRucChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value.toUpperCase()
+    setFormState((prev) => ({
+      ...prev,
+      ruc: value,
+    }))
+  }
+
+  const handleDvChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const numeric = event.target.value.replace(/[^0-9]/g, "")
+    setFormState((prev) => ({
+      ...prev,
+      dv: numeric,
+    }))
+  }
           ? checked
           : value,
     }))
@@ -64,6 +83,8 @@ export function ProfileSettings({ user, organizationName }: ProfileSettingsProps
         body: JSON.stringify({
           ...formState,
           phone: formState.phone?.trim() || null,
+          ruc: formState.ruc.trim(),
+          dv: formState.dv.trim(),
         }),
       })
 
@@ -173,6 +194,48 @@ export function ProfileSettings({ user, organizationName }: ProfileSettingsProps
 
             <div>
               <label
+                htmlFor="ruc"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                RUC personal (obligatorio para firma)
+              </label>
+              <input
+                id="ruc"
+                name="ruc"
+                type="text"
+                required
+                value={formState.ruc}
+                onChange={handleRucChange}
+                placeholder="Ej: 8-488-194 o E-8-123-456"
+                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Debe coincidir con el RUC registrado en tus certificados P12/PFX personales.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="dv"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Dígito verificador (DV)
+              </label>
+              <input
+                id="dv"
+                name="dv"
+                type="text"
+                required
+                maxLength={2}
+                value={formState.dv}
+                onChange={handleDvChange}
+                placeholder="Ej: 41"
+                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label
                 htmlFor="language"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
@@ -255,6 +318,22 @@ export function ProfileSettings({ user, organizationName }: ProfileSettingsProps
             </button>
           </div>
         </form>
+      </div>
+      <div className="rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs text-indigo-800">
+        <p className="font-semibold uppercase tracking-wide">Importante para firmas digitales</p>
+        <ul className="mt-2 list-disc space-y-1 pl-4">
+          <li>
+            El <strong>RUC personal</strong> y el <strong>DV</strong> se utilizan cuando seleccionas el modo de firma
+            personal. Deben coincidir con los datos del certificado <code>.p12/.pfx</code> que subas.
+          </li>
+          <li>
+            Si firmas con certificados de la organización, se usará el RUC de la empresa configurado por el
+            administrador.
+          </li>
+          <li>
+            Cada usuario mantiene sus credenciales y certificados aislados; ninguna otra cuenta puede reutilizarlos.
+          </li>
+        </ul>
       </div>
     </div>
   )

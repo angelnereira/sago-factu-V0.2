@@ -24,6 +24,20 @@ const updateSchema = z.object({
     .optional()
     .default("America/Panama"),
   emailNotifications: z.boolean().optional().default(true),
+  ruc: z
+    .string({
+      required_error: "El RUC personal es obligatorio",
+    })
+    .min(5, "El RUC debe tener al menos 5 caracteres")
+    .max(30, "El RUC no puede superar 30 caracteres")
+    .regex(/^[0-9A-Za-z-]+$/, "Formato inválido de RUC (solo letras, números y guiones)"),
+  dv: z
+    .string({
+      required_error: "El DV es obligatorio",
+    })
+    .min(1, "El DV debe tener al menos 1 dígito")
+    .max(2, "El DV no puede superar 2 dígitos")
+    .regex(/^\d+$/, "El DV debe contener solo números"),
 })
 
 export async function GET() {
@@ -44,6 +58,8 @@ export async function GET() {
         language: true,
         timezone: true,
         emailNotifications: true,
+        ruc: true,
+        dv: true,
         organization: {
           select: {
             id: true,
@@ -90,6 +106,8 @@ export async function PUT(request: Request) {
         language: true,
         timezone: true,
         emailNotifications: true,
+        ruc: true,
+        dv: true,
       },
     })
 
@@ -108,6 +126,8 @@ export async function PUT(request: Request) {
           typeof data.emailNotifications === "boolean"
             ? data.emailNotifications
             : currentUser.emailNotifications,
+        ruc: data.ruc,
+        dv: data.dv,
       },
       select: {
         id: true,
@@ -117,6 +137,8 @@ export async function PUT(request: Request) {
         language: true,
         timezone: true,
         emailNotifications: true,
+        ruc: true,
+        dv: true,
       },
     })
 
@@ -135,6 +157,8 @@ export async function PUT(request: Request) {
             language: updatedUser.language,
             timezone: updatedUser.timezone,
             emailNotifications: updatedUser.emailNotifications,
+            ruc: updatedUser.ruc,
+            dv: updatedUser.dv,
           },
         }),
         ip: request.headers.get("x-forwarded-for") ?? undefined,

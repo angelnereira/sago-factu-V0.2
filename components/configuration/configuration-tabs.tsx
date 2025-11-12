@@ -77,6 +77,8 @@ interface ConfigurationTabsProps {
     language: string
     timezone: string
     emailNotifications: boolean
+    ruc: string | null
+    dv: string | null
   }
   isSuperAdmin?: boolean
   initialCertificates?: {

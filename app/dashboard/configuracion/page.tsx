@@ -152,6 +152,8 @@ export default async function ConfigurationPage() {
       language: true,
       timezone: true,
       emailNotifications: true,
+      ruc: true,
+      dv: true,
     },
   })
 
