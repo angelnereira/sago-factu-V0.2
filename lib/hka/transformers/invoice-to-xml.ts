@@ -61,9 +61,14 @@ export function transformInvoiceToXMLInput(
   const isDemo = ambienteOrg === 'demo';
   
   // Obtener RUC válido (demo o producción)
+  const orgRuc = invoice.organization.ruc?.trim() || null;
+  const orgDv = invoice.organization.dv?.trim() || null;
+  const invoiceRuc = invoice.issuerRuc?.trim() || null;
+  const invoiceDv = invoice.issuerDv?.trim() || null;
+
   const { ruc: emisorRuc, dv: emisorDv } = getValidRUC(
-    invoice.issuerRuc || invoice.organization.ruc,
-    invoice.issuerDv || invoice.organization.dv,
+    orgRuc || invoiceRuc,
+    orgDv || invoiceDv,
     isDemo
   );
   
@@ -356,10 +361,41 @@ function getValidRUC(
   
   // En producción, usar RUC de la organización
   if (rucOrg && dvOrg) {
-    return {
-      ruc: rucOrg.trim(),
-      dv: dvOrg.trim(),
-    };
+    const rucTrimmed = rucOrg.trim();
+    const dvTrimmed = dvOrg.trim();
+
+    const numericRuc = rucTrimmed.replace(/\D/g, '');
+    const numericDv = dvTrimmed.replace(/\D/g, '');
+
+    const dvResolved = (() => {
+      if (numericDv.length === 0) {
+        hkaLogger.warn('DV_SANITIZED_DEFAULT', 'DV del emisor no era numérico. Se usará "01" como valor por defecto.', {
+          original: dvTrimmed,
+        });
+        return '01';
+      }
+      if (numericDv.length <= 2) return numericDv.padStart(1, '0');
+      return numericDv.slice(0, 2);
+    })();
+
+    if (/^\d{8,15}$/.test(rucTrimmed)) {
+      return {
+        ruc: rucTrimmed,
+        dv: dvResolved,
+      };
+    }
+
+    if (numericRuc.length >= 8 && numericRuc.length <= 15) {
+      hkaLogger.warn('RUC_SANITIZED', 'El RUC del emisor contenía caracteres no numéricos. Se aplicó sanitización automáticamente.', {
+        original: rucTrimmed,
+        sanitized: numericRuc,
+      });
+
+      return {
+        ruc: numericRuc,
+        dv: dvResolved,
+      };
+    }
   }
   
   // Fallback: usar RUC demo si no hay RUC de organización
