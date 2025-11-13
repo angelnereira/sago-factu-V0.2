@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Building2, Users, FileText, Plug, Bell, Shield, PenTool, UserCircle } from "lucide-react"
+import { Building2, Users, FileText, Plug, Bell, Shield, PenTool, UserCircle, Key } from "lucide-react"
 import { OrganizationSettings } from "./organization-settings"
 import { UsersManagement } from "./users-management"
 import { InvoiceSettings } from "./invoice-settings"
@@ -10,6 +10,7 @@ import { NotificationSettings } from "./notification-settings"
 import { SecuritySettings } from "./security-settings"
 import { ProfileSettings } from "./profile-settings"
 import { DigitalSignaturePanel } from "@/components/certificates/digital-signature-panel"
+import HKACredentialsForm from "@/components/simple/hka-credentials-form"
 
 interface Organization {
   id: string
@@ -111,6 +112,7 @@ type TabId =
   | "users"
   | "invoicing"
   | "integration"
+  | "hkaCredentials"
   | "digitalSignature"
   | "notifications"
   | "security"
@@ -151,6 +153,11 @@ const tabs: Tab[] = [
     name: "Integración HKA",
     icon: Plug,
     roles: ["SUPER_ADMIN", "ORG_ADMIN"],
+  },
+  {
+    id: "hkaCredentials",
+    name: "Mis credenciales HKA",
+    icon: Key,
   },
   {
     id: "digitalSignature",
@@ -259,6 +266,22 @@ export function ConfigurationTabs({
             organizationId={organization.id}
             systemConfig={systemConfig}
           />
+        )}
+        {activeTabSafe === "hkaCredentials" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Configuración personal de HKA
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Define tus credenciales de autenticación para ambiente Demo y Producción. Estas credenciales son
+                privadas y se usan al enviar documentos a HKA.
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
+              <HKACredentialsForm />
+            </div>
+          </div>
         )}
         {activeTabSafe === "digitalSignature" && (
           <DigitalSignaturePanel
