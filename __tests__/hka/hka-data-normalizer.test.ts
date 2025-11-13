@@ -37,6 +37,13 @@ describe('HKA Data Normalizer', () => {
       expect(normalizeCantidad(0)).toBe('1.0000');
       expect(normalizeCantidad('2.5')).toBe('2.5000');
     });
+
+    it('interpreta variantes del punto decimal como el mismo valor', () => {
+      const variantes = ['1', '1.0', '1.000', '01', '0001.', '1.'];
+      variantes.forEach((valor) => {
+        expect(normalizeCantidad(valor)).toBe('1.0000');
+      });
+    });
   });
 
   describe('normalizePrecioUnitario / Item / Total', () => {
