@@ -54,6 +54,7 @@ export function DigitalSignatureSettings({
   )
   const [status, setStatus] = useState<StatusMessage>({ type: null, message: null })
   const [isSaving, setIsSaving] = useState(false)
+  const [isInitialLoadCompleted, setIsInitialLoadCompleted] = useState(false)
 
   const fetchCertificates = useCallback(async () => {
     try {
@@ -99,6 +100,50 @@ export function DigitalSignatureSettings({
       void fetchCertificates()
     }
   }, [refreshToken, fetchCertificates])
+
+  useEffect(() => {
+    const loadInitialConfig = async () => {
+      try {
+        const response = await fetch("/api/settings/digital-signature", { cache: "no-store" })
+        if (!response.ok) {
+          return
+        }
+
+        const data = await response.json()
+
+        if (Array.isArray(data?.certificates)) {
+          setOrgCertificates(
+            data.certificates.map((certificate: any) => ({
+              id: certificate.id,
+              subject: certificate.subject,
+              issuer: certificate.issuer,
+              validFrom: certificate.validFrom,
+              validTo: certificate.validTo,
+              ruc: certificate.ruc,
+            })),
+          )
+        }
+
+        if (data?.config) {
+          setSignatureMode(data.config.signatureMode ?? "ORGANIZATION")
+          setSelectedCertificate(data.config.certificateId ?? null)
+          setAutoSign(typeof data.config.autoSign === "boolean" ? data.config.autoSign : true)
+          setNotifyOnExpiration(
+            typeof data.config.notifyOnExpiration === "boolean" ? data.config.notifyOnExpiration : true,
+          )
+        }
+      } catch (error) {
+        console.error("[DigitalSignatureSettings] Error cargando configuración inicial:", error)
+      } finally {
+        setIsInitialLoadCompleted(true)
+      }
+    }
+
+    // Evitar sobreescribir valores si ya se cargaron desde el servidor a través de props
+    if (!isInitialLoadCompleted) {
+      void loadInitialConfig()
+    }
+  }, [isInitialLoadCompleted])
 
   useEffect(() => {
     const activeList = signatureMode === "PERSONAL" ? personalCertificates : orgCertificates

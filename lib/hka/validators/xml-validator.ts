@@ -281,7 +281,15 @@ export function validateXMLStructure(xmlString: string): ValidationResult {
     let match;
     
     while ((match = emptyTagsRegex.exec(xmlString)) !== null) {
-      const tagName = match[1] || match[2];
+      const rawTag = (match[1] || match[2] || "").trim();
+      if (!rawTag) continue;
+
+      const tagName = rawTag.split(/\s+/)[0];
+
+      // Ignorar tags de namespaces externos (ej: ds:*) que pueden ser self-closing según estándar XMLDSig
+      if (tagName.startsWith("ds:")) {
+        continue;
+      }
       
       // Ignorar tags que pueden estar vacíos según especificación
       const tagsOpcionalesVacios = [
@@ -290,9 +298,9 @@ export function validateXMLStructure(xmlString: string): ValidationResult {
       ];
 
       if (!tagsOpcionalesVacios.includes(tagName)) {
-        emptyTags.push(tagName);
+        emptyTags.push(rawTag);
         result.criticalFields.push({
-          field: tagName,
+          field: rawTag,
           value: '',
           issue: 'Tag XML vacío detectado. HKA lo rechaza.'
         });
