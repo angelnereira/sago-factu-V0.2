@@ -19,9 +19,9 @@ import {
   TasaITBMS,
   calcularTotales,
 } from '../xml/generator';
-import { getUbicacionOrDefault, getDefaultUbicacion } from '../constants/ubicaciones-panama';
+import { getUbicacionOrDefault } from '../constants/ubicaciones-panama';
 import { hkaLogger } from '../utils/logger';
-import { validarFormatoRUC, calcularDigitoVerificador } from '../utils/ruc-validator';
+import { validarFormatoRUC, calcularDigitoVerificador } from '@/lib/validations/ruc-validator';
 
 // ============================================
 // TIPO PARA INVOICE CON RELACIONES
