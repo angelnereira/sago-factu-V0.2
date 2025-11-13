@@ -22,6 +22,11 @@ import {
 import { getUbicacionOrDefault } from '../constants/ubicaciones-panama';
 import { hkaLogger } from '../utils/logger';
 import { validarFormatoRUC, calcularDigitoVerificador } from '@/lib/validations/ruc-validator';
+import {
+  normalizeInvoiceItem,
+  normalizePrecioUnitario,
+  normalizePrecioItem,
+} from '../data-normalizer';
 
 // ============================================
 // TIPO PARA INVOICE CON RELACIONES
@@ -119,49 +124,61 @@ export function transformInvoiceToXMLInput(
   // TRANSFORMAR ITEMS DE FACTURA
   // ============================================
   const items: ItemFactura[] = invoice.items.map((item, index) => {
-    // 🔧 FIX: Convertir Decimal a number para mapear correctamente
-    const taxRateNumber = Number(item.taxRate);
-    const tasaITBMS = mapTasaITBMS(taxRateNumber);
-    
-    // Calcular valores
-    const precioUnitario = Number(item.unitPrice);
-    const precioUnitarioDescuento = item.discountedPrice 
-      ? Number(item.discountedPrice) 
-      : precioUnitario;
-    const cantidad = Number(item.quantity);
-    const precioItem = Number(item.subtotal); // Precio total sin impuestos
-    const valorITBMS = Number(item.taxAmount);
-    const valorTotal = precioItem + valorITBMS;
-    
-    // 🔧 FIX: Si la tasa es EXENTO (00), el valor ITBMS DEBE ser 0
-    const valorITBMSFinal = tasaITBMS === TasaITBMS.EXENTO ? 0 : valorITBMS;
-    
-    // Validar que los campos críticos no estén vacíos
     if (!item.description || item.description.trim() === '') {
       throw new Error(`Item en línea ${index + 1} no tiene descripción. Todos los items deben tener descripción.`);
     }
-    if (cantidad <= 0) {
-      throw new Error(`Item "${item.description}" tiene cantidad inválida: ${cantidad}. La cantidad debe ser mayor a 0.`);
+
+    const normalized = normalizeInvoiceItem({
+      DESCRIPCION: item.description,
+      CODIGO: item.code,
+      UNIDADMEDIDA: item.unit,
+      CANTIDAD: item.quantity?.toString(),
+      PRECIO_UNITARIO: item.unitPrice?.toString(),
+      PRECIO_UNITARIO_DESCUENTO: item.discountedPrice?.toString() ?? item.unitPrice?.toString(),
+      PRECIO_ITEM: item.subtotal?.toString() ?? item.total?.toString(),
+      PRECIOACARREO: item.metadata?.acarreo,
+      PRECIOSEGURO: item.metadata?.seguro,
+      TASA_ITBMS: item.taxRate?.toString(),
+    });
+
+    const cantidad = Number.parseFloat(normalized.cantidad);
+    if (!Number.isFinite(cantidad) || cantidad <= 0) {
+      throw new Error(`Item "${item.description}" tiene cantidad inválida: ${normalized.cantidad}`);
     }
-    if (precioUnitario <= 0) {
-      throw new Error(`Item "${item.description}" tiene precio unitario inválido: ${precioUnitario}. El precio debe ser mayor a 0.`);
+
+    const precioUnitario = Number.parseFloat(normalized.precioUnitario);
+    if (!Number.isFinite(precioUnitario) || precioUnitario <= 0) {
+      throw new Error(`Item "${item.description}" tiene precio unitario inválido: ${normalized.precioUnitario}`);
     }
-    
+
+    const precioItem = Number.parseFloat(normalized.precioItem);
+    const tasaITBMSNumber = Number.parseFloat(normalized.tasaItbms);
+    const valorITBMS = Number.isFinite(item.taxAmount)
+      ? Number(item.taxAmount)
+      : Number.parseFloat(normalizePrecioItem(precioItem * (tasaITBMSNumber / 100)));
+
+    const tasaITBMS = mapTasaITBMS(tasaITBMSNumber);
+    const valorITBMSFinal = tasaITBMS === TasaITBMS.EXENTO ? 0 : valorITBMS;
+
     return {
       secuencia: item.lineNumber || (index + 1),
-      descripcion: item.description.trim(), // Asegurar que no tenga espacios extra
-      codigo: (item.code || `PROD-${index + 1}`).trim(), // Asegurar código válido
-      codigoCPBS: undefined, // Opcional, si lo tienes en el schema agregarlo
-      unidadMedida: (item.unit || 'und').trim(), // Asegurar unidad válida
+      descripcion: normalized.descripcion,
+      codigo: normalized.codigo || `PROD-${index + 1}`,
+      codigoCPBS: item.cpbsCode || undefined,
+      unidadMedida: normalized.unidadMedida || 'UND',
       cantidad,
       precioUnitario,
-      precioUnitarioDescuento,
+      precioUnitarioDescuento: Number.parseFloat(
+        normalizePrecioUnitario(item.discountedPrice ?? precioUnitario),
+      ),
       precioItem,
-      valorTotal,
+      valorTotal: precioItem + valorITBMSFinal,
       tasaITBMS,
-      valorITBMS: valorITBMSFinal, // ✅ Asegurar consistencia
-      tasaISC: 0, // ISC no implementado por ahora
+      valorITBMS: valorITBMSFinal,
+      tasaISC: 0,
       valorISC: 0,
+      precioAcarreo: Number.parseFloat(normalizePrecioItem(item.metadata?.acarreo ?? 0)),
+      precioSeguro: Number.parseFloat(normalizePrecioItem(item.metadata?.seguro ?? 0)),
     };
   });
   
