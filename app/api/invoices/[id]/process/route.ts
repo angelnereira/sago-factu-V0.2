@@ -91,6 +91,11 @@ export async function POST(
     // Verificar si hay credenciales disponibles (BD o .env)
     // getHKACredentialsForInvoice maneja esto automáticamente, pero verificamos aquí para evitar errores
     const hasOrgCreds = Boolean(invoice.organization.hkaTokenUser && invoice.organization.hkaTokenPassword);
+    const hasUserCreds =
+      autoSendToHKA &&
+      (await prisma.hKACredential.count({
+        where: { userId: invoice.createdBy, isActive: true },
+      })) > 0;
     const hasEnvCreds = Boolean(
       process.env.HKA_DEMO_TOKEN_USER || process.env.HKA_PROD_TOKEN_USER
     );
@@ -98,11 +103,15 @@ export async function POST(
     // Determinar si debe enviar a HKA
     // - Si autoSendToHKA está habilitado Y hay credenciales (BD o .env)
     // - Funciona igual para todos los usuarios (SIMPLE, DASHBOARD, ENTERPRISE)
-    const shouldSendToHKA = autoSendToHKA && (hasOrgCreds || hasEnvCreds);
+    const shouldSendToHKA = autoSendToHKA && (hasOrgCreds || hasUserCreds || hasEnvCreds);
     
     if (!shouldSendToHKA && autoSendToHKA) {
-      console.warn(`⚠️  Envío a HKA deshabilitado: autoSendToHKA=${autoSendToHKA}, hasOrgCreds=${hasOrgCreds}, hasEnvCreds=${hasEnvCreds}`);
-      console.warn(`   Configure credenciales en /simple/configuracion o en variables de entorno (.env)`);
+      console.warn(
+        `⚠️  Envío a HKA deshabilitado: autoSendToHKA=${autoSendToHKA}, hasOrgCreds=${hasOrgCreds}, hasUserCreds=${hasUserCreds}, hasEnvCreds=${hasEnvCreds}`
+      );
+      console.warn(
+        `   Configura credenciales personales en Configuración → Integraciones (/simple/configuracion) o define variables de entorno (.env)`
+      );
     }
 
     const result = await processInvoiceDirectly(invoiceId, {

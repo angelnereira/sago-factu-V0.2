@@ -30,7 +30,8 @@ export async function POST() {
         await client.initialize();
         
         return { success: true };
-      }
+      },
+      { userId: user.id }
     );
 
     return NextResponse.json({

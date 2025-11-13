@@ -6,14 +6,34 @@ export interface HKAOrganizationCredentials {
   tokenUser: string;
   tokenPassword: string;
   environment: 'demo' | 'prod';
+  source: 'user' | 'organization';
+  credentialId?: string;
 }
 
 export async function getHKACredentials(
-  organizationId: string
+  organizationId: string,
+  options: { userId?: string } = {}
 ): Promise<HKAOrganizationCredentials | null> {
   const { prismaServer: prisma } = await import('@/lib/prisma-server');
   const { OrganizationPlan } = await import('@prisma/client');
   const { decryptToken } = await import('@/lib/utils/encryption');
+
+  if (options.userId) {
+    const userCredential = await prisma.hKACredential.findFirst({
+      where: { userId: options.userId, isActive: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    if (userCredential) {
+      return {
+        tokenUser: userCredential.tokenUser,
+        tokenPassword: decryptToken(userCredential.tokenPassword),
+        environment: userCredential.environment === 'PROD' ? 'prod' : 'demo',
+        source: 'user',
+        credentialId: userCredential.id,
+      };
+    }
+  }
 
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },
@@ -31,15 +51,15 @@ export async function getHKACredentials(
   if (org.plan === OrganizationPlan.SIMPLE) {
     if (!org.hkaTokenUser || !org.hkaTokenPassword) {
       throw new Error(
-        'Plan Simple: Configure sus credenciales HKA en Configuración. ' +
-        'Vaya a /simple/configuracion para configurar sus credenciales.'
+        'Plan Simple: configura tus credenciales HKA personales en Configuración → Integraciones (o /simple/configuracion).'
       );
     }
     
     return {
       tokenUser: org.hkaTokenUser,
       tokenPassword: decryptToken(org.hkaTokenPassword),
-      environment: (org.hkaEnvironment || 'demo') as 'demo' | 'prod'
+      environment: (org.hkaEnvironment || 'demo') === 'prod' || (org.hkaEnvironment || 'demo') === 'production' ? 'prod' : 'demo',
+      source: 'organization',
     };
   }
 
@@ -55,9 +75,10 @@ export async function getHKACredentials(
  */
 export async function withHKACredentials<T>(
   organizationId: string,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
+  options: { userId?: string } = {}
 ): Promise<T> {
-  const credentials = await getHKACredentials(organizationId);
+  const credentials = await getHKACredentials(organizationId, options);
 
   if (!credentials) {
     // Plan Empresarial: ejecutar normal con credenciales de .env
@@ -65,25 +86,78 @@ export async function withHKACredentials<T>(
   }
 
   // Plan Simple: override temporal de variables de entorno
-  const originalToken = process.env.HKA_DEMO_TOKEN_USER;
-  const originalPassword = process.env.HKA_DEMO_TOKEN_PASSWORD;
+  const originalDemoToken = process.env.HKA_DEMO_TOKEN_USER;
+  const originalDemoPassword = process.env.HKA_DEMO_TOKEN_PASSWORD;
+  const originalProdToken = process.env.HKA_PROD_TOKEN_USER;
+  const originalProdPassword = process.env.HKA_PROD_TOKEN_PASSWORD;
   const originalEnv = process.env.HKA_ENV;
+  const originalEnvCompat = process.env.HKA_ENVIRONMENT;
 
   try {
     // Establecer credenciales del usuario
-    process.env.HKA_DEMO_TOKEN_USER = credentials.tokenUser;
-    process.env.HKA_DEMO_TOKEN_PASSWORD = credentials.tokenPassword;
-    process.env.HKA_ENV = credentials.environment;
+    if (credentials.environment === 'prod') {
+      process.env.HKA_ENV = 'prod';
+      process.env.HKA_ENVIRONMENT = 'production';
+      process.env.HKA_PROD_TOKEN_USER = credentials.tokenUser;
+      process.env.HKA_PROD_TOKEN_PASSWORD = credentials.tokenPassword;
+    } else {
+      process.env.HKA_ENV = 'demo';
+      process.env.HKA_ENVIRONMENT = 'demo';
+      process.env.HKA_DEMO_TOKEN_USER = credentials.tokenUser;
+      process.env.HKA_DEMO_TOKEN_PASSWORD = credentials.tokenPassword;
+    }
 
-    console.log(`[HKA] Usando credenciales de Plan Simple para org ${organizationId}`);
-    console.log(`[HKA] Environment: ${credentials.environment}`);
+    console.log(`[HKA] Usando credenciales ${credentials.source} para org ${organizationId}`);
+    console.log(`[HKA] Environment activo: ${credentials.environment}`);
 
-    return await fn();
+    const result = await fn();
+
+    if (credentials.source === 'user' && credentials.credentialId) {
+      const { prismaServer: prisma } = await import('@/lib/prisma-server');
+      await prisma.hKACredential.update({
+        where: { id: credentials.credentialId },
+        data: { lastUsedAt: new Date() },
+      });
+    }
+
+    return result;
   } finally {
     // Restaurar valores originales
-    if (originalToken) process.env.HKA_DEMO_TOKEN_USER = originalToken;
-    if (originalPassword) process.env.HKA_DEMO_TOKEN_PASSWORD = originalPassword;
-    if (originalEnv) process.env.HKA_ENV = originalEnv;
+    if (originalDemoToken !== undefined) {
+      process.env.HKA_DEMO_TOKEN_USER = originalDemoToken;
+    } else {
+      delete process.env.HKA_DEMO_TOKEN_USER;
+    }
+
+    if (originalDemoPassword !== undefined) {
+      process.env.HKA_DEMO_TOKEN_PASSWORD = originalDemoPassword;
+    } else {
+      delete process.env.HKA_DEMO_TOKEN_PASSWORD;
+    }
+
+    if (originalProdToken !== undefined) {
+      process.env.HKA_PROD_TOKEN_USER = originalProdToken;
+    } else {
+      delete process.env.HKA_PROD_TOKEN_USER;
+    }
+
+    if (originalProdPassword !== undefined) {
+      process.env.HKA_PROD_TOKEN_PASSWORD = originalProdPassword;
+    } else {
+      delete process.env.HKA_PROD_TOKEN_PASSWORD;
+    }
+
+    if (originalEnv !== undefined) {
+      process.env.HKA_ENV = originalEnv;
+    } else {
+      delete process.env.HKA_ENV;
+    }
+
+    if (originalEnvCompat !== undefined) {
+      process.env.HKA_ENVIRONMENT = originalEnvCompat;
+    } else {
+      delete process.env.HKA_ENVIRONMENT;
+    }
   }
 }
 

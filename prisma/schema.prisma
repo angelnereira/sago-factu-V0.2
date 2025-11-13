@@ -127,6 +127,7 @@ model User {
   signatureConfig UserSignatureConfig?
   environments  Environment[]
   userCertificates DigitalCertificate[]
+  hkaCredentials HKACredential[]
 
   @@index([organizationId])
   @@index([email])
@@ -208,6 +209,23 @@ model DigitalCertificate {
   @@index([userId])
   @@index([validTo])
   @@map("digital_certificates")
+}
+
+model HKACredential {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  environment   HKAEnvironment @default(DEMO)
+  tokenUser     String
+  tokenPassword String         @db.Text
+  isActive      Boolean        @default(true)
+  lastUsedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@unique([userId, environment])
+  @@index([userId, environment])
+  @@map("hka_credentials")
 }
 
 model UserSignatureConfig {
@@ -494,6 +512,11 @@ enum OrganizationPlan {
   SUPER_ADMIN // Administrador de plataforma
   ENTERPRISE // Plan empresarial (folio pool, credenciales centralizadas)
   SIMPLE // Plan simple (interfaz HKA con credenciales propias)
+}
+
+enum HKAEnvironment {
+  DEMO
+  PROD
 }
 
 enum EmailStatus {

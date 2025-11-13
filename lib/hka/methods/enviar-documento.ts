@@ -48,7 +48,8 @@ async function getHKACredentialsForInvoice(
   // Validar que las credenciales de entorno existan
   if (!envCredentials.tokenEmpresa || !envCredentials.tokenPassword) {
     throw new Error(
-      'Credenciales HKA no configuradas. Configure credenciales en /simple/configuracion o en variables de entorno (.env):\n' +
+      'Credenciales HKA no configuradas. Configura tus credenciales personales en Configuración → Integraciones (o /simple/configuracion) ' +
+      'o define las variables de entorno (.env):\n' +
       '  HKA_DEMO_TOKEN_USER=walgofugiitj_ws_tfhka\n' +
       '  HKA_DEMO_TOKEN_PASSWORD=Octopusp1oQs5'
     );
@@ -116,7 +117,7 @@ export async function enviarDocumento(
         if (!credentials?.tokenEmpresa || !credentials?.tokenPassword) {
           const errorMsg = organization?.hkaTokenUser 
             ? 'Credenciales HKA configuradas pero password inválido. Verifica la configuración.'
-            : 'Credenciales HKA ausentes. Configure credenciales en /simple/configuracion o en variables de entorno (.env)';
+            : 'Credenciales HKA ausentes. Configura tus credenciales personales en Configuración → Integraciones (o /simple/configuracion) o usa variables de entorno (.env)';
           throw new Error(errorMsg);
         }
 

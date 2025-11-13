@@ -11,6 +11,8 @@ export default function HKACredentialsForm() {
   const [tokenPassword, setTokenPassword] = useState('');
   const [environment, setEnvironment] = useState<'demo' | 'prod'>('demo');
   const [isConfigured, setIsConfigured] = useState(false);
+  const [tokenStore, setTokenStore] = useState<{ demo: string; prod: string }>({ demo: '', prod: '' });
+  const [configuredMap, setConfiguredMap] = useState<{ demo: boolean; prod: boolean }>({ demo: false, prod: false });
   
   // Datos del contribuyente
   const [ruc, setRuc] = useState('');
@@ -25,20 +27,31 @@ export default function HKACredentialsForm() {
     fetch('/api/settings/hka-credentials')
       .then(res => res.json())
       .then(data => {
-        if (data.configured) {
-          setTokenUser(data.tokenUser);
-          setEnvironment(data.environment);
-          setIsConfigured(true);
-          
-          // Cargar datos del contribuyente
-          if (data.ruc) setRuc(data.ruc);
-          if (data.dv) setDv(data.dv);
-          if (data.razonSocial) setRazonSocial(data.razonSocial);
-          if (data.nombreComercial) setNombreComercial(data.nombreComercial);
-          if (data.email) setEmail(data.email);
-          if (data.telefono) setTelefono(data.telefono);
-          if (data.direccion) setDireccion(data.direccion);
-        }
+        const environments = data.environments || {};
+        const mappedTokens = {
+          demo: environments.demo?.tokenUser ?? '',
+          prod: environments.prod?.tokenUser ?? '',
+        };
+        const mappedConfigured = {
+          demo: environments.demo?.tokenUser ? true : false,
+          prod: environments.prod?.tokenUser ? true : false,
+        };
+
+        setTokenStore(mappedTokens);
+        setConfiguredMap(mappedConfigured);
+
+        const initialEnvironment: 'demo' | 'prod' = data.environment === 'prod' ? 'prod' : 'demo';
+        setEnvironment(initialEnvironment);
+        setTokenUser(mappedTokens[initialEnvironment] || data.tokenUser || data.fallback?.tokenUser || '');
+        setIsConfigured(mappedConfigured[initialEnvironment]);
+
+        if (data.ruc) setRuc(data.ruc);
+        if (data.dv) setDv(data.dv);
+        if (data.razonSocial) setRazonSocial(data.razonSocial);
+        if (data.nombreComercial) setNombreComercial(data.nombreComercial);
+        if (data.email) setEmail(data.email);
+        if (data.telefono) setTelefono(data.telefono);
+        if (data.direccion) setDireccion(data.direccion);
       })
       .catch(err => console.error('Error cargando credenciales:', err));
   }, []);
@@ -71,6 +84,14 @@ export default function HKACredentialsForm() {
       if (res.ok) {
         setMessage({ type: 'success', text: 'Credenciales guardadas correctamente' });
         setIsConfigured(true);
+        setTokenStore((prev) => ({
+          ...prev,
+          [environment]: tokenUser,
+        }));
+        setConfiguredMap((prev) => ({
+          ...prev,
+          [environment]: true,
+        }));
       } else {
         setMessage({ type: 'error', text: result.error || 'Error al guardar credenciales' });
       }
@@ -114,7 +135,14 @@ export default function HKACredentialsForm() {
           id="tokenUser"
           type="text"
           value={tokenUser}
-          onChange={(e) => setTokenUser(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setTokenUser(value);
+            setTokenStore((prev) => ({
+              ...prev,
+              [environment]: value,
+            }));
+          }}
           disabled={loading}
           required
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
@@ -145,7 +173,13 @@ export default function HKACredentialsForm() {
         <select
           id="environment"
           value={environment}
-          onChange={(e) => setEnvironment(e.target.value as 'demo' | 'prod')}
+          onChange={(e) => {
+            const newEnv = e.target.value as 'demo' | 'prod';
+            setEnvironment(newEnv);
+            setTokenUser(tokenStore[newEnv] || '');
+            setIsConfigured(configuredMap[newEnv]);
+            setMessage(null);
+          }}
           disabled={loading}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
         >
