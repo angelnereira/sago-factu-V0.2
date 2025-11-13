@@ -95,7 +95,7 @@ export default function HKACredentialsForm() {
       } else {
         setMessage({ type: 'error', text: result.error || 'Error al guardar credenciales' });
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: 'error', text: 'Error de conexión. Intenta nuevamente.' });
     } finally {
       setLoading(false);
@@ -118,7 +118,7 @@ export default function HKACredentialsForm() {
       } else {
         setMessage({ type: 'error', text: result.error || 'Error al conectar con HKA' });
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: 'error', text: 'Error al probar conexión' });
     } finally {
       setTesting(false);
