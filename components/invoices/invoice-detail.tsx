@@ -2,7 +2,7 @@
 
 import { Download, Send, XCircle, CheckCircle, Clock, FileText, ArrowLeft, FileCode } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { SendEmailButton } from "./send-email-button"
 import { EmailHistory } from "./email-history"
 import { InvoiceSuccessResponse } from "./invoice-success-response"
@@ -84,61 +84,17 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
   // Mostrar successData si existe (después de enviar) o certifiedData si la factura ya está certificada
   const displayData = successData || certifiedData
 
-  // Debug: Log para verificar datos (SIEMPRE se ejecuta en el cliente)
-  useEffect(() => {
-    console.group('🔍 [InvoiceDetail] Debug State');
-    console.log('📊 Invoice Status:', invoice.status);
-    console.log('📦 Invoice Data:', {
-      id: invoice.id,
-      hasCufe: !!invoice.cufe,
-      cufe: invoice.cufe,
-      hasCafe: !!invoice.cafe,
-      cafe: invoice.cafe,
-      hasQrCode: !!invoice.qrCode,
-      hasQrUrl: !!invoice.qrUrl,
-      qrUrl: invoice.qrUrl,
-      hasNumeroFiscal: !!invoice.numeroDocumentoFiscal,
-      numeroDocumentoFiscal: invoice.numeroDocumentoFiscal,
-      hasProtocol: !!invoice.hkaProtocol,
-      hasProtocolDate: !!invoice.hkaProtocolDate,
-    });
-    console.log('📦 State Data:', {
-      successData: successData ? 'EXISTE' : 'NULL',
-      certifiedData: certifiedData ? 'EXISTE' : 'NULL',
-      displayData: displayData ? 'EXISTE' : 'NULL',
-      willShowComponent: !!displayData,
-    });
-    
-    // Alert visual si está certificada pero no tiene displayData
-    if (invoice.status === 'CERTIFIED' && !displayData) {
-      console.warn('⚠️ [InvoiceDetail] Factura CERTIFIED pero sin displayData!', {
-        certifiedData,
-        successData,
-        invoiceFields: {
-          cufe: invoice.cufe,
-          cafe: invoice.cafe,
-          qrUrl: invoice.qrUrl,
-          qrCode: invoice.qrCode,
-        }
-      });
-    }
-    console.groupEnd();
-  }, [invoice.status, invoice.cufe, invoice.cafe, invoice.id, invoice.qrCode, invoice.qrUrl, invoice.numeroDocumentoFiscal, invoice.hkaProtocol, invoice.hkaProtocolDate, certifiedData, successData, displayData])
-
   const handleSendToHKA = async () => {
     setIsProcessing(true)
     setDownloadError(null)
     setSuccessData(null)
     try {
-      console.log('🚀 [InvoiceDetail] Enviando factura a HKA...', invoice.id)
-      
       const response = await fetch(`/api/invoices/${invoice.id}/process`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
 
       const result = await response.json()
-      console.log('📥 [InvoiceDetail] Respuesta recibida:', result)
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || result.message || 'Error al procesar factura')
@@ -146,19 +102,16 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
       // Si hay datos de respuesta exitosa, mostrarlos
       if (result.data) {
-        console.log('✅ [InvoiceDetail] Estableciendo successData:', result.data)
         setSuccessData(result.data)
         // Scroll al inicio para mostrar el componente
         setTimeout(() => {
           window.scrollTo({ top: 0, behavior: 'smooth' })
         }, 100)
       } else {
-        console.log('⚠️ [InvoiceDetail] No hay result.data, recargando página...')
         // Recargar la página para mostrar el nuevo estado y CUFE
         router.refresh()
       }
     } catch (error) {
-      console.error("❌ [InvoiceDetail] Error al enviar a HKA:", error)
       setDownloadError(error instanceof Error ? error.message : 'Error al enviar factura')
     } finally {
       setIsProcessing(false)
@@ -233,96 +186,6 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
   return (
     <div className="space-y-6">
-      {/* PANEL DE DEBUG VISUAL FIJO - Top Right */}
-      <div className="fixed top-4 right-4 z-50 bg-yellow-100 dark:bg-yellow-900/30 border-2 border-yellow-500 dark:border-yellow-600 p-4 rounded-lg shadow-xl max-w-xs max-h-96 overflow-auto">
-        <h3 className="font-bold text-sm mb-2 text-yellow-900 dark:text-yellow-200">🔍 Debug Panel</h3>
-        <div className="text-xs space-y-1 font-mono">
-          <div className="flex justify-between">
-            <span className="text-yellow-800 dark:text-yellow-300">Status:</span>
-            <code className="text-yellow-900 dark:text-yellow-100">{invoice.status}</code>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-yellow-800 dark:text-yellow-300">successData:</span>
-            <code className={successData ? 'text-green-600' : 'text-red-600'}>
-              {successData ? '✅' : '❌'}
-            </code>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-yellow-800 dark:text-yellow-300">certifiedData:</span>
-            <code className={certifiedData ? 'text-green-600' : 'text-red-600'}>
-              {certifiedData ? '✅' : '❌'}
-            </code>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-yellow-800 dark:text-yellow-300">displayData:</span>
-            <code className={displayData ? 'text-green-600' : 'text-red-600'}>
-              {displayData ? '✅' : '❌'}
-            </code>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-yellow-800 dark:text-yellow-300">Has CUFE:</span>
-            <code className={invoice.cufe ? 'text-green-600' : 'text-red-600'}>
-              {invoice.cufe ? '✅' : '❌'}
-            </code>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-yellow-800 dark:text-yellow-300">Has CAFE:</span>
-            <code className={invoice.cafe ? 'text-green-600' : 'text-red-600'}>
-              {invoice.cafe ? '✅' : '❌'}
-            </code>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-yellow-800 dark:text-yellow-300">Has QR URL:</span>
-            <code className={invoice.qrUrl ? 'text-green-600' : 'text-red-600'}>
-              {invoice.qrUrl ? '✅' : '❌'}
-            </code>
-          </div>
-          {displayData && (
-            <div className="mt-2 pt-2 border-t border-yellow-400">
-              <div className="text-green-700 dark:text-green-400 font-bold">
-                ✅ Componente Visible
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ALERTA VISIBLE - Siempre se muestra para verificar que el componente se renderiza */}
-      <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-500 rounded-lg">
-        <p className="text-sm text-red-800 dark:text-red-200 font-bold">
-          🔴 COMPONENTE InvoiceDetail CARGADO - Si ves esto, el componente funciona
-        </p>
-        <p className="text-xs text-red-700 dark:text-red-300 font-mono mt-2">
-          Invoice ID: {invoice?.id || 'NO DISPONIBLE'}
-        </p>
-        <p className="text-xs text-red-700 dark:text-red-300 font-mono">
-          Status: {invoice?.status || 'NO DISPONIBLE'}
-        </p>
-        <p className="text-xs text-red-700 dark:text-red-300 font-mono">
-          Timestamp: {new Date().toISOString()}
-        </p>
-      </div>
-
-      {/* DEBUG: Mostrar siempre si está certificada para verificar renderizado */}
-      {invoice.status === "CERTIFIED" && (
-        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg">
-          <p className="text-xs text-blue-800 dark:text-blue-200 font-mono font-bold">
-            🐛 DEBUG: Factura CERTIFIED detectada
-          </p>
-          <p className="text-xs text-blue-700 dark:text-blue-300 font-mono mt-1">
-            displayData: {displayData ? '✅ EXISTE' : '❌ NULL'}
-          </p>
-          <p className="text-xs text-blue-700 dark:text-blue-300 font-mono">
-            hasCufe: {invoice.cufe ? '✅ SÍ' : '❌ NO'} | hasCafe: {invoice.cafe ? '✅ SÍ' : '❌ NO'}
-          </p>
-          {successData && (
-            <p className="text-xs text-green-700 dark:text-green-300 font-mono mt-1">
-              ✅ successData establecido (factura recién enviada)
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Mostrar componente de respuesta exitosa si hay datos de éxito O si la factura ya está certificada */}
       {displayData ? (
         <div className="mb-6 border-4 border-green-500 dark:border-green-600 rounded-lg p-4 bg-green-50 dark:bg-green-900/20">

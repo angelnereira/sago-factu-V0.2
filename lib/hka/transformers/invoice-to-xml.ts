@@ -21,6 +21,7 @@ import {
 } from '../xml/generator';
 import { getUbicacionOrDefault, getDefaultUbicacion } from '../constants/ubicaciones-panama';
 import { hkaLogger } from '../utils/logger';
+import { validarFormatoRUC, calcularDigitoVerificador } from '../utils/ruc-validator';
 
 // ============================================
 // TIPO PARA INVOICE CON RELACIONES
@@ -110,21 +111,9 @@ export function transformInvoiceToXMLInput(
   // Obtener ubicación válida usando catálogo para receptor
   const ubicacionReceptor = getUbicacionOrDefault(clienteData.locationCode);
   
-  const receptor: ReceptorData = {
-    tipoRuc: mapTipoRUC(clienteData.rucType || '2'), // Default: Persona Jurídica
-    ruc: clienteData.ruc || invoice.receiverRuc || '0000000000', // Fallback a invoice.receiverRuc si no hay customer.ruc
-    dv: clienteData.dv || invoice.receiverDv || '00', // Fallback a invoice.receiverDv si no hay customer.dv
-    tipoCliente: mapTipoCliente(clienteData.clientType || '01'), // Default: Contribuyente
-    razonSocial: clienteData.name || invoice.receiverName || 'CLIENTE SIN NOMBRE', // CRÍTICO: debe tener valor
-    direccion: clienteData.address || invoice.receiverAddress || 'PANAMA', // CRÍTICO: debe tener valor
-    codigoUbicacion: ubicacionReceptor.codigo,
-    provincia: ubicacionReceptor.provincia,
-    distrito: ubicacionReceptor.distrito,
-    corregimiento: ubicacionReceptor.corregimiento,
-    paisCodigo: clienteData.countryCode || 'PA',
-    telefono: clienteData.phone || undefined,
-    correo: clienteData.email || invoice.receiverEmail || undefined,
-  };
+  const receptorNormalizado = sanitizeReceptorData(invoice, clienteData, ubicacionReceptor);
+
+  const receptor: ReceptorData = receptorNormalizado;
   
   // ============================================
   // TRANSFORMAR ITEMS DE FACTURA
@@ -245,6 +234,100 @@ export function transformInvoiceToXMLInput(
   };
   
   return facturaInput;
+}
+
+function sanitizeReceptorData(
+  invoice: InvoiceWithRelations,
+  clienteData: Customer,
+  ubicacionReceptor: ReturnType<typeof getUbicacionOrDefault>,
+): ReceptorData {
+  const rawRuc =
+    clienteData.ruc ||
+    invoice.receiverRuc ||
+    '';
+
+  const rawDv =
+    clienteData.dv ||
+    invoice.receiverDv ||
+    '';
+
+  const sanitized = normalizarRucReceptor(rawRuc, rawDv);
+
+  const tipoClienteBase = mapTipoCliente(clienteData.clientType || '01');
+  const tipoCliente =
+    sanitized.isConsumidorFinal ? TipoCliente.CONSUMIDOR_FINAL : tipoClienteBase;
+
+  const razonSocialBase = clienteData.name || invoice.receiverName;
+  const razonSocial = razonSocialBase && razonSocialBase.trim().length > 0
+    ? razonSocialBase.trim()
+    : sanitized.isConsumidorFinal
+      ? 'CONSUMIDOR FINAL'
+      : 'CLIENTE SIN NOMBRE';
+
+  const direccionBase = clienteData.address || invoice.receiverAddress;
+  const direccion = direccionBase && direccionBase.trim().length > 0
+    ? direccionBase.trim()
+    : 'PANAMA';
+
+  return {
+    tipoRuc: sanitized.tipoRuc,
+    ruc: sanitized.ruc,
+    dv: sanitized.dv,
+    tipoCliente,
+    razonSocial,
+    direccion,
+    codigoUbicacion: ubicacionReceptor.codigo,
+    provincia: ubicacionReceptor.provincia,
+    distrito: ubicacionReceptor.distrito,
+    corregimiento: ubicacionReceptor.corregimiento,
+    paisCodigo: clienteData.countryCode || 'PA',
+    telefono: clienteData.phone || undefined,
+    correo: clienteData.email || invoice.receiverEmail || undefined,
+  };
+}
+
+function normalizarRucReceptor(rawRuc: string, rawDv: string) {
+  const cleanRuc = (rawRuc || '').replace(/[^0-9\-]/g, '');
+  const cleanDv = (rawDv || '').replace(/\D/g, '');
+
+  if (cleanRuc.length === 0 || cleanRuc.length < 8) {
+    return {
+      ruc: '0000000000',
+      dv: '00',
+      tipoRuc: TipoRUC.PERSONA_NATURAL,
+      isConsumidorFinal: true,
+    };
+  }
+
+  if (validarFormatoRUC(cleanRuc)) {
+    const partes = cleanRuc.split('-');
+    const rucBase = partes.length >= 3 ? `${partes[0]}${partes[1]}` : cleanRuc.replace(/-/g, '');
+    const dvCalculado = calcularDigitoVerificador(partes.length >= 3 ? `${partes[0]}-${partes[1]}-${partes[2]}` : cleanRuc);
+    return {
+      ruc: rucBase.padStart(8, '0'),
+      dv: partes.length === 4 ? partes[3] : dvCalculado.padStart(2, '0'),
+      tipoRuc: TipoRUC.PERSONA_JURIDICA,
+      isConsumidorFinal: false,
+    };
+  }
+
+  const numericRuc = cleanRuc.replace(/\D/g, '');
+  if (numericRuc.length >= 8) {
+    const dvFinal = cleanDv.length > 0 ? cleanDv.padStart(2, '0') : calcularDigitoVerificador(numericRuc).padStart(2, '0');
+    return {
+      ruc: numericRuc.slice(0, 15),
+      dv: dvFinal,
+      tipoRuc: TipoRUC.PERSONA_JURIDICA,
+      isConsumidorFinal: false,
+    };
+  }
+
+  return {
+    ruc: '0000000000',
+    dv: '00',
+    tipoRuc: TipoRUC.PERSONA_NATURAL,
+    isConsumidorFinal: true,
+  };
 }
 
 // ============================================
