@@ -149,14 +149,22 @@ export async function enviarDocumento(
 
         // HKA espera el XML como texto plano sin escapar
         // Remover la declaración XML del inicio si existe
-        let xmlLimpio = xmlDocumento.trim();
-        if (xmlLimpio.startsWith('<?xml')) {
-          // Encontrar el final de la declaración XML
-          const endOfDeclaration = xmlLimpio.indexOf('?>');
-          if (endOfDeclaration !== -1) {
-            xmlLimpio = xmlLimpio.substring(endOfDeclaration + 2).trim();
-          }
+        let xmlLimpio = xmlDocumento
+          .replace(/^\uFEFF/, '') // Quitar BOM si existe
+          .trim();
+
+        // Eliminar TODAS las declaraciones XML que puedan quedar (inicio o en medio)
+        if (xmlLimpio.includes('<?xml')) {
+          xmlLimpio = xmlLimpio
+            .replace(/<\?xml[^>]*\?>/gi, ' ')
+            .trim();
         }
+
+        // Homogeneizar saltos de línea/espacios antes de rFE
+        xmlLimpio = xmlLimpio.replace(/\s*(<rFE[\s>])/i, '$1').trim();
+
+        // Utilizar la versión normalizada como documento principal
+        xmlDocumento = xmlLimpio;
 
         const hasSignatureTag = /<ds:Signature|<Signature/i.test(xmlLimpio);
 
