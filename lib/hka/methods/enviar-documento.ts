@@ -202,6 +202,8 @@ export async function enviarDocumento(
           organizationId: organization?.id,
         });
         
+        xmlLimpio = xmlDocumento.replace(/\s+/g, ' ');
+
         // Usar módulo de validación estructurado
         const validationResult = validateXMLStructure(xmlLimpio);
         
@@ -234,6 +236,10 @@ export async function enviarDocumento(
           organizationId: organization?.id,
         });
         
+        // Validaciones adicionales puntuales
+        const esConsumidorFinal = /<iTipoRec>\s*02\s*<\/iTipoRec>/.test(xmlLimpio);
+        const tieneGucRec = /<gRucRec>/.test(xmlLimpio);
+
         // Validaciones de campos críticos según formato rFE v1.00 de HKA/DGI
         // IMPORTANTE: Usar los nombres EXACTOS que se generan en el XML según documentación HKA
         const validaciones: { campo: string; encontrado: boolean; regex: RegExp }[] = [
@@ -243,9 +249,6 @@ export async function enviarDocumento(
           { campo: 'dTipoRuc (Emisor)', encontrado: /<gRucEmi>[\s\S]*?<dTipoRuc>[^<]+<\/dTipoRuc>/.test(xmlLimpio), regex: /<gRucEmi>[\s\S]*?<dTipoRuc>([^<]+)<\/dTipoRuc>/ },
           { campo: 'dNombEm (Razón Social Emisor)', encontrado: /<dNombEm>[^<]+<\/dNombEm>/.test(xmlLimpio), regex: /<dNombEm>([^<]+)<\/dNombEm>/ },
           { campo: 'dDirecEm (Dirección Emisor)', encontrado: /<dDirecEm>[^<]+<\/dDirecEm>/.test(xmlLimpio), regex: /<dDirecEm>([^<]+)<\/dDirecEm>/ },
-          // Receptor - Los campos están dentro de gRucRec, no como dRucRe/dDVRe
-          { campo: 'dRuc (Receptor)', encontrado: /<gRucRec>[\s\S]*?<dRuc>[^<]+<\/dRuc>/.test(xmlLimpio), regex: /<gRucRec>[\s\S]*?<dRuc>([^<]+)<\/dRuc>/ },
-          { campo: 'dDV (Receptor)', encontrado: /<gRucRec>[\s\S]*?<dDV>[^<]+<\/dDV>/.test(xmlLimpio), regex: /<gRucRec>[\s\S]*?<dDV>([^<]+)<\/dDV>/ },
           { campo: 'dNombRec (Nombre Receptor)', encontrado: /<dNombRec>[^<]+<\/dNombRec>/.test(xmlLimpio), regex: /<dNombRec>([^<]+)<\/dNombRec>/ },
           { campo: 'dDirecRec (Dirección Receptor)', encontrado: /<dDirecRec>[^<]+<\/dDirecRec>/.test(xmlLimpio), regex: /<dDirecRec>([^<]+)<\/dDirecRec>/ },
           // Items y Totales - Verificar que gItem tenga contenido válido
@@ -256,6 +259,17 @@ export async function enviarDocumento(
           { campo: 'dVTot (Total Final)', encontrado: /<dVTot>[^<]+<\/dVTot>/.test(xmlLimpio), regex: /<dVTot>([^<]+)<\/dVTot>/ },
           { campo: 'dId (CUFE)', encontrado: /<dId>[^<]+<\/dId>/.test(xmlLimpio), regex: /<dId>([^<]+)<\/dId>/ },
         ];
+
+        if (!esConsumidorFinal || tieneGucRec) {
+          validaciones.splice(
+            5,
+            0,
+            { campo: 'dRuc (Receptor)', encontrado: /<gRucRec>[\s\S]*?<dRuc>[^<]+<\/dRuc>/.test(xmlLimpio), regex: /<gRucRec>[\s\S]*?<dRuc>([^<]+)<\/dRuc>/ },
+            { campo: 'dDV (Receptor)', encontrado: /<gRucRec>[\s\S]*?<dDV>[^<]+<\/dDV>/.test(xmlLimpio), regex: /<gRucRec>[\s\S]*?<dDV>([^<]+)<\/dDV>/ },
+          );
+        } else {
+          console.log('   ✅ Receptor marcado como consumidor final: se omite validación de dRuc/dDV.');
+        }
 
         // Log de validaciones
         const faltantes: string[] = [];
