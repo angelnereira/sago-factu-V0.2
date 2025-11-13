@@ -4,7 +4,7 @@
 // Convierte un Invoice de Prisma con sus relaciones
 // al formato FacturaElectronicaInput para el generador XML
 
-import { Invoice, InvoiceItem, Organization, Customer } from '@prisma/client';
+import { Invoice, InvoiceItem, Organization, Customer, ReceiverType } from '@prisma/client';
 import {
   FacturaElectronicaInput,
   EmisorData,
@@ -251,11 +251,12 @@ function sanitizeReceptorData(
     invoice.receiverDv ||
     '';
 
-  const sanitized = normalizarRucReceptor(rawRuc, rawDv);
+  const sanitized = normalizarRucReceptor(rawRuc, rawDv, invoice.receiverType);
 
   const tipoClienteBase = mapTipoCliente(clienteData.clientType || '01');
-  const tipoCliente =
-    sanitized.isConsumidorFinal ? TipoCliente.CONSUMIDOR_FINAL : tipoClienteBase;
+  const tipoCliente = sanitized.isConsumidorFinal
+    ? TipoCliente.CONSUMIDOR_FINAL
+    : tipoClienteBase;
 
   const razonSocialBase = clienteData.name || invoice.receiverName;
   const razonSocial = razonSocialBase && razonSocialBase.trim().length > 0
@@ -286,11 +287,17 @@ function sanitizeReceptorData(
   };
 }
 
-function normalizarRucReceptor(rawRuc: string, rawDv: string) {
+function normalizarRucReceptor(
+  rawRuc: string,
+  rawDv: string,
+  receiverType?: ReceiverType,
+) {
   const cleanRuc = (rawRuc || '').replace(/[^0-9\-]/g, '');
   const cleanDv = (rawDv || '').replace(/\D/g, '');
 
-  if (cleanRuc.length === 0 || cleanRuc.length < 8) {
+  const esConsumidorFinal = receiverType === 'FINAL_CONSUMER';
+
+  if (esConsumidorFinal || cleanRuc.length === 0 || cleanRuc.length < 8) {
     return {
       ruc: '0000000000',
       dv: '00',
@@ -301,11 +308,13 @@ function normalizarRucReceptor(rawRuc: string, rawDv: string) {
 
   if (validarFormatoRUC(cleanRuc)) {
     const partes = cleanRuc.split('-');
-    const rucBase = partes.length >= 3 ? `${partes[0]}${partes[1]}` : cleanRuc.replace(/-/g, '');
-    const dvCalculado = calcularDigitoVerificador(partes.length >= 3 ? `${partes[0]}-${partes[1]}-${partes[2]}` : cleanRuc);
+    const base = partes.slice(0, 3).join('-');
+    const dvCalculado = partes.length === 4
+      ? partes[3]
+      : calcularDigitoVerificador(base).padStart(2, '0');
     return {
-      ruc: rucBase.padStart(8, '0'),
-      dv: partes.length === 4 ? partes[3] : dvCalculado.padStart(2, '0'),
+      ruc: (partes[0] + partes[1]).padStart(8, '0'),
+      dv: dvCalculado.padStart(2, '0'),
       tipoRuc: TipoRUC.PERSONA_JURIDICA,
       isConsumidorFinal: false,
     };
@@ -313,7 +322,7 @@ function normalizarRucReceptor(rawRuc: string, rawDv: string) {
 
   const numericRuc = cleanRuc.replace(/\D/g, '');
   if (numericRuc.length >= 8) {
-    const dvFinal = cleanDv.length > 0 ? cleanDv.padStart(2, '0') : calcularDigitoVerificador(numericRuc).padStart(2, '0');
+    const dvFinal = cleanDv.length > 0 ? cleanDv.padStart(2, '0') : '00';
     return {
       ruc: numericRuc.slice(0, 15),
       dv: dvFinal,
