@@ -205,7 +205,7 @@ export async function processInvoice(
           async () => {
             return enviarDocumento(xml, invoiceId, invoice.organizationId);
           },
-          { userId: invoice.userId }
+          { userId: invoice.createdBy }
         );
 
         console.log(`   ✅ Respuesta de HKA recibida`);
