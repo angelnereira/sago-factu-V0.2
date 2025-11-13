@@ -95,6 +95,7 @@ export interface ReceptorData {
   paisCodigo?: string; // Default: PA
   telefono?: string;
   correo?: string;
+  esConsumidorFinal?: boolean;
 }
 
 export interface ItemFactura {
@@ -344,11 +345,14 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   // DATOS DEL RECEPTOR
   // ============================================
   // Validar campos críticos del receptor
-  if (!data.receptor.ruc || data.receptor.ruc.trim() === '') {
-    throw new Error('El RUC del receptor es obligatorio y no puede estar vacío.');
-  }
-  if (!data.receptor.dv || data.receptor.dv.trim() === '') {
-    throw new Error('El dígito verificador (DV) del receptor es obligatorio y no puede estar vacío.');
+  const esConsumidorFinal = Boolean(data.receptor.esConsumidorFinal);
+  if (!esConsumidorFinal) {
+    if (!data.receptor.ruc || data.receptor.ruc.trim() === '') {
+      throw new Error('El RUC del receptor es obligatorio y no puede estar vacío.');
+    }
+    if (!data.receptor.dv || data.receptor.dv.trim() === '') {
+      throw new Error('El dígito verificador (DV) del receptor es obligatorio y no puede estar vacío.');
+    }
   }
   if (!data.receptor.razonSocial || data.receptor.razonSocial.trim() === '') {
     throw new Error('El nombre del receptor es obligatorio y no puede estar vacío.');
@@ -360,11 +364,13 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   const gDatRec = gDGen.ele('gDatRec');
   gDatRec.ele('iTipoRec').txt(data.receptor.tipoCliente).up();
   
-  const gRucRec = gDatRec.ele('gRucRec');
-  gRucRec.ele('dTipoRuc').txt(data.receptor.tipoRuc).up();
-  gRucRec.ele('dRuc').txt(data.receptor.ruc.trim()).up(); // Asegurar sin espacios
-  gRucRec.ele('dDV').txt(data.receptor.dv.trim()).up(); // Asegurar sin espacios
-  gRucRec.up();
+  if (!esConsumidorFinal) {
+    const gRucRec = gDatRec.ele('gRucRec');
+    gRucRec.ele('dTipoRuc').txt(data.receptor.tipoRuc).up();
+    gRucRec.ele('dRuc').txt(data.receptor.ruc.trim()).up(); // Asegurar sin espacios
+    gRucRec.ele('dDV').txt(data.receptor.dv.trim()).up(); // Asegurar sin espacios
+    gRucRec.up();
+  }
   
   gDatRec.ele('dNombRec').txt(data.receptor.razonSocial.trim()).up(); // Asegurar sin espacios extra
   gDatRec.ele('dDirecRec').txt(data.receptor.direccion.trim()).up(); // Asegurar sin espacios extra

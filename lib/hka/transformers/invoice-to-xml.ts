@@ -257,7 +257,7 @@ function sanitizeReceptorData(
   invoice: InvoiceWithRelations,
   clienteData: Customer,
   ubicacionReceptor: ReturnType<typeof getUbicacionOrDefault>,
-): ReceptorData {
+): ReceptorData & { esConsumidorFinal: boolean } {
   const rawRuc =
     clienteData.ruc ||
     invoice.receiverRuc ||
@@ -301,6 +301,7 @@ function sanitizeReceptorData(
     paisCodigo: clienteData.countryCode || 'PA',
     telefono: clienteData.phone || undefined,
     correo: clienteData.email || invoice.receiverEmail || undefined,
+    esConsumidorFinal: sanitized.isConsumidorFinal,
   };
 }
 
