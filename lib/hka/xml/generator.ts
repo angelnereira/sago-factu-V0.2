@@ -523,6 +523,8 @@ export function generarXMLFactura(data: FacturaElectronicaInput): string {
   return xmlString;
 }
 
+export const generarFacturaXML = generarXMLFactura;
+
 // ============================================
 // FUNCIÓN DE AYUDA: CALCULAR TOTALES
 // ============================================
