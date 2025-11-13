@@ -3,6 +3,12 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --form-bg: #ffffff;
+  --form-text: #111827;
+  --form-placeholder: #6b7280;
+  --form-border: #d1d5db;
+  --form-disabled-bg: #f3f4f6;
+  --form-disabled-text: #4b5563;
 }
 
 @theme inline {
@@ -16,6 +22,12 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --form-bg: #111827;
+    --form-text: #f9fafb;
+    --form-placeholder: #9ca3af;
+    --form-border: #1f2937;
+    --form-disabled-bg: #1f2937;
+    --form-disabled-text: #9ca3af;
   }
 }
 
@@ -23,6 +35,22 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+:where(input, textarea, select) {
+  background-color: var(--form-bg);
+  color: var(--form-text);
+  border-color: var(--form-border);
+}
+
+:where(input, textarea, select)::placeholder {
+  color: var(--form-placeholder);
+  opacity: 1;
+}
+
+:where(input, textarea, select):disabled {
+  background-color: var(--form-disabled-bg);
+  color: var(--form-disabled-text);
 }
 
 /* PWA Install Banner Animation */
