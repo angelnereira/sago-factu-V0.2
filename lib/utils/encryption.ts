@@ -11,7 +11,6 @@
 
 import crypto from 'crypto';
 import { z } from 'zod';
-import { logger } from '@/lib/logger';
 
 // ============================================================================
 // VALIDACIÓN Y CONFIGURACIÓN
@@ -31,7 +30,7 @@ if (!ENCRYPTION_KEY) {
     'Esta variable es obligatoria para cifrar credenciales HKA.\n\n' +
     'Generar clave con: openssl rand -hex 32\n' +
     'Luego configurar en .env: ENCRYPTION_KEY=<valor generado>\n';
-  logger.error(errorMsg);
+  console.error(errorMsg);
   throw new Error(errorMsg);
 }
 
@@ -95,7 +94,7 @@ export function encryptToken(token: string): string {
 
     return JSON.stringify(encryptedData);
   } catch (error) {
-    logger.error('Error encriptando token', {
+    console.error('[Encryption] Error encriptando token', {
       error: error instanceof Error ? error.message : String(error),
     });
     throw new Error('Fallo al encriptar token HKA');
@@ -137,7 +136,7 @@ export function decryptToken(encryptedJson: string): string {
 
     return decrypted;
   } catch (error) {
-    logger.error('Error desencriptando token', {
+    console.error('[Encryption] Error desencriptando token', {
       error: error instanceof Error ? error.message : String(error),
     });
     throw new Error('Fallo al desencriptar token HKA (posible datos corruptos o clave incorrecta)');

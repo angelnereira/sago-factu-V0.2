@@ -7,7 +7,6 @@
  * - Compatible con Plan Simple y Plan Empresarial
  */
 
-import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 // ============================================================================
@@ -46,12 +45,11 @@ export async function getHKACredentials(
   const { decryptToken } = require('@/lib/utils/encryption');
 
   const requestId = crypto.randomUUID();
-  const log = logger.child({ requestId, organizationId });
 
   try {
     // 1. Intentar obtener credenciales del usuario (Plan Simple)
     if (options.userId) {
-      log.debug('Buscando credenciales de usuario', { userId: options.userId });
+      console.debug('[HKA] Buscando credenciales de usuario', { userId: options.userId });
 
       const userCredential = await prismaServer.hKACredential.findFirst({
         where: { userId: options.userId, isActive: true },
@@ -59,7 +57,7 @@ export async function getHKACredentials(
       });
 
       if (userCredential) {
-        log.info('Credenciales de usuario encontradas', {
+        console.log('[HKA] Credenciales de usuario encontradas', {
           source: 'user',
           environment: userCredential.environment,
         });
@@ -89,21 +87,21 @@ export async function getHKACredentials(
     });
 
     if (!org) {
-      log.error('Organización no encontrada', { organizationId });
+      console.error('[HKA] Organización no encontrada', { organizationId });
       return null;
     }
 
     // 3. Plan Simple: usar credenciales de la organización
     if (org.plan === OrganizationPlan.SIMPLE) {
       if (!org.hkaTokenUser || !org.hkaTokenPassword) {
-        log.error('Credenciales HKA no configuradas en Plan Simple');
+        console.error('[HKA] Credenciales HKA no configuradas en Plan Simple');
         throw new Error(
           '❌ Plan Simple: configura tus credenciales HKA en Configuración → Integraciones.\n' +
           'Contacta a soporte@thefactoryhka.com.pa para obtener credenciales.'
         );
       }
 
-      log.info('Usando credenciales de organización (Plan Simple)', {
+      console.log('[HKA] Usando credenciales de organización (Plan Simple)', {
         source: 'organization',
         environment: org.hkaEnvironment,
       });
@@ -122,10 +120,10 @@ export async function getHKACredentials(
     }
 
     // 4. Plan Empresarial: usar credenciales centralizadas de .env
-    log.debug('Plan Empresarial: usando credenciales de .env');
+    console.debug('[HKA] Plan Empresarial: usando credenciales de .env');
     return null;
   } catch (error) {
-    log.error('Error obteniendo credenciales HKA', {
+    console.error('[HKA] Error obteniendo credenciales HKA', {
       error: error instanceof Error ? error.message : String(error),
     });
     throw error;
