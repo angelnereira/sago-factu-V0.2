@@ -23,19 +23,25 @@ const SALT_LENGTH = 16; // 128 bits
 const IV_LENGTH = 12; // 96 bits (recomendado para GCM)
 const AUTH_TAG_LENGTH = 16; // 128 bits
 
-// Validar encriptación key al iniciar
-if (!ENCRYPTION_KEY) {
-  const errorMsg =
-    '🔴 ERROR CRÍTICO: ENCRYPTION_KEY no está configurada\n\n' +
-    'Esta variable es obligatoria para cifrar credenciales HKA.\n\n' +
-    'Generar clave con: openssl rand -hex 32\n' +
-    'Luego configurar en .env: ENCRYPTION_KEY=<valor generado>\n';
-  console.error(errorMsg);
-  throw new Error(errorMsg);
-}
+// ============================================================================
+// FUNCIÓN AUXILIAR: Validar ENCRYPTION_KEY
+// ============================================================================
+// Deferred validation: Only validate when encryption/decryption is actually used
+// This allows the build to complete, but prevents runtime encryption operations
+function validateEncryptionKey(): void {
+  if (!ENCRYPTION_KEY) {
+    const errorMsg =
+      '🔴 ERROR CRÍTICO: ENCRYPTION_KEY no está configurada\n\n' +
+      'Esta variable es obligatoria para cifrar credenciales HKA.\n\n' +
+      'Generar clave con: openssl rand -hex 32\n' +
+      'Luego configurar en .env: ENCRYPTION_KEY=<valor generado>\n';
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
 
-if (ENCRYPTION_KEY.length < 32) {
-  throw new Error(`ENCRYPTION_KEY debe tener mínimo 32 caracteres (tiene ${ENCRYPTION_KEY.length})`);
+  if (ENCRYPTION_KEY.length < 32) {
+    throw new Error(`ENCRYPTION_KEY debe tener mínimo 32 caracteres (tiene ${ENCRYPTION_KEY.length})`);
+  }
 }
 
 // ============================================================================
@@ -61,6 +67,9 @@ interface EncryptedData {
  */
 export function encryptToken(token: string): string {
   try {
+    // Validar ENCRYPTION_KEY antes de encriptar
+    validateEncryptionKey();
+
     // 1. Generar salt aleatorio
     const salt = crypto.randomBytes(SALT_LENGTH);
 
@@ -109,6 +118,9 @@ export function encryptToken(token: string): string {
  */
 export function decryptToken(encryptedJson: string): string {
   try {
+    // Validar ENCRYPTION_KEY antes de desencriptar
+    validateEncryptionKey();
+
     // 1. Parsear JSON
     const encryptedData: EncryptedData = JSON.parse(encryptedJson);
 
