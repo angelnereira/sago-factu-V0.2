@@ -1,50 +1,65 @@
 import { getHKAClient } from '../soap/client';
 import { ConsultarDocumentoParams, ConsultarDocumentoResponse } from '../soap/types';
+import { withHKACredentials } from '../credentials-manager';
+import { monitorHKACall } from '@/lib/monitoring/hka-monitor-wrapper';
 
 /**
  * Consulta un documento electrónico en HKA por su CUFE
  */
 export async function consultarDocumento(
-  cufe: string
+  cufe: string,
+  organizationId: string,
+  options: { userId?: string } = {}
 ): Promise<ConsultarDocumentoResponse> {
-  try {
-    const hkaClient = getHKAClient();
-    const environment = process.env.HKA_ENVIRONMENT === 'prod' ? 1 : 2;
+  return withHKACredentials(
+    organizationId,
+    async () => {
+      try {
+        const hkaClient = getHKAClient();
+        await hkaClient.initialize();
+        const environment = (process.env.HKA_ENV === 'prod' || process.env.HKA_ENVIRONMENT === 'production') ? 1 : 2;
 
-    console.log(`🔍 Consultando documento con CUFE: ${cufe}`);
+        console.log(`🔍 Consultando documento con CUFE: ${cufe}`);
 
-    // Parámetros para consulta
-    const params: ConsultarDocumentoParams = {
-      dVerForm: '1.00',
-      dId: '01',
-      iAmb: environment,
-      dCufe: cufe,
-    };
+        // Parámetros para consulta
+        const params: ConsultarDocumentoParams = {
+          dVerForm: '1.00',
+          dId: '01',
+          iAmb: environment,
+          dCufe: cufe,
+        };
 
-    // Invocar método SOAP con monitoreo
-    const response = await monitorHKACall('ConsultaFE', async () => {
-      return await hkaClient.invoke<ConsultarDocumentoResponse>('ConsultaFE', params);
-    });
+        // Invocar método SOAP con monitoreo
+        const response = await monitorHKACall('ConsultaFE', async () => {
+          return await hkaClient.invoke<ConsultarDocumentoResponse>('ConsultaFE', params);
+        });
 
-    console.log(`✅ Documento consultado exitosamente`);
-    console.log(`   Código: ${response.dCodRes}`);
-    console.log(`   Mensaje: ${response.dMsgRes}`);
+        console.log(`✅ Documento consultado exitosamente`);
+        console.log(`   Código: ${response.dCodRes}`);
+        console.log(`   Mensaje: ${response.dMsgRes}`);
 
-    return response;
-  } catch (error) {
-    console.error('❌ Error al consultar documento:', error);
-    throw error;
-  }
+        return response;
+      } catch (error) {
+        console.error('❌ Error al consultar documento:', error);
+        throw error;
+      }
+    },
+    options
+  );
 }
 
 /**
  * Obtiene el PDF de un documento por su CUFE
  */
-export async function obtenerPdfDocumento(cufe: string): Promise<Buffer> {
+export async function obtenerPdfDocumento(
+  cufe: string,
+  organizationId: string,
+  options: { userId?: string } = {}
+): Promise<Buffer> {
   try {
     console.log(`📄 Obteniendo PDF para CUFE: ${cufe}`);
     
-    const response = await consultarDocumento(cufe);
+    const response = await consultarDocumento(cufe, organizationId, options);
     
     if (!response.xContenFE?.rContFe?.xContPDF) {
       throw new Error('PDF no disponible en la respuesta');
@@ -65,11 +80,15 @@ export async function obtenerPdfDocumento(cufe: string): Promise<Buffer> {
 /**
  * Obtiene el XML de un documento por su CUFE
  */
-export async function obtenerXmlDocumento(cufe: string): Promise<string> {
+export async function obtenerXmlDocumento(
+  cufe: string,
+  organizationId: string,
+  options: { userId?: string } = {}
+): Promise<string> {
   try {
     console.log(`📝 Obteniendo XML para CUFE: ${cufe}`);
     
-    const response = await consultarDocumento(cufe);
+    const response = await consultarDocumento(cufe, organizationId, options);
     
     if (!response.xContenFE?.rContFe?.xFe) {
       throw new Error('XML no disponible en la respuesta');

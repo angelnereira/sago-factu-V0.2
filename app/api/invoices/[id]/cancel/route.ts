@@ -85,7 +85,13 @@ export async function POST(
     }
 
     // Anular en HKA
-    const result = await anularDocumento(invoice.cufe, motivo, invoiceId);
+    const result = await anularDocumento(
+      invoice.cufe,
+      motivo,
+      invoiceId,
+      invoice.organizationId,
+      { userId: session.user.id }
+    );
 
     if (result.dCodRes === '0200') {
       // Actualizar factura en BD

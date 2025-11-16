@@ -1,62 +1,129 @@
 /**
  * Configuración de The Factory HKA
- * Maneja las credenciales y URLs para demo y producción
+ * ⚠️ SECURITY-CRITICAL: Credenciales NUNCA hardcodeadas
+ *
+ * Todas las credenciales DEBEN provenir de variables de entorno.
+ * Si falta alguna, la aplicación fallaría al iniciar (fail-fast approach).
  */
 
-export interface HKAConfig {
-  environment: 'demo' | 'production'
-  soapUrl: string
-  restUrl: string
-  tokenUser: string
-  tokenPassword: string
+import { z } from 'zod';
+
+// ============================================================================
+// SCHEMA VALIDATION - Validar credenciales al iniciar
+// ============================================================================
+
+const HKACredentialsSchema = z.object({
+  tokenUser: z.string()
+    .min(1, '❌ CRÍTICO: HKA_DEMO_TOKEN_USER no está configurado'),
+  tokenPassword: z.string()
+    .min(1, '❌ CRÍTICO: HKA_DEMO_TOKEN_PASSWORD no está configurado'),
+});
+
+const HKAConfigSchema = z.object({
+  environment: z.enum(['demo', 'production']),
+  soapUrl: z.string().url('SOAP URL inválida'),
+  restUrl: z.string().url('REST URL inválida'),
+  credentials: HKACredentialsSchema,
+});
+
+export type HKAConfig = z.infer<typeof HKAConfigSchema>;
+
+// ============================================================================
+// VALIDACIÓN AL INICIAR LA APLICACIÓN
+// ============================================================================
+
+function validateEnvironmentVariables(): void {
+  const missingVars: string[] = [];
+
+  // Credenciales DEMO - SIEMPRE requeridas
+  if (!process.env.HKA_DEMO_TOKEN_USER) {
+    missingVars.push('HKA_DEMO_TOKEN_USER');
+  }
+  if (!process.env.HKA_DEMO_TOKEN_PASSWORD) {
+    missingVars.push('HKA_DEMO_TOKEN_PASSWORD');
+  }
+
+  // Credenciales PRODUCCIÓN - Requeridas si HKA_ENV=production
+  if (process.env.HKA_ENV === 'production') {
+    if (!process.env.HKA_PROD_TOKEN_USER) {
+      missingVars.push('HKA_PROD_TOKEN_USER (requerido para ambiente PRODUCCIÓN)');
+    }
+    if (!process.env.HKA_PROD_TOKEN_PASSWORD) {
+      missingVars.push('HKA_PROD_TOKEN_PASSWORD (requerido para ambiente PRODUCCIÓN)');
+    }
+  }
+
+  if (missingVars.length > 0) {
+    const errorMessage = [
+      '',
+      '🔴 ============================================================================',
+      '🔴 ERROR CRÍTICO: VARIABLES DE ENTORNO HKA FALTANTES',
+      '🔴 ============================================================================',
+      '',
+      `Las siguientes variables no están configuradas:`,
+      ...missingVars.map(v => `  ❌ ${v}`),
+      '',
+      'SOLUCIÓN:',
+      '1. Copiar .env.example a .env: cp .env.example .env',
+      '2. Solicitar credenciales a The Factory HKA: soporte@thefactoryhka.com.pa',
+      '3. Configurar en .env:',
+      `   HKA_DEMO_TOKEN_USER=valor_aqui`,
+      `   HKA_DEMO_TOKEN_PASSWORD=valor_aqui`,
+      '',
+      'Ref: https://felwiki.thefactoryhka.com.pa/',
+      '🔴 ============================================================================',
+      '',
+    ].join('\n');
+
+    throw new Error(errorMessage);
+  }
 }
 
+// Ejecutar validación al importar este módulo
+validateEnvironmentVariables();
+
+// ============================================================================
+// FUNCIONES DE CONFIGURACIÓN
+// ============================================================================
+
 export function getHKAConfig(): HKAConfig {
-  const environment = (process.env.HKA_ENV as 'demo' | 'production') || 'demo'
-  
+  const environment = (process.env.HKA_ENV as 'demo' | 'production') || 'demo';
+
   if (environment === 'demo') {
-    return {
+    const config: HKAConfig = {
       environment: 'demo',
       soapUrl: process.env.HKA_DEMO_SOAP_URL || 'https://demoemision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc',
       restUrl: process.env.HKA_DEMO_REST_URL || 'https://demointegracion.thefactoryhka.com.pa',
-      tokenUser: process.env.HKA_DEMO_TOKEN_USER || 'walgofugiitj_ws_tfhka',
-      tokenPassword: process.env.HKA_DEMO_TOKEN_PASSWORD || 'Octopusp1oQs5'
-    }
+      credentials: {
+        tokenUser: process.env.HKA_DEMO_TOKEN_USER!,
+        tokenPassword: process.env.HKA_DEMO_TOKEN_PASSWORD!,
+      },
+    };
+    return HKAConfigSchema.parse(config);
   }
-  
+
   // Producción
-  return {
+  const config: HKAConfig = {
     environment: 'production',
     soapUrl: process.env.HKA_PROD_SOAP_URL || 'https://emision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc',
     restUrl: process.env.HKA_PROD_REST_URL || 'https://integracion.thefactoryhka.com.pa',
-    tokenUser: process.env.HKA_PROD_TOKEN_USER || '',
-    tokenPassword: process.env.HKA_PROD_TOKEN_PASSWORD || ''
-  }
+    credentials: {
+      tokenUser: process.env.HKA_PROD_TOKEN_USER!,
+      tokenPassword: process.env.HKA_PROD_TOKEN_PASSWORD!,
+    },
+  };
+  return HKAConfigSchema.parse(config);
 }
 
 export function validateHKAConfig(): { isValid: boolean; errors: string[] } {
-  const config = getHKAConfig()
-  const errors: string[] = []
-  
-  if (!config.soapUrl) {
-    errors.push('HKA SOAP URL no configurada')
-  }
-  
-  if (!config.restUrl) {
-    errors.push('HKA REST URL no configurada')
-  }
-  
-  if (!config.tokenUser) {
-    errors.push('HKA Token User no configurado')
-  }
-  
-  if (!config.tokenPassword) {
-    errors.push('HKA Token Password no configurado')
-  }
-  
-  return {
-    isValid: errors.length === 0,
-    errors
+  try {
+    getHKAConfig();
+    return { isValid: true, errors: [] };
+  } catch (error) {
+    return {
+      isValid: false,
+      errors: [error instanceof Error ? error.message : 'Configuración HKA inválida'],
+    };
   }
 }
 

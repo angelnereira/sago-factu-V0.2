@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { consultarFolios } from '@/lib/hka/methods/consultar-folios';
+import { requireAuth } from '@/lib/auth/api-helpers';
 
 // Nota: No usar Edge Runtime porque soap requiere módulos de Node.js
 // export const runtime = 'edge';
@@ -11,6 +12,7 @@ import { consultarFolios } from '@/lib/hka/methods/consultar-folios';
  */
 export async function GET(request: NextRequest) {
   try {
+    const session = await requireAuth(request);
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get('organizationId');
 
@@ -36,7 +38,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Consultar folios en tiempo real desde HKA
-    const foliosResponse = await consultarFolios(organization.ruc, organization.dv);
+    const foliosResponse = await consultarFolios(
+      organization.ruc,
+      organization.dv,
+      organizationId,
+      { userId: session.user.id }
+    );
 
     // Obtener últimos folios usados desde la base de datos
     const ultimosUsados = await sql`

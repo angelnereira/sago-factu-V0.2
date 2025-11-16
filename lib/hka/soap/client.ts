@@ -5,25 +5,56 @@ export class HKASOAPClient {
   private client: soap.Client | null = null;
   private wsdlUrl: string;
   private credentials: HKACredentials;
+  private currentEnvironment: HKAEnvironment;
+  private currentWsdlUrl: string;
 
   constructor() {
+    // Inicializar con valores por defecto, se actualizarán en initialize()
+    this.currentEnvironment = (process.env.HKA_ENV as HKAEnvironment) || 'demo';
+    this.wsdlUrl = '';
+    this.currentWsdlUrl = '';
+    this.credentials = {
+      tokenEmpresa: '',
+      tokenPassword: '',
+      usuario: '',
+    };
+  }
+
+  /**
+   * Actualiza la configuración según el ambiente actual
+   */
+  updateConfiguration(): void {
     const environment = (process.env.HKA_ENV as HKAEnvironment) || 'demo';
     
-    // WSDL URL (agregar ?wsdl al final del SOAP URL)
-    this.wsdlUrl = environment === 'demo' 
+    // Si el ambiente cambió, necesitamos reinicializar
+    const environmentChanged = this.currentEnvironment !== environment;
+    
+    // Calcular nueva URL WSDL
+    const newWsdlUrl = environment === 'demo' 
       ? `${process.env.HKA_DEMO_SOAP_URL}?wsdl`
       : `${process.env.HKA_PROD_SOAP_URL}?wsdl`;
 
+    // Si cambió el ambiente o la URL, reinicializar
+    if (environmentChanged || this.currentWsdlUrl !== newWsdlUrl) {
+      console.log(`🔄 Ambiente HKA cambió: ${this.currentEnvironment} → ${environment}`);
+      console.log(`   WSDL URL: ${this.currentWsdlUrl} → ${newWsdlUrl}`);
+      this.client = null; // Forzar reinicialización
+    }
+
+    this.currentEnvironment = environment;
+    this.wsdlUrl = newWsdlUrl;
+    this.currentWsdlUrl = newWsdlUrl;
+
     this.credentials = {
       tokenEmpresa: environment === 'demo'
-        ? process.env.HKA_DEMO_TOKEN_USER!
-        : process.env.HKA_PROD_TOKEN_USER!,
+        ? process.env.HKA_DEMO_TOKEN_USER || ''
+        : process.env.HKA_PROD_TOKEN_USER || '',
       tokenPassword: environment === 'demo'
-        ? process.env.HKA_DEMO_TOKEN_PASSWORD!
-        : process.env.HKA_PROD_TOKEN_PASSWORD!,
+        ? process.env.HKA_DEMO_TOKEN_PASSWORD || ''
+        : process.env.HKA_PROD_TOKEN_PASSWORD || '',
       usuario: environment === 'demo'
-        ? process.env.HKA_DEMO_TOKEN_USER!
-        : process.env.HKA_PROD_TOKEN_USER!,
+        ? process.env.HKA_DEMO_TOKEN_USER || ''
+        : process.env.HKA_PROD_TOKEN_USER || '',
     };
   }
 
@@ -31,6 +62,9 @@ export class HKASOAPClient {
    * Inicializa el cliente SOAP
    */
   async initialize(): Promise<void> {
+    // Actualizar configuración antes de inicializar
+    this.updateConfiguration();
+
     if (this.client) return;
 
     try {
@@ -152,7 +186,20 @@ let hkaClientInstance: HKASOAPClient | null = null;
 export function getHKAClient(): HKASOAPClient {
   if (!hkaClientInstance) {
     hkaClientInstance = new HKASOAPClient();
+  } else {
+    // Forzar actualización de configuración en cada llamada
+    // para asegurar que use el ambiente correcto
+    hkaClientInstance.updateConfiguration();
   }
   return hkaClientInstance;
+}
+
+/**
+ * Reinicia el cliente SOAP (útil cuando cambia el ambiente)
+ */
+export function resetHKAClient(): void {
+  if (hkaClientInstance) {
+    hkaClientInstance = null;
+  }
 }
 

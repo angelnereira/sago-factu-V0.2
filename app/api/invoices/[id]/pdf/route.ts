@@ -52,7 +52,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       // Fallback: obtener PDF desde HKA si no está en BD
       console.log('⚠️ PDF no en BD, obteniendo desde HKA...');
       try {
-        pdfBuffer = await obtenerPdfDocumento(invoice.cufe);
+        pdfBuffer = await obtenerPdfDocumento(invoice.cufe, invoice.organizationId, { userId: invoice.createdBy });
         if (!pdfBuffer) {
           return NextResponse.json({ error: 'No se pudo obtener el PDF desde HKA' }, { status: 500 });
         }
