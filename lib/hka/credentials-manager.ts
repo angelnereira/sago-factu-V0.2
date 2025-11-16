@@ -188,3 +188,48 @@ export async function executeWithCredentials<T>(
   return fn(credentials);
 }
 
+/**
+ * Alias para executeWithCredentials (compatibilidad con código existente)
+ */
+export async function withHKACredentials<T>(
+  organizationId: string,
+  fn: () => Promise<T>,
+  options: { userId?: string } = {}
+): Promise<T> {
+  const credentials = await resolveHKACredentials(organizationId, options);
+  // Inyectar credenciales en el contexto global de forma segura
+  // Establecer temporalmente variables de entorno para esta ejecución
+  const originalUser = process.env.HKA_TOKEN_USER;
+  const originalPassword = process.env.HKA_TOKEN_PASSWORD;
+  const originalEnv = process.env.HKA_ENV;
+
+  try {
+    // Establecer credenciales para esta ejecución
+    process.env.HKA_TOKEN_USER = credentials.tokenUser;
+    process.env.HKA_TOKEN_PASSWORD = credentials.tokenPassword;
+    process.env.HKA_ENV = credentials.environment;
+
+    // Ejecutar función con credenciales
+    return await fn();
+  } finally {
+    // RESTAURAR valores originales (CRÍTICO para multi-tenancy)
+    if (originalUser !== undefined) {
+      process.env.HKA_TOKEN_USER = originalUser;
+    } else {
+      delete process.env.HKA_TOKEN_USER;
+    }
+
+    if (originalPassword !== undefined) {
+      process.env.HKA_TOKEN_PASSWORD = originalPassword;
+    } else {
+      delete process.env.HKA_TOKEN_PASSWORD;
+    }
+
+    if (originalEnv !== undefined) {
+      process.env.HKA_ENV = originalEnv;
+    } else {
+      delete process.env.HKA_ENV;
+    }
+  }
+}
+
