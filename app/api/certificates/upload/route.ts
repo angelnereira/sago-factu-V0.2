@@ -71,6 +71,7 @@ export async function POST(request: Request) {
     hkaLogger.info('[API/certificates/upload] Procesando carga de certificado', {
       fileName: file.name,
       size: file.size,
+      organizationId,
     })
 
     const tempPath = join(tmpdir(), `cert-${randomUUID()}.p12`)
@@ -82,6 +83,29 @@ export async function POST(request: Request) {
       const certInfo = await getCertificateInfo(tempPath, undefined, password)
       const certificateBase64 = await certificateToBase64(tempPath)
 
+      // 🔑 STRATEGY: Delete old certificates and create only the new one
+      // This prevents certificate accumulation in the database
+      hkaLogger.info('[API/certificates/upload] Eliminando certificados antiguos para evitar acumulación', {
+        organizationId,
+      })
+
+      // Delete all previous certificates for this organization
+      const oldCerts = await prisma.digitalCertificate.findMany({
+        where: { organizationId },
+        select: { id: true },
+      })
+
+      if (oldCerts.length > 0) {
+        await prisma.digitalCertificate.deleteMany({
+          where: { organizationId },
+        })
+        hkaLogger.info('[API/certificates/upload] Certificados antiguos eliminados', {
+          count: oldCerts.length,
+          organizationId,
+        })
+      }
+
+      // Create new certificate (only one active at a time)
       const digitalCert = await prisma.digitalCertificate.create({
         data: {
           organizationId,
@@ -94,21 +118,9 @@ export async function POST(request: Request) {
           ruc: certInfo.ruc,
           fingerprint: certInfo.fingerprint,
           isActive: true,
-          isDefault: setAsDefault,
+          isDefault: true, // Always set as default since it's the only one
         },
       })
-
-      if (setAsDefault) {
-        await prisma.digitalCertificate.updateMany({
-          where: {
-            organizationId,
-            id: { not: digitalCert.id },
-          },
-          data: {
-            isDefault: false,
-          },
-        })
-      }
 
       hkaLogger.info('[API/certificates/upload] Certificado cargado exitosamente', {
         certificateId: digitalCert.id,
