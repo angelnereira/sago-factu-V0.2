@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProviderWrapper } from "./theme-provider-wrapper"
 import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"] })
+
+// Disable static generation for entire app due to dynamic content and client-side features
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: "SAGO-FACTU - Plataforma de Facturación Electrónica",
@@ -61,15 +64,9 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange={false}
-          storageKey="sago-factu-theme"
-        >
+        <ThemeProviderWrapper>
           {children}
-        </ThemeProvider>
+        </ThemeProviderWrapper>
         <Analytics />
       </body>
     </html>
