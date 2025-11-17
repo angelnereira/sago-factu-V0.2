@@ -248,6 +248,7 @@ model UserSignatureConfig {
 
   @@index([organizationId])
   @@index([digitalCertificateId])
+  @@map("UserSignatureConfig")
 }
 
 enum SignatureMode {
