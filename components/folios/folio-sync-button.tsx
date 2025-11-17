@@ -40,9 +40,19 @@ export function FolioSyncButton({ organizationId, onSyncComplete }: FolioSyncBut
         }, 1500);
       } else {
         console.error('[FolioSync] Error en sincronización:', result);
+
+        // Determinar mensaje de error específico
+        let errorText = result.error || 'Error al sincronizar folios';
+
+        if (result.code === 'CREDENTIALS_NOT_CONFIGURED' || (result.details && result.details.includes('credenciales'))) {
+          errorText = '⚠️ Credenciales HKA no configuradas. Ve a Configuración → Integraciones para configurarlas.';
+        } else if (result.details) {
+          errorText = `❌ ${result.details}`;
+        }
+
         setMessage({
           type: 'error',
-          text: result.error || 'Error al sincronizar folios',
+          text: errorText,
         });
       }
     } catch (error) {

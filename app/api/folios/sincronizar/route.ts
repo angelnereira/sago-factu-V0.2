@@ -57,11 +57,19 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Error al sincronizar folios:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Error al sincronizar folios:', {
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      organizationId,
+    });
+
+    // Retornar error con más contexto
     return NextResponse.json(
-      { 
+      {
         error: 'Error al sincronizar folios',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: errorMessage,
+        code: errorMessage.includes('credenciales') ? 'CREDENTIALS_NOT_CONFIGURED' : 'SYNC_ERROR',
       },
       { status: 500 }
     );
