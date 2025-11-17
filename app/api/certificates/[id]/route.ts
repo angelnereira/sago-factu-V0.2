@@ -114,11 +114,29 @@ export async function DELETE(
 
     const { id } = params
 
-    await getCertificateOrThrow(id, session.user.organizationId)
+    const cert = await getCertificateOrThrow(id, session.user.organizationId)
 
     await prisma.digitalCertificate.delete({
       where: { id },
     })
+
+    // Si era el default, establecer el siguiente como default
+    if (cert.isDefault) {
+      const nextCert = await prisma.digitalCertificate.findFirst({
+        where: {
+          organizationId: session.user.organizationId,
+          isActive: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      if (nextCert) {
+        await prisma.digitalCertificate.update({
+          where: { id: nextCert.id },
+          data: { isDefault: true },
+        })
+      }
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
