@@ -16,7 +16,6 @@ import { z } from 'zod';
 // VALIDACIÓN Y CONFIGURACIÓN
 // ============================================================================
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 const ALGORITHM = 'aes-256-gcm';
 const PBKDF2_ITERATIONS = 120000; // Resistente a fuerza bruta
 const SALT_LENGTH = 16; // 128 bits
@@ -24,12 +23,14 @@ const IV_LENGTH = 12; // 96 bits (recomendado para GCM)
 const AUTH_TAG_LENGTH = 16; // 128 bits
 
 // ============================================================================
-// FUNCIÓN AUXILIAR: Validar ENCRYPTION_KEY
+// FUNCIÓN AUXILIAR: Obtener y Validar ENCRYPTION_KEY
 // ============================================================================
-// Deferred validation: Only validate when encryption/decryption is actually used
-// This allows the build to complete, but prevents runtime encryption operations
-function validateEncryptionKey(): void {
-  if (!ENCRYPTION_KEY) {
+// IMPORTANTE: Se lee dinámicamente (no en module load time) para asegurar que
+// las variables de entorno estén disponibles en Next.js API routes
+function getEncryptionKey(): string {
+  const key = process.env.ENCRYPTION_KEY;
+
+  if (!key) {
     const errorMsg =
       '🔴 ERROR CRÍTICO: ENCRYPTION_KEY no está configurada\n\n' +
       'Esta variable es obligatoria para cifrar credenciales HKA.\n\n' +
@@ -39,9 +40,11 @@ function validateEncryptionKey(): void {
     throw new Error(errorMsg);
   }
 
-  if (ENCRYPTION_KEY.length < 32) {
-    throw new Error(`ENCRYPTION_KEY debe tener mínimo 32 caracteres (tiene ${ENCRYPTION_KEY.length})`);
+  if (key.length < 32) {
+    throw new Error(`ENCRYPTION_KEY debe tener mínimo 32 caracteres (tiene ${key.length})`);
   }
+
+  return key;
 }
 
 // ============================================================================
@@ -67,15 +70,16 @@ interface EncryptedData {
  */
 export function encryptToken(token: string): string {
   try {
-    // Validar ENCRYPTION_KEY antes de encriptar
-    validateEncryptionKey();
+    // Obtener ENCRYPTION_KEY dinámicamente
+    const encryptionKey = getEncryptionKey();
+    console.log('[encryptToken] Starting encryption, ENCRYPTION_KEY available');
 
     // 1. Generar salt aleatorio
     const salt = crypto.randomBytes(SALT_LENGTH);
 
     // 2. Derivar clave con PBKDF2 (resistente a diccionario)
     const derivedKey = crypto.pbkdf2Sync(
-      ENCRYPTION_KEY!,
+      encryptionKey,
       salt,
       PBKDF2_ITERATIONS,
       32, // 256 bits
@@ -118,8 +122,8 @@ export function encryptToken(token: string): string {
  */
 export function decryptToken(encryptedJson: string): string {
   try {
-    // Validar ENCRYPTION_KEY antes de desencriptar
-    validateEncryptionKey();
+    // Obtener ENCRYPTION_KEY dinámicamente
+    const encryptionKey = getEncryptionKey();
 
     // 1. Parsear JSON
     const encryptedData: EncryptedData = JSON.parse(encryptedJson);
@@ -132,7 +136,7 @@ export function decryptToken(encryptedJson: string): string {
 
     // 3. Derivar clave con PBKDF2 (mismo salt)
     const derivedKey = crypto.pbkdf2Sync(
-      ENCRYPTION_KEY!,
+      encryptionKey,
       salt,
       PBKDF2_ITERATIONS,
       32,

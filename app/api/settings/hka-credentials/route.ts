@@ -38,8 +38,15 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = credentialsSchema.parse(body);
 
+    console.log('[API] Received credentials request:', {
+      tokenUser: data.tokenUser.substring(0, 5) + '***',
+      environment: data.environment,
+    });
+
     const environmentEnum = data.environment === 'prod' ? 'PROD' : 'DEMO';
+    console.log('[API] About to call encryptToken...');
     const encryptedPassword = encryptToken(data.tokenPassword);
+    console.log('[API] encryptToken succeeded');
 
     await prisma.$transaction(async (tx) => {
       // Marcar otras credenciales como inactivas
