@@ -75,9 +75,9 @@ curl https://sago-factu-v0-2.vercel.app/api/debug/encryption-test
 #### Documentación de Fixes Críticos
 
 Para entender los fixes realizados y arquitectura de seguridad, consulta:
-- 📄 [ENCRYPTION-FIX-SUMMARY.md](./ENCRYPTION-FIX-SUMMARY.md) — Fix crítico de encriptación en runtime
-- 📄 [VERCEL-DEPLOYMENT-GUIDE.md](./VERCEL-DEPLOYMENT-GUIDE.md) — Guía de deployment
-- 📄 [PRODUCTION-READINESS-CHECKLIST.md](./PRODUCTION-READINESS-CHECKLIST.md) — Checklist pre-production
+- 📄 [Guía de Encriptación](./docs/guides/encryption.md) — Fix crítico de encriptación en runtime
+- 📄 [Guía de Deployment Vercel](./docs/deployment/vercel.md) — Guía de deployment
+- 📄 [Checklist Production](./docs/quality-assurance/production-checklist.md) — Checklist pre-production
 
 ## Resumen Ejecutivo
 
@@ -140,7 +140,7 @@ Luego accede a `http://localhost:3000` con las credenciales demo arriba menciona
 
 ## Testing en Producción
 
-### Guía Completa: [TESTING-PRODUCTION.md](./TESTING-PRODUCTION.md)
+### Guía Completa: [docs/quality-assurance/testing.md](./docs/quality-assurance/testing.md)
 
 **Si accediste a la app en vivo y quieres probar la funcionalidad crítica de encriptación de credenciales HKA:**
 
@@ -165,7 +165,7 @@ Luego accede a `http://localhost:3000` con las credenciales demo arriba menciona
 
 Si todo funciona, ¡la encriptación AES-256-GCM está operativa en producción! 🎉
 
-**Para testing más detallado**, consulta [TESTING-PRODUCTION.md](./TESTING-PRODUCTION.md) con:
+**Para testing más detallado**, consulta [docs/quality-assurance/testing.md](./docs/quality-assurance/testing.md) con:
 - Testing de todas las funcionalidades
 - Verificación de infraestructura
 - Debugging de errores comunes
@@ -215,12 +215,12 @@ Esta funcionalidad demuestra:
 
 ### Documentación de Desarrollo
 
-- **Workflow de desarrollo**: `docs/guides/development-workflow.md`
-- **API HTTP + Webhooks**: `docs/guides/api-documentation.md`
-- **Testing (unit + integration + E2E)**: `docs/guides/testing.md`
-- **Migraciones y seeds**: `docs/database/migrations.md` y `docs/database/seeds.md`
-- **Backup & restore**: `docs/database/backup-restore.md`
-- **Guía de Encriptación**: [ENCRYPTION-FIX-SUMMARY.md](./ENCRYPTION-FIX-SUMMARY.md)
+- **Workflow de desarrollo**: [docs/guides/development-workflow.md](./docs/guides/development-workflow.md)
+- **API HTTP + Webhooks**: [docs/guides/api-documentation.md](./docs/guides/api-documentation.md)
+- **Testing (unit + integration + E2E)**: [docs/quality-assurance/testing.md](./docs/quality-assurance/testing.md)
+- **Migraciones y seeds**: [docs/database/migrations.md](./docs/database/migrations.md) y [docs/database/seeds.md](./docs/database/seeds.md)
+- **Backup & restore**: [docs/database/backup-restore.md](./docs/database/backup-restore.md)
+- **Guía de Encriptación**: [docs/guides/encryption.md](./docs/guides/encryption.md)
 
 ## Deployment
 
@@ -248,9 +248,9 @@ Consulta el detalle en `CHANGELOG.md` y abre un issue para proponer nuevas funci
 
 Aceptamos contribuciones externas siguiendo la guía oficial:
 
-- Lee `CONTRIBUTING.md` para conocer estándares de código, convenios de commits y flujo de PR.
-- Usa `docs/contributing/code-style.md` para formateo y patrones aceptados.
-- Aplica la plantilla `docs/contributing/pull-request-template.md` al abrir un PR.
+- Lee [docs/contributing/CONTRIBUTING.md](./docs/contributing/CONTRIBUTING.md) para conocer estándares de código, convenios de commits y flujo de PR.
+- Usa [docs/contributing/code-style.md](./docs/contributing/code-style.md) para formateo y patrones aceptados.
+- Aplica la plantilla [docs/contributing/pull-request-template.md](./docs/contributing/pull-request-template.md) al abrir un PR.
 
 ### Scripts útiles
 
@@ -290,8 +290,8 @@ Si deseas continuar con el desarrollo:
    - Guarda credenciales demo y verifica que persistan
 
 2. **Revisar documentación de arquitectura**:
-   - [ARQUITECTURA-CREDENCIALES-USUARIOS.md](./ARQUITECTURA-CREDENCIALES-USUARIOS.md)
-   - [ENCRYPTION-FIX-SUMMARY.md](./ENCRYPTION-FIX-SUMMARY.md)
+   - [docs/architecture/credentials.md](./docs/architecture/credentials.md)
+   - [docs/guides/encryption.md](./docs/guides/encryption.md)
 
 3. **Para cambios locales**:
    - Clone el repo
@@ -301,7 +301,7 @@ Si deseas continuar con el desarrollo:
 ### Debugging y Troubleshooting
 
 En caso de problemas con encriptación:
-- Revisa [CONNECTIVITY-AND-DEPLOYMENT-STATUS.md](./CONNECTIVITY-AND-DEPLOYMENT-STATUS.md)
+- Revisa [docs/deployment/status.md](./docs/deployment/status.md)
 - Verifica que `ENCRYPTION_KEY` esté configurado en Vercel
 - Consulta los logs en Vercel → Functions Analytics
 
@@ -318,16 +318,20 @@ Construido con ❤️ por el equipo de UbicSystem. Para soporte escribe a `sopor
 
 Toda la documentación está organizada en `/docs` para fácil navegación:
 
-- **[Inicio Rápido](./START-HERE.md)** - Para nuevos desarrolladores (5 min)
+- **[Inicio Rápido](./docs/START-HERE.md)** - Para nuevos desarrolladores (5 min)
 - **[Arquitectura](./docs/architecture/overview.md)** - Cómo funciona internamente
 - **[Guías de Desarrollo](./docs/guides/)** - Firma digital, APIs, Testing
 - **[Despliegue](./docs/deployment/)** - Docker, Vercel, Cloud
-- **[Contribuir](./CONTRIBUTING.md)** - Cómo colaborar
+- **[Contribuir](./docs/contributing/)** - Cómo colaborar
 
 **Documentos Ejecutivos** (para inversores/stakeholders):
-- [Resumen Ejecutivo](./BLUEPRINT-RESUMEN-EJECUTIVO.md)
-- [Modelo de Negocio](./BLUEPRINT-MODELO-NEGOCIO.md)
-- [Características Técnicas](./BLUEPRINT-FEATURES-TECNICAS.md)
+- [Resumen Ejecutivo](./docs/business/BLUEPRINT-RESUMEN-EJECUTIVO.md)
+- [Modelo de Negocio](./docs/business/BLUEPRINT-MODELO-NEGOCIO.md)
+- [Características Técnicas](./docs/business/BLUEPRINT-FEATURES-TECNICAS.md)
+
+**Integración & HKA**:
+- [The Factory HKA - Brief Técnico](./docs/integrations/THE-FACTORY-HKA-TECHNICAL-BRIEF.md)
+- [Plantilla de Email para HKA](./docs/integrations/EMAIL-TEMPLATE-THE-FACTORY-HKA.md)
 
 ---
 

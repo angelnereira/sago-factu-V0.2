@@ -7,8 +7,8 @@ Bienvenido a la documentación de **SAGO FACTU**, un sistema moderno de facturac
 ## 🚀 Inicio Rápido
 
 **¿Es tu primera vez?** Comienza aquí:
-- [START-HERE.md](../START-HERE.md) - Guía de inicio rápido (5 minutos)
-- [BLUEPRINTS-INDEX.md](../BLUEPRINTS-INDEX.md) - Documentación estratégica
+- [START-HERE.md](./START-HERE.md) - Guía de inicio rápido (5 minutos)
+- [business/INDEX.md](./business/INDEX.md) - Documentación estratégica
 
 ---
 
@@ -47,16 +47,16 @@ Bienvenido a la documentación de **SAGO FACTU**, un sistema moderno de facturac
 
 ### 📊 Para Stakeholders / No-Técnicos
 
-- [../BLUEPRINT-RESUMEN-EJECUTIVO.md](../BLUEPRINT-RESUMEN-EJECUTIVO.md) - Resumen para inversores
-- [../BLUEPRINT-MODELO-NEGOCIO.md](../BLUEPRINT-MODELO-NEGOCIO.md) - Modelo de negocio
-- [../BLUEPRINT-FEATURES-TECNICAS.md](../BLUEPRINT-FEATURES-TECNICAS.md) - Capacidades técnicas
-- [../CONNECTIVITY-AND-DEPLOYMENT-STATUS.md](../CONNECTIVITY-AND-DEPLOYMENT-STATUS.md) - Estado del sistema
+- [business/BLUEPRINT-RESUMEN-EJECUTIVO.md](./business/BLUEPRINT-RESUMEN-EJECUTIVO.md) - Resumen para inversores
+- [business/BLUEPRINT-MODELO-NEGOCIO.md](./business/BLUEPRINT-MODELO-NEGOCIO.md) - Modelo de negocio
+- [business/BLUEPRINT-FEATURES-TECNICAS.md](./business/BLUEPRINT-FEATURES-TECNICAS.md) - Capacidades técnicas
+- [deployment/status.md](./deployment/status.md) - Estado del sistema
 
 ---
 
 ### 🤝 Para Colaboradores
 
-- [../CONTRIBUTING.md](../CONTRIBUTING.md) - Guía de contribución
+- [contributing/CONTRIBUTING.md](./contributing/CONTRIBUTING.md) - Guía de contribución
 - [contributing/code-style.md](./contributing/code-style.md) - Estándares de código
 - [contributing/pull-request-template.md](./contributing/pull-request-template.md) - Plantilla de PR
 - [../CHANGELOG.md](../CHANGELOG.md) - Historial de cambios
@@ -104,11 +104,11 @@ Bienvenido a la documentación de **SAGO FACTU**, un sistema moderno de facturac
 
 ## ❓ FAQ Rápidas
 
-**¿Por dónde empiezo?** → [START-HERE.md](../START-HERE.md)
+**¿Por dónde empiezo?** → [START-HERE.md](./START-HERE.md)
 **¿Cómo instalo?** → [setup/installation.md](./setup/installation.md)
 **¿Cómo funciona HKA?** → [guides/api-documentation.md](./guides/api-documentation.md)
 **¿Qué es firma digital?** → [guides/digital-signatures.md](./guides/digital-signatures.md)
-**¿Cómo contribuyo?** → [../CONTRIBUTING.md](../CONTRIBUTING.md)
+**¿Cómo contribuyo?** → [contributing/CONTRIBUTING.md](./contributing/CONTRIBUTING.md)
 
 ---
 
