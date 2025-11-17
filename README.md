@@ -310,3 +310,26 @@ En caso de problemas con encriptación:
 **SAGO FACTU** — Enterprise Billing Platform for Panamá
 🚀 En vivo en: [https://sago-factu-v0-2.vercel.app/](https://sago-factu-v0-2.vercel.app/)
 Construido con ❤️ por el equipo de UbicSystem. Para soporte escribe a `soporte@sago-factu.com`.
+---
+
+## 📚 **Documentación Centralizada**
+
+**[👉 Ir al Centro de Documentación](./docs/INDEX.md)**
+
+Toda la documentación está organizada en `/docs` para fácil navegación:
+
+- **[Inicio Rápido](./START-HERE.md)** - Para nuevos desarrolladores (5 min)
+- **[Arquitectura](./docs/architecture/overview.md)** - Cómo funciona internamente
+- **[Guías de Desarrollo](./docs/guides/)** - Firma digital, APIs, Testing
+- **[Despliegue](./docs/deployment/)** - Docker, Vercel, Cloud
+- **[Contribuir](./CONTRIBUTING.md)** - Cómo colaborar
+
+**Documentos Ejecutivos** (para inversores/stakeholders):
+- [Resumen Ejecutivo](./BLUEPRINT-RESUMEN-EJECUTIVO.md)
+- [Modelo de Negocio](./BLUEPRINT-MODELO-NEGOCIO.md)
+- [Características Técnicas](./BLUEPRINT-FEATURES-TECNICAS.md)
+
+---
+
+**Ver [docs/DOCUMENTACION-REFINADA.md](./docs/DOCUMENTACION-REFINADA.md) para información sobre la reorganización de documentación.**
+
