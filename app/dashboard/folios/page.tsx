@@ -4,7 +4,7 @@ import { prismaServer as prisma } from "@/lib/prisma-server"
 import { FolioStats } from "@/components/folios/folio-stats"
 import { FolioList } from "@/components/folios/folio-list"
 import { FolioPurchaseButton } from "@/components/folios/folio-purchase-button"
-import { Plus } from "lucide-react"
+import { FolioSyncButton } from "@/components/folios/folio-sync-button"
 
 export default async function FoliosPage() {
   const session = await auth()
@@ -87,7 +87,10 @@ export default async function FoliosPage() {
             Administra y monitorea tus folios de facturación
           </p>
         </div>
-        <FolioPurchaseButton />
+        <div className="flex gap-3">
+          <FolioSyncButton organizationId={organizationId} />
+          <FolioPurchaseButton />
+        </div>
       </div>
 
       {/* Estadísticas */}
