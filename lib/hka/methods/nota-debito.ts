@@ -37,9 +37,9 @@ export async function emitirNotaDebito(
       dCufeReferencia: cufeFacturaOriginal,
     };
 
-    // Invocar método SOAP con monitoreo
+    // Invocar método SOAP con monitoreo y credenciales inyectadas
     const response = await monitorHKACall('NotaDebitoFE', async () => {
-      return await hkaClient.invoke<NotaDebitoResponse>('NotaDebitoFE', params);
+      return await hkaClient.invokeWithCredentials<NotaDebitoResponse>('NotaDebitoFE', params, credentials);
     });
 
     console.log(`✅ Nota de Débito emitida exitosamente`);

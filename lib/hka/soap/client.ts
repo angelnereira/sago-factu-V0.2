@@ -7,6 +7,7 @@ export class HKASOAPClient {
   private credentials: HKACredentials;
   private currentEnvironment: HKAEnvironment;
   private currentWsdlUrl: string;
+  private injectedCredentials: HKACredentials | null = null;
 
   constructor() {
     // Inicializar con valores por defecto, se actualizarán en initialize()
@@ -18,6 +19,23 @@ export class HKASOAPClient {
       tokenPassword: '',
       usuario: '',
     };
+  }
+
+  /**
+   * Inyecta credenciales específicas del usuario para esta solicitud
+   * ✅ SEGURO: No modifica process.env, solo almacena localmente
+   */
+  injectCredentials(credentials: HKACredentials): void {
+    console.log('[HKA] Inyectando credenciales específicas del usuario');
+    this.injectedCredentials = credentials;
+  }
+
+  /**
+   * Limpia las credenciales inyectadas
+   */
+  clearInjectedCredentials(): void {
+    console.log('[HKA] Limpiando credenciales inyectadas');
+    this.injectedCredentials = null;
   }
 
   /**
@@ -116,8 +134,15 @@ export class HKASOAPClient {
 
   /**
    * Obtiene las credenciales configuradas
+   *
+   * Prioridad:
+   * 1. Credenciales inyectadas (usuario específico)
+   * 2. Credenciales del cliente (por defecto)
    */
   getCredentials(): HKACredentials {
+    if (this.injectedCredentials) {
+      return this.injectedCredentials;
+    }
     return this.credentials;
   }
 
@@ -142,20 +167,28 @@ export class HKASOAPClient {
   }
 
   /**
-   * Invoca un método del servicio SOAP
+   * Invoca un método del servicio SOAP con credenciales específicas
+   * ✅ SEGURO: Inyecta credenciales de forma temporal sin modificar process.env
    */
-  async invoke<T = any>(
+  async invokeWithCredentials<T = any>(
     method: string,
-    params: any
+    params: any,
+    credentials: HKACredentials
   ): Promise<T> {
     try {
+      // Inyectar credenciales del usuario
+      this.injectCredentials(credentials);
+
       const client = await this.getClient();
-      
-      console.log(`📤 Invocando método HKA: ${method}`);
-      
+
+      console.log(`📤 Invocando método HKA: ${method}`, {
+        usuario: credentials.usuario,
+        ambiente: credentials.environment,
+      });
+
       // Primero intentar listar métodos disponibles si falla
       const methodAsync = `${method}Async`;
-      
+
       if (typeof client[methodAsync] !== 'function') {
         console.error(`❌ Método ${methodAsync} no encontrado`);
         console.log('📋 Listando métodos disponibles...');
@@ -164,14 +197,56 @@ export class HKASOAPClient {
         const methodsStr = Array.isArray(methods) ? methods.join(', ') : String(methods);
         throw new Error(`Método ${methodAsync} no existe. Métodos disponibles: ${methodsStr}`);
       }
-      
+
       const [result] = await client[methodAsync](params);
-      
+
       console.log(`📥 Respuesta de HKA ${method}:`, {
         codigo: result?.dCodRes,
         mensaje: result?.dMsgRes,
       });
-      
+
+      return result;
+    } catch (error) {
+      console.error(`❌ Error al invocar método ${method}:`, error);
+      throw error;
+    } finally {
+      // CRÍTICO: Limpiar credenciales inyectadas después de uso
+      this.clearInjectedCredentials();
+    }
+  }
+
+  /**
+   * Invoca un método del servicio SOAP
+   * ⚠️ DEPRECATED: Usar invokeWithCredentials() para aplicaciones multi-tenant
+   */
+  async invoke<T = any>(
+    method: string,
+    params: any
+  ): Promise<T> {
+    try {
+      const client = await this.getClient();
+
+      console.log(`📤 Invocando método HKA: ${method}`);
+
+      // Primero intentar listar métodos disponibles si falla
+      const methodAsync = `${method}Async`;
+
+      if (typeof client[methodAsync] !== 'function') {
+        console.error(`❌ Método ${methodAsync} no encontrado`);
+        console.log('📋 Listando métodos disponibles...');
+        const methods = await this.listMethods();
+        console.log('   Métodos disponibles:', methods);
+        const methodsStr = Array.isArray(methods) ? methods.join(', ') : String(methods);
+        throw new Error(`Método ${methodAsync} no existe. Métodos disponibles: ${methodsStr}`);
+      }
+
+      const [result] = await client[methodAsync](params);
+
+      console.log(`📥 Respuesta de HKA ${method}:`, {
+        codigo: result?.dCodRes,
+        mensaje: result?.dMsgRes,
+      });
+
       return result;
     } catch (error) {
       console.error(`❌ Error al invocar método ${method}:`, error);

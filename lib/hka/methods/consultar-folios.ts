@@ -30,10 +30,11 @@ export async function consultarFolios(
         };
 
         console.log(`📊 Consultando folios para RUC: ${ruc}-${dv}`);
+        console.log(`   Usando credenciales de usuario: ${options.userId || 'organización'}`);
 
-        // Invocar método SOAP con monitoreo
+        // Invocar método SOAP con monitoreo y credenciales inyectadas
         const response = await monitorHKACall('ConsultarFolios', async () => {
-          return await hkaClient.invoke<any>('ConsultarFolios', params);
+          return await hkaClient.invokeWithCredentials<any>('ConsultarFolios', params, credentials);
         });
 
         // Procesar respuesta

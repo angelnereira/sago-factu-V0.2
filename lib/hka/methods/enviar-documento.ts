@@ -377,7 +377,7 @@ export async function enviarDocumento(
         const rawResponse = await withRetryOrThrow(
           async () => {
             return await monitorHKACall('Enviar', async () => {
-              return await hkaClient.invoke<any>('Enviar', params);
+              return await hkaClient.invokeWithCredentials<any>('Enviar', params, credentials);
             });
           },
           {

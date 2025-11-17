@@ -29,9 +29,12 @@ export async function consultarDocumento(
           dCufe: cufe,
         };
 
-        // Invocar método SOAP con monitoreo
+        // Obtener credenciales para pasar a invokeWithCredentials
+        const credentials = hkaClient.getCredentials();
+
+        // Invocar método SOAP con monitoreo y credenciales inyectadas
         const response = await monitorHKACall('ConsultaFE', async () => {
-          return await hkaClient.invoke<ConsultarDocumentoResponse>('ConsultaFE', params);
+          return await hkaClient.invokeWithCredentials<ConsultarDocumentoResponse>('ConsultaFE', params, credentials);
         });
 
         console.log(`✅ Documento consultado exitosamente`);

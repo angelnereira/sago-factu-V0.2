@@ -22,9 +22,9 @@ export async function enviarCorreoHKA(
       TokenPassword: credentials.tokenPassword,
     };
 
-    // Invocar método SOAP "EnvioCorreo" con monitoreo
+    // Invocar método SOAP "EnvioCorreo" con monitoreo y credenciales inyectadas
     const response = await monitorHKACall('EnvioCorreo', async () => {
-      return await hkaClient.invoke<EnvioCorreoResponse>('EnvioCorreo', fullParams);
+      return await hkaClient.invokeWithCredentials<EnvioCorreoResponse>('EnvioCorreo', fullParams, credentials);
     });
 
     // Validar respuesta

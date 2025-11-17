@@ -47,9 +47,9 @@ export async function emitirNotaCredito(
       dCufeReferencia: cufeFacturaOriginal,
     };
 
-    // Invocar método SOAP con monitoreo
+    // Invocar método SOAP con monitoreo y credenciales inyectadas
     const response = await monitorHKACall('NotaCreditoFE', async () => {
-      return await hkaClient.invoke<NotaCreditoResponse>('NotaCreditoFE', params);
+      return await hkaClient.invokeWithCredentials<NotaCreditoResponse>('NotaCreditoFE', params, credentials);
     });
 
     console.log(`✅ Nota de Crédito emitida exitosamente`);

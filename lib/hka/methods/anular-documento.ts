@@ -52,9 +52,9 @@ export async function anularDocumento(
           motivo,
         };
 
-        // Invocar método SOAP con monitoreo
+        // Invocar método SOAP con monitoreo y credenciales inyectadas
         const response = await monitorHKACall('AnulacionFE', async () => {
-          return await hkaClient.invoke<AnularDocumentoResponse>('AnulacionFE', params);
+          return await hkaClient.invokeWithCredentials<AnularDocumentoResponse>('AnulacionFE', params, credentials);
         });
 
         console.log(`✅ Documento anulado exitosamente`);
