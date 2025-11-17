@@ -150,6 +150,16 @@ export async function GET() {
       }),
     ]);
 
+    console.log('[API] Retrieved organization data:', {
+      ruc: org?.ruc,
+      dv: org?.dv,
+      name: org?.name,
+      tradeName: org?.tradeName,
+      email: org?.email,
+      phone: org?.phone,
+      address: org?.address,
+    });
+
     const environmentMap: Record<'demo' | 'prod', { tokenUser: string | null; isActive: boolean; lastUpdated: string | null }> = {
       demo: { tokenUser: null, isActive: false, lastUpdated: null },
       prod: { tokenUser: null, isActive: false, lastUpdated: null },

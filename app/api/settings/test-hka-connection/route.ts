@@ -37,12 +37,17 @@ export async function POST() {
 
     if (!soapUrl) {
       console.error(`[API] Missing environment variable: ${soapUrlVar}`);
+      console.log('[API] Available environment variables:', {
+        HKA_DEMO_SOAP_URL: process.env.HKA_DEMO_SOAP_URL ? '✓ configured' : '✗ missing',
+        HKA_PROD_SOAP_URL: process.env.HKA_PROD_SOAP_URL ? '✓ configured' : '✗ missing',
+      });
       return NextResponse.json(
         {
           success: false,
           error: `Configuración incompleta del servidor HKA`,
           details: `La variable de entorno '${soapUrlVar}' no está configurada en el servidor. ` +
-            `Por favor, contacta al administrador del sistema para configurar las credenciales de HKA.`,
+            `Por favor, contacta al administrador del sistema para configurar las credenciales de HKA. ` +
+            `Requiere: HKA_${environment.toUpperCase()}_SOAP_URL`,
           environment,
           missingVariable: soapUrlVar,
         },
