@@ -8,7 +8,7 @@
  * - Integración con IHkaSecretProvider para obtener secretos de forma segura
  *
  * ARQUITECTURA:
- * 1. Para Plan Simple: Obtiene credenciales de HKACredential table (encriptadas en BD)
+ * 1. Para Plan Simple: Obtiene credenciales de HKACredential table (plaintext en BD)
  * 2. Para Plan Empresarial: Usa IHkaSecretProvider (env, vault, etc.)
  * 3. Nunca expone credenciales en logs o errores
  */
@@ -49,7 +49,6 @@ export async function getHKACredentials(
   // Imports estáticos (no dinámicos dentro de la función)
   const prismaServer = require('@/lib/prisma-server').prismaServer;
   const { OrganizationPlan } = require('@prisma/client');
-  const { decryptToken } = require('@/lib/utils/encryption');
 
   const requestId = crypto.randomUUID();
 
@@ -69,16 +68,16 @@ export async function getHKACredentials(
           environment: userCredential.environment,
         });
 
-        const decrypted = {
+        const credentials = {
           tokenUser: userCredential.tokenUser,
-          tokenPassword: decryptToken(userCredential.tokenPassword),
+          tokenPassword: userCredential.tokenPassword,
           environment: userCredential.environment === 'PROD' ? 'prod' : 'demo',
           source: 'user' as const,
           credentialId: userCredential.id,
         };
 
         // Validar schema
-        return HKACredentialsSchema.parse(decrypted);
+        return HKACredentialsSchema.parse(credentials);
       }
     }
 
@@ -113,9 +112,9 @@ export async function getHKACredentials(
         environment: org.hkaEnvironment,
       });
 
-      const decrypted = {
+      const credentials = {
         tokenUser: org.hkaTokenUser,
-        tokenPassword: decryptToken(org.hkaTokenPassword),
+        tokenPassword: org.hkaTokenPassword,
         environment:
           org.hkaEnvironment === 'prod' || org.hkaEnvironment === 'production'
             ? 'prod'
@@ -123,7 +122,7 @@ export async function getHKACredentials(
         source: 'organization' as const,
       };
 
-      return HKACredentialsSchema.parse(decrypted);
+      return HKACredentialsSchema.parse(credentials);
     }
 
     // 4. Plan Empresarial: usar credenciales centralizadas de .env

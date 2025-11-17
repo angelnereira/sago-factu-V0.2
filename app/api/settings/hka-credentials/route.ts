@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prismaServer as prisma } from '@/lib/prisma-server';
-import { encryptToken } from '@/lib/utils/encryption';
 import { auth } from '@/lib/auth';
 import { z } from 'zod';
 
@@ -44,9 +43,7 @@ export async function POST(request: Request) {
     });
 
     const environmentEnum = data.environment === 'prod' ? 'PROD' : 'DEMO';
-    console.log('[API] About to call encryptToken...');
-    const encryptedPassword = encryptToken(data.tokenPassword);
-    console.log('[API] encryptToken succeeded');
+    console.log('[API] Guardando credenciales HKA en plaintext...');
 
     await prisma.$transaction(async (tx) => {
       // Marcar otras credenciales como inactivas
@@ -64,14 +61,14 @@ export async function POST(request: Request) {
         },
         update: {
           tokenUser: data.tokenUser,
-          tokenPassword: encryptedPassword,
+          tokenPassword: data.tokenPassword,
           isActive: true,
         },
         create: {
           userId: user.id,
           environment: environmentEnum,
           tokenUser: data.tokenUser,
-          tokenPassword: encryptedPassword,
+          tokenPassword: data.tokenPassword,
           isActive: true,
         },
       });
