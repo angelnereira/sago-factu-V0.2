@@ -13,7 +13,7 @@ export default function HKACredentialsForm() {
   const [isConfigured, setIsConfigured] = useState(false);
   const [tokenStore, setTokenStore] = useState<{ demo: string; prod: string }>({ demo: '', prod: '' });
   const [configuredMap, setConfiguredMap] = useState<{ demo: boolean; prod: boolean }>({ demo: false, prod: false });
-  
+
   // Datos del contribuyente
   const [ruc, setRuc] = useState('');
   const [dv, setDv] = useState('');
@@ -23,37 +23,58 @@ export default function HKACredentialsForm() {
   const [telefono, setTelefono] = useState('');
   const [direccion, setDireccion] = useState('');
 
+  // Función para cargar datos desde el servidor
+  const fetchCredentials = async () => {
+    try {
+      const res = await fetch('/api/settings/hka-credentials');
+      const data = await res.json();
+
+      console.log('[HKAForm] Datos cargados del servidor:', {
+        ruc: data.ruc,
+        dv: data.dv,
+        razonSocial: data.razonSocial,
+        nombreComercial: data.nombreComercial,
+        email: data.email,
+        telefono: data.telefono,
+        direccion: data.direccion,
+        environment: data.environment,
+      });
+
+      const environments = data.environments || {};
+      const mappedTokens = {
+        demo: environments.demo?.tokenUser ?? '',
+        prod: environments.prod?.tokenUser ?? '',
+      };
+      const mappedConfigured = {
+        demo: environments.demo?.tokenUser ? true : false,
+        prod: environments.prod?.tokenUser ? true : false,
+      };
+
+      setTokenStore(mappedTokens);
+      setConfiguredMap(mappedConfigured);
+
+      const initialEnvironment: 'demo' | 'prod' = data.environment === 'prod' ? 'prod' : 'demo';
+      setEnvironment(initialEnvironment);
+      setTokenUser(mappedTokens[initialEnvironment] || data.tokenUser || data.fallback?.tokenUser || '');
+      setIsConfigured(mappedConfigured[initialEnvironment]);
+
+      // Cargar datos del contribuyente
+      if (data.ruc) setRuc(data.ruc);
+      if (data.dv) setDv(data.dv);
+      if (data.razonSocial) setRazonSocial(data.razonSocial);
+      if (data.nombreComercial) setNombreComercial(data.nombreComercial);
+      if (data.email) setEmail(data.email);
+      if (data.telefono) setTelefono(data.telefono);
+      if (data.direccion) setDireccion(data.direccion);
+
+      console.log('[HKAForm] Credenciales cargadas exitosamente');
+    } catch (err) {
+      console.error('[HKAForm] Error cargando credenciales:', err);
+    }
+  };
+
   useEffect(() => {
-    fetch('/api/settings/hka-credentials')
-      .then(res => res.json())
-      .then(data => {
-        const environments = data.environments || {};
-        const mappedTokens = {
-          demo: environments.demo?.tokenUser ?? '',
-          prod: environments.prod?.tokenUser ?? '',
-        };
-        const mappedConfigured = {
-          demo: environments.demo?.tokenUser ? true : false,
-          prod: environments.prod?.tokenUser ? true : false,
-        };
-
-        setTokenStore(mappedTokens);
-        setConfiguredMap(mappedConfigured);
-
-        const initialEnvironment: 'demo' | 'prod' = data.environment === 'prod' ? 'prod' : 'demo';
-        setEnvironment(initialEnvironment);
-        setTokenUser(mappedTokens[initialEnvironment] || data.tokenUser || data.fallback?.tokenUser || '');
-        setIsConfigured(mappedConfigured[initialEnvironment]);
-
-        if (data.ruc) setRuc(data.ruc);
-        if (data.dv) setDv(data.dv);
-        if (data.razonSocial) setRazonSocial(data.razonSocial);
-        if (data.nombreComercial) setNombreComercial(data.nombreComercial);
-        if (data.email) setEmail(data.email);
-        if (data.telefono) setTelefono(data.telefono);
-        if (data.direccion) setDireccion(data.direccion);
-      })
-      .catch(err => console.error('Error cargando credenciales:', err));
+    fetchCredentials();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,13 +82,22 @@ export default function HKACredentialsForm() {
     setLoading(true);
     setMessage(null);
 
+    console.log('[HKAForm] Enviando credenciales...', {
+      environment,
+      tokenUser: tokenUser.substring(0, 5) + '***',
+      ruc,
+      dv,
+      razonSocial,
+      nombreComercial,
+    });
+
     try {
       const res = await fetch('/api/settings/hka-credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          tokenUser, 
-          tokenPassword, 
+        body: JSON.stringify({
+          tokenUser,
+          tokenPassword,
           environment,
           ruc,
           dv,
@@ -82,20 +112,23 @@ export default function HKACredentialsForm() {
       const result = await res.json();
 
       if (res.ok) {
-        setMessage({ type: 'success', text: 'Credenciales guardadas correctamente' });
-        setIsConfigured(true);
-        setTokenStore((prev) => ({
-          ...prev,
-          [environment]: tokenUser,
-        }));
-        setConfiguredMap((prev) => ({
-          ...prev,
-          [environment]: true,
-        }));
+        console.log('[HKAForm] Guardado exitoso, refetchando datos...');
+        // Limpiar el campo de contraseña después del guardado
+        setTokenPassword('');
+        // Refetch de los datos para confirmar la persistencia desde el servidor
+        await fetchCredentials();
+        // Mostrar mensaje de éxito después del refetch
+        setMessage({
+          type: 'success',
+          text: `✓ Credenciales guardadas correctamente en ${environment === 'demo' ? 'ambiente Demo' : 'Producción'}. Datos persistidos en la base de datos.`
+        });
+        console.log('[HKAForm] Persistencia confirmada desde el servidor');
       } else {
+        console.error('[HKAForm] Error al guardar:', result);
         setMessage({ type: 'error', text: result.error || 'Error al guardar credenciales' });
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error('[HKAForm] Error de conexión:', error);
       setMessage({ type: 'error', text: 'Error de conexión. Intenta nuevamente.' });
     } finally {
       setLoading(false);
