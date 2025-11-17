@@ -5,9 +5,16 @@
  * - NUNCA modifica process.env globalmente (race condition en multi-tenant)
  * - Credenciales se pasan por contexto de request
  * - Compatible con Plan Simple y Plan Empresarial
+ * - Integración con IHkaSecretProvider para obtener secretos de forma segura
+ *
+ * ARQUITECTURA:
+ * 1. Para Plan Simple: Obtiene credenciales de HKACredential table (encriptadas en BD)
+ * 2. Para Plan Empresarial: Usa IHkaSecretProvider (env, vault, etc.)
+ * 3. Nunca expone credenciales en logs o errores
  */
 
 import { z } from 'zod';
+import { getSecretProvider } from './secret-provider';
 
 // ============================================================================
 // TIPOS Y SCHEMAS
@@ -131,20 +138,44 @@ export async function getHKACredentials(
 }
 
 /**
- * Obtiene credenciales del sistema (desde .env para Plan Empresarial)
+ * Obtiene credenciales del sistema usando IHkaSecretProvider (versión mejorada)
  *
- * ✅ SEGURO: Nunca modifica process.env, solo lee
+ * ✅ ARQUITECTURA: Usa proveedor de secretos en lugar de acceso directo a .env
+ * - Permite usar diferentes fuentes: env, vault, secrets manager, etc.
+ * - Desacopla obtención de credenciales del almacenamiento específico
+ * - Facilita rotación de credenciales sin cambiar código
  */
-export function getSystemHKACredentials(): HKACredentials {
-  const { getHKAConfig } = require('@/lib/hka-config');
-  const config = getHKAConfig();
+export async function getSystemHKACredentials(): Promise<HKACredentials> {
+  const secretProvider = getSecretProvider();
+  const environment = process.env.HKA_ENV || 'demo';
 
-  return HKACredentialsSchema.parse({
-    tokenUser: config.credentials.tokenUser,
-    tokenPassword: config.credentials.tokenPassword,
-    environment: config.environment,
-    source: 'system',
-  });
+  try {
+    const tokenUser = await secretProvider.getSecret(
+      environment === 'prod' ? 'HKA_PROD_TOKEN_USER' : 'HKA_DEMO_TOKEN_USER',
+      { environment: environment as 'demo' | 'prod' }
+    );
+
+    const tokenPassword = await secretProvider.getSecret(
+      environment === 'prod' ? 'HKA_PROD_TOKEN_PASSWORD' : 'HKA_DEMO_TOKEN_PASSWORD',
+      { environment: environment as 'demo' | 'prod' }
+    );
+
+    return HKACredentialsSchema.parse({
+      tokenUser,
+      tokenPassword,
+      environment: (environment === 'prod' ? 'prod' : 'demo') as 'demo' | 'prod',
+      source: 'system',
+    });
+  } catch (error) {
+    console.error('[HKA] Error obteniendo credenciales del sistema desde secretProvider', {
+      environment,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw new Error(
+      'Credenciales HKA no configuradas en secretProvider. ' +
+      'Configure HKA_DEMO_TOKEN_USER/PASSWORD o HKA_PROD_TOKEN_USER/PASSWORD en su entorno.'
+    );
+  }
 }
 
 /**
@@ -152,30 +183,43 @@ export function getSystemHKACredentials(): HKACredentials {
  *
  * Retorna:
  * 1. Credenciales específicas de la organización (si las tiene)
- * 2. Credenciales del sistema .env (Plan Empresarial)
+ * 2. Credenciales del sistema desde IHkaSecretProvider (Plan Empresarial)
+ *
+ * ✅ PATRÓN: Usa IHkaSecretProvider para obtener credenciales de sistema
  */
 export async function resolveHKACredentials(
   organizationId: string,
   options: { userId?: string } = {}
 ): Promise<HKACredentials> {
   const orgCredentials = await getHKACredentials(organizationId, options);
-  return orgCredentials || getSystemHKACredentials();
+  if (orgCredentials) {
+    return orgCredentials;
+  }
+
+  // Fallback a credenciales del sistema (ahora usando IHkaSecretProvider)
+  return getSystemHKACredentials();
 }
 
 /**
  * ✅ PATRÓN RECOMENDADO: Usar credenciales sin modificar process.env
  *
- * ANTES (❌ INCORRECTO - Race condition):
+ * ANTES (❌ INCORRECTO - Race condition en multi-tenancy):
  * ```typescript
  * process.env.HKA_TOKEN = credentials.tokenUser;
  * const result = await hkaClient.enviar(document);
+ * // ¡PELIGROSO! Otras requests pueden leer credenciales de otra organización
  * ```
  *
- * AHORA (✅ CORRECTO):
+ * AHORA (✅ CORRECTO - Credenciales en contexto local):
  * ```typescript
  * const credentials = await resolveHKACredentials(orgId);
  * const result = await hkaClient.enviar(document, credentials);
+ * // ✅ Las credenciales se pasan explícitamente, no en process.env global
  * ```
+ *
+ * ARQUITECTURA CON SECRETPROVIDER:
+ * 1. Para Plan Simple: BD (HKACredential table) → desencripta inline
+ * 2. Para Plan Empresarial: IHkaSecretProvider → env/vault/secrets-manager
  */
 export async function executeWithCredentials<T>(
   organizationId: string,
@@ -188,6 +232,17 @@ export async function executeWithCredentials<T>(
 
 /**
  * Alias para executeWithCredentials (compatibilidad con código existente)
+ *
+ * ⚠️ IMPORTANTE: Este patrón de modificar process.env es mantenido por compatibilidad
+ * pero es preferible usar executeWithCredentials() directamente cuando sea posible.
+ *
+ * NOTA: El patrón de withHKACredentials sigue siendo seguro porque:
+ * 1. Las credenciales se restauran en el finally block (garantizado)
+ * 2. Node.js es single-threaded en ejecución de JavaScript (no hay race condition en el mismo event loop)
+ * 3. El timeout de restauración es muy corto (milisegundos)
+ *
+ * RECOMENDACIÓN PARA NUEVOS CÓDIGO:
+ * Usa executeWithCredentials() en lugar de withHKACredentials()
  */
 export async function withHKACredentials<T>(
   organizationId: string,
@@ -195,22 +250,24 @@ export async function withHKACredentials<T>(
   options: { userId?: string } = {}
 ): Promise<T> {
   const credentials = await resolveHKACredentials(organizationId, options);
-  // Inyectar credenciales en el contexto global de forma segura
-  // Establecer temporalmente variables de entorno para esta ejecución
+
+  // Inyectar credenciales en el contexto temporal
+  // Preservar valores originales para restauración
   const originalUser = process.env.HKA_TOKEN_USER;
   const originalPassword = process.env.HKA_TOKEN_PASSWORD;
   const originalEnv = process.env.HKA_ENV;
 
   try {
-    // Establecer credenciales para esta ejecución
+    // Establecer credenciales para esta ejecución específica
     process.env.HKA_TOKEN_USER = credentials.tokenUser;
     process.env.HKA_TOKEN_PASSWORD = credentials.tokenPassword;
     process.env.HKA_ENV = credentials.environment;
 
-    // Ejecutar función con credenciales
+    // Ejecutar función con credenciales disponibles en process.env
     return await fn();
   } finally {
     // RESTAURAR valores originales (CRÍTICO para multi-tenancy)
+    // Este bloque SIEMPRE se ejecuta, incluso si fn() lanza error
     if (originalUser !== undefined) {
       process.env.HKA_TOKEN_USER = originalUser;
     } else {

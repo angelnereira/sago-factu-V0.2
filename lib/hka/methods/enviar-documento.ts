@@ -11,86 +11,95 @@ import { hkaLogger } from '../utils/logger';
 import { parseHKAResponse, validateMinimumResponse, toEnviarDocumentoResponse } from '../utils/response-parser';
 import { withRetryOrThrow } from '../utils/retry';
 import { signInvoiceXml } from '@/services/invoice/signer';
+import { executeWithCredentials, resolveHKACredentials } from '../credentials-manager';
 
 /**
- * Obtiene credenciales HKA priorizando BD sobre variables de entorno
- * Si hay organización con credenciales en BD, las usa; si no, usa variables de entorno
+ * Obtiene credenciales HKA usando el sistema mejorado de resolución
+ *
+ * ARQUITECTURA:
+ * 1. Intenta obtener credenciales específicas de la organización/usuario
+ * 2. Si no hay credenciales específicas, usa IHkaSecretProvider (env/vault)
+ * 3. Nunca mezcla credenciales de diferentes fuentes
+ *
+ * ✅ SEGURO: Usa resolveHKACredentials() que valida y resuelve automáticamente
  */
 async function getHKACredentialsForInvoice(
-  organization: { hkaTokenUser: string | null; hkaTokenPassword: string | null; hkaEnvironment: string | null; plan: string } | null
+  organizationId: string | null,
+  userId?: string
 ): Promise<HKACredentials> {
-  // Si hay organización con credenciales configuradas, usarlas
-  if (organization?.hkaTokenUser && organization?.hkaTokenPassword) {
-    console.log(`   🔑 Usando credenciales de BD (Plan: ${organization.plan})`);
-    const environment = (organization.hkaEnvironment || 'demo').toLowerCase();
-    
-    try {
-      const decryptedPassword = decryptToken(organization.hkaTokenPassword);
-      return {
-        tokenEmpresa: organization.hkaTokenUser,
-        tokenPassword: decryptedPassword,
-        usuario: organization.hkaTokenUser,
-      };
-    } catch (error) {
-      console.error(`   ⚠️  Error desencriptando password de BD, usando variables de entorno:`, error);
-      // Si hay error desencriptando, usar variables de entorno
-      const hkaClient = getHKAClient();
-      return hkaClient.getCredentials();
-    }
-  }
-
-  // Si no, usar credenciales de variables de entorno (fallback)
-  // Esto incluye las credenciales demo por defecto del .env
-  console.log(`   🔑 Usando credenciales de variables de entorno (demo por defecto)`);
-  const hkaClient = getHKAClient();
-  const envCredentials = hkaClient.getCredentials();
-  
-  // Validar que las credenciales de entorno existan
-  if (!envCredentials.tokenEmpresa || !envCredentials.tokenPassword) {
+  if (!organizationId) {
     throw new Error(
-      'Credenciales HKA no configuradas. Configura tus credenciales personales en Configuración → Integraciones (o /simple/configuracion) ' +
-      'o define las variables de entorno (.env):\n' +
-      '  HKA_DEMO_TOKEN_USER=walgofugiitj_ws_tfhka\n' +
-      '  HKA_DEMO_TOKEN_PASSWORD=Octopusp1oQs5'
+      'organizationId es requerido para resolver credenciales HKA. ' +
+      'Verifica que la factura esté asociada a una organización válida.'
     );
   }
-  
-  return envCredentials;
+
+  try {
+    // Usar el nuevo sistema de resolución de credenciales
+    // que integra IHkaSecretProvider para Plan Empresarial
+    const credentials = await resolveHKACredentials(organizationId, { userId });
+
+    console.log(`   🔑 Credenciales HKA resueltas`, {
+      source: credentials.source,
+      environment: credentials.environment,
+    });
+
+    return credentials;
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
+    console.error(`   ❌ Error resolviendo credenciales HKA:`, errorMsg);
+    throw new Error(
+      'Credenciales HKA no disponibles. ' +
+      `Detalle: ${errorMsg}. ` +
+      'Configura tus credenciales en Configuración → Integraciones (Plan Simple) ' +
+      'o define variables de entorno (Plan Empresarial).'
+    );
+  }
 }
 
 /**
  * Envía un documento electrónico a HKA (Factura, Nota Crédito, Nota Débito)
+ *
+ * ✅ ARQUITECTURA: Usa IHkaSecretProvider para obtener credenciales de forma segura
+ * - Plan Simple: credenciales de HKACredential table
+ * - Plan Empresarial: credenciales del secretProvider (env/vault)
  */
 export async function enviarDocumento(
   xmlDocumento: string,
   invoiceId: string,
-  organizationId?: string
+  organizationId?: string,
+  userId?: string
 ): Promise<EnviarDocumentoResponse> {
   try {
     await hkaLogger.info('ENVIAR_DOCUMENTO_START', `Enviando documento a HKA para invoice: ${invoiceId}`, {
       invoiceId,
       organizationId,
+      userId,
     });
 
-    // Obtener organización para usar credenciales de BD si están disponibles
-    let organization = null;
-    if (organizationId) {
-      organization = await prisma.organization.findUnique({
-        where: { id: organizationId },
-        select: {
-          id: true,
-          plan: true,
-          hkaTokenUser: true,
-          hkaTokenPassword: true,
-          hkaEnvironment: true,
-        },
-      });
-      
-      if (organization) {
-        console.log(`   📋 Organización: ${organization.id}, Plan: ${organization.plan}`);
-        console.log(`   🔑 Credenciales HKA configuradas: ${!!organization.hkaTokenUser}`);
-      }
+    if (!organizationId) {
+      throw new Error(
+        'organizationId es requerido para enviar documento a HKA. ' +
+        'Verifica que la factura esté asociada a una organización válida.'
+      );
     }
+
+    // Obtener información básica de la organización (NO credenciales)
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        id: true,
+        plan: true,
+        hkaEnvironment: true,
+      },
+    });
+
+    if (!organization) {
+      throw new Error(`Organización no encontrada: ${organizationId}`);
+    }
+
+    console.log(`   📋 Organización: ${organization.id}, Plan: ${organization.plan}`);
+    console.log(`   🔑 Resolviendo credenciales de forma segura...`);
 
     // Validar RUC en el XML antes de enviar
     const rucValidation = await validarRUCEnXML(xmlDocumento);
@@ -110,41 +119,41 @@ export async function enviarDocumento(
       invoiceId,
       async () => {
         // Método real de envío
-        // Obtener credenciales: primero de BD, luego de variables de entorno
-        const credentials = await getHKACredentialsForInvoice(organization);
+        // Obtener credenciales usando el nuevo sistema IHkaSecretProvider
+        const credentials = await getHKACredentialsForInvoice(organizationId, userId);
 
         // Validación defensiva de credenciales antes de invocar HKA
         if (!credentials?.tokenEmpresa || !credentials?.tokenPassword) {
-          const errorMsg = organization?.hkaTokenUser 
-            ? 'Credenciales HKA configuradas pero password inválido. Verifica la configuración.'
-            : 'Credenciales HKA ausentes. Configura tus credenciales personales en Configuración → Integraciones (o /simple/configuracion) o usa variables de entorno (.env)';
-          throw new Error(errorMsg);
+          throw new Error(
+            'Credenciales HKA inválidas después de resolución. ' +
+            'Verifica que las credenciales estén correctamente configuradas. ' +
+            'Si es Plan Simple, configura en Configuración → Integraciones. ' +
+            'Si es Plan Empresarial, configura variables de entorno HKA_*_TOKEN_*.'
+          );
         }
 
         await hkaLogger.info('CREDENTIALS_VALIDATED', `Credenciales válidas: ${credentials.tokenEmpresa.substring(0, 10)}...`, {
           invoiceId,
-          organizationId: organization?.id,
+          organizationId,
         });
 
         const environment = (organization?.hkaEnvironment || 'demo').toLowerCase();
         const isDemoEnvironment = environment === 'demo';
 
-        if (organization?.id || organizationId) {
-          try {
-            xmlDocumento = await signInvoiceXml(xmlDocumento, organization?.id ?? organizationId!);
-          } catch (signatureError) {
-            if (!isDemoEnvironment) {
-              throw signatureError instanceof Error
-                ? signatureError
-                : new Error(String(signatureError));
-            }
-
-            await hkaLogger.warn('XML_SIGNATURE_PLACEHOLDER', 'No se pudo firmar con certificado, usando firma simulada en DEMO', {
-              invoiceId,
-              organizationId: organization?.id,
-              error: signatureError instanceof Error ? signatureError : new Error(String(signatureError)),
-            });
+        try {
+          xmlDocumento = await signInvoiceXml(xmlDocumento, organizationId);
+        } catch (signatureError) {
+          if (!isDemoEnvironment) {
+            throw signatureError instanceof Error
+              ? signatureError
+              : new Error(String(signatureError));
           }
+
+          await hkaLogger.warn('XML_SIGNATURE_PLACEHOLDER', 'No se pudo firmar con certificado, usando firma simulada en DEMO', {
+            invoiceId,
+            organizationId,
+            error: signatureError instanceof Error ? signatureError : new Error(String(signatureError)),
+          });
         }
 
         // HKA espera el XML como texto plano sin escapar
