@@ -43,14 +43,26 @@ export class HKASOAPClient {
    */
   updateConfiguration(): void {
     const environment = (process.env.HKA_ENV as HKAEnvironment) || 'demo';
-    
+
     // Si el ambiente cambió, necesitamos reinicializar
     const environmentChanged = this.currentEnvironment !== environment;
-    
+
+    // Validar que las variables de entorno WSDL estén configuradas
+    const soapUrlVar = environment === 'demo' ? 'HKA_DEMO_SOAP_URL' : 'HKA_PROD_SOAP_URL';
+    const soapUrl = environment === 'demo'
+      ? process.env.HKA_DEMO_SOAP_URL
+      : process.env.HKA_PROD_SOAP_URL;
+
+    if (!soapUrl) {
+      const errorMsg = `❌ CONFIGURATION ERROR: Environment variable '${soapUrlVar}' is not set. ` +
+        `Cannot initialize HKA SOAP client for '${environment}' environment. ` +
+        `Please check your .env file and ensure both HKA_DEMO_SOAP_URL and HKA_PROD_SOAP_URL are configured.`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
     // Calcular nueva URL WSDL
-    const newWsdlUrl = environment === 'demo' 
-      ? `${process.env.HKA_DEMO_SOAP_URL}?wsdl`
-      : `${process.env.HKA_PROD_SOAP_URL}?wsdl`;
+    const newWsdlUrl = `${soapUrl}?wsdl`;
 
     // Si cambió el ambiente o la URL, reinicializar
     if (environmentChanged || this.currentWsdlUrl !== newWsdlUrl) {
@@ -80,10 +92,25 @@ export class HKASOAPClient {
    * Inicializa el cliente SOAP
    */
   async initialize(): Promise<void> {
-    // Actualizar configuración antes de inicializar
-    this.updateConfiguration();
+    // Actualizar configuración antes de inicializar (esto validará variables de entorno)
+    try {
+      this.updateConfiguration();
+    } catch (configError) {
+      // Re-lanzar errores de configuración con contexto adicional
+      console.error('[HKA] Configuration validation failed during initialize()');
+      throw configError;
+    }
 
     if (this.client) return;
+
+    // Validar que la URL WSDL sea válida antes de intentar conectarse
+    if (!this.wsdlUrl || this.wsdlUrl.includes('undefined')) {
+      const errorMsg = `❌ INVALID WSDL URL: '${this.wsdlUrl}'. ` +
+        `This usually means HKA_DEMO_SOAP_URL or HKA_PROD_SOAP_URL environment variables are not set. ` +
+        `Please configure these variables in your .env file.`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
 
     try {
       this.client = await soap.createClientAsync(this.wsdlUrl, {
@@ -118,6 +145,10 @@ export class HKASOAPClient {
       console.log('   escapeXML: false (XML sin escapar)');
     } catch (error) {
       console.error('❌ Error al inicializar cliente SOAP HKA:', error);
+      if (error instanceof Error && error.message.includes('ENOENT')) {
+        console.error('   This error suggests WSDL URL is invalid or contains "undefined"');
+        console.error('   Actual WSDL URL attempted:', this.wsdlUrl);
+      }
       throw error;
     }
   }
