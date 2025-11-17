@@ -10,13 +10,31 @@
   <a href="https://www.prisma.io/"><img alt="Prisma" src="https://img.shields.io/badge/Prisma-6.17.1-2D3748?logo=prisma&style=flat-square"></a>
 </p>
 
+---
+
+## 🚀 **VER LA APP EN VIVO**
+
+<div align="center">
+
+### ➡️ **[ACCEDER A SAGO FACTU EN PRODUCCIÓN](https://sago-factu-v0-2.vercel.app/)**
+
+🎯 **Credenciales Demo**:
+- **Super Admin**: `admin@sago-factu.com` / `admin123`
+- **Usuario Demo**: `usuario@empresa.com` / `usuario123`
+
+</div>
+
+---
+
 ## Tabla de Contenidos
 
+- [Estado Actual del Proyecto](#estado-actual-del-proyecto)
 - [Resumen Ejecutivo](#resumen-ejecutivo)
 - [Características Clave](#características-clave)
 - [Stack Tecnológico](#stack-tecnológico)
 - [Demo y Capturas](#demo-y-capturas)
 - [Quick Start](#quick-start)
+- [Testing en Producción](#testing-en-producción)
 - [Entorno y Configuración](#entorno-y-configuración)
 - [Arquitectura](#arquitectura)
 - [Guías de Uso](#guías-de-uso)
@@ -24,6 +42,42 @@
 - [Roadmap](#roadmap)
 - [Contribuir](#contribuir)
 - [Licencia](#licencia)
+
+## Estado Actual del Proyecto
+
+### 🟢 **PRODUCCIÓN LISTA** ✅
+
+**Status**: La aplicación está **en vivo y totalmente funcional** en Vercel.
+
+#### Últimos Hitos Completados (Nov 2025)
+
+- ✅ **Multi-tenancy por Usuario**: Cada usuario puede gestionar sus propias credenciales HKA para ambientes (demo/prod)
+- ✅ **Encriptación Segura de Tokens**: AES-256-GCM + PBKDF2 (120k iteraciones) con validación en runtime
+- ✅ **Build Production-Ready**: Zero errores de compilación
+- ✅ **Deployment Vercel**: Auto-deploy via GitHub con soporte para variables de entorno
+- ✅ **Documentación Completa**: Arquitectura, deployment, troubleshooting y guías de desarrollo
+
+#### Verificación Rápida de Salud
+
+```bash
+# Build Status
+npm run build  # ✅ Completa sin errores
+
+# Test de Encriptación
+curl https://sago-factu-v0-2.vercel.app/api/debug/encryption-test
+# Response: { "success": true, "match": true }
+
+# Estado de la BD
+# PostgreSQL (Neon): Conectada ✅
+# Redis (Vercel KV): Disponible para jobs ✅
+```
+
+#### Documentación de Fixes Críticos
+
+Para entender los fixes realizados y arquitectura de seguridad, consulta:
+- 📄 [ENCRYPTION-FIX-SUMMARY.md](./ENCRYPTION-FIX-SUMMARY.md) — Fix crítico de encriptación en runtime
+- 📄 [VERCEL-DEPLOYMENT-GUIDE.md](./VERCEL-DEPLOYMENT-GUIDE.md) — Guía de deployment
+- 📄 [PRODUCTION-READINESS-CHECKLIST.md](./PRODUCTION-READINESS-CHECKLIST.md) — Checklist pre-production
 
 ## Resumen Ejecutivo
 
@@ -59,6 +113,20 @@ Consulta la documentación ampliada en `docs/architecture/overview.md`.
 
 ## Quick Start
 
+### Opción A: Acceder a la Demo en Vivo (Recomendado)
+
+No necesitas instalar nada. Solo:
+
+1. **Abre** [https://sago-factu-v0-2.vercel.app/](https://sago-factu-v0-2.vercel.app/) en tu navegador
+2. **Inicia sesión** con las credenciales demo:
+   - Super Admin: `admin@sago-factu.com` / `admin123`
+   - Usuario Demo: `usuario@empresa.com` / `usuario123`
+3. **Prueba las funcionalidades** (crear facturas, gestionar credenciales HKA, ver reportes, etc.)
+
+### Opción B: Desarrollo Local
+
+Para contribuir o hacer cambios locales:
+
 ```bash
 git clone https://github.com/angelnereira/sago-factu-V0.2.git
 cd sago-factu
@@ -68,10 +136,40 @@ npm run setup && npm run db:migrate && npm run db:seed
 npm run dev
 ```
 
-Credenciales demo tras el seed:
+Luego accede a `http://localhost:3000` con las credenciales demo arriba mencionadas.
 
-- **Super Admin**: `admin@sago-factu.com` / `admin123`
-- **Usuario Demo**: `usuario@empresa.com` / `usuario123`
+## Testing en Producción
+
+### Guía Completa: [TESTING-PRODUCTION.md](./TESTING-PRODUCTION.md)
+
+**Si accediste a la app en vivo y quieres probar la funcionalidad crítica de encriptación de credenciales HKA:**
+
+#### Test Rápido (5 minutos)
+
+1. **Inicia sesión** en https://sago-factu-v0-2.vercel.app/ con:
+   ```
+   usuario@empresa.com / usuario123
+   ```
+
+2. **Navega a** Settings → HKA Credentials Configuration
+
+3. **Ingresa credenciales demo**:
+   - Token User: `demo_user_test`
+   - Token Password: `demo_password_test_123`
+   - Environment: `Demo`
+
+4. **Haz clic en Save** y verifica que:
+   - ✅ Se guarden sin error
+   - ✅ Persistan después de recarga
+   - ✅ El token password no sea visible (está encriptado)
+
+Si todo funciona, ¡la encriptación AES-256-GCM está operativa en producción! 🎉
+
+**Para testing más detallado**, consulta [TESTING-PRODUCTION.md](./TESTING-PRODUCTION.md) con:
+- Testing de todas las funcionalidades
+- Verificación de infraestructura
+- Debugging de errores comunes
+- Checklist de validación
 
 ## Entorno y Configuración
 
@@ -95,11 +193,34 @@ Consulta `docs/architecture/overview.md` y `docs/architecture/tech-decisions.md`
 
 ## Guías de Uso
 
+### Probar Credenciales HKA en Producción
+
+Si deseas verificar que la encriptación de credenciales funciona correctamente en la app en vivo:
+
+1. **En producción**: Navega a `Settings → HKA Credentials Configuration`
+2. **Ingresa credenciales demo**:
+   ```
+   Token User: demo_user_test
+   Token Password: demo_password_test_123
+   Environment: Demo
+   ```
+3. **Haz clic en Save** y verifica que se guarden sin errores
+4. **Verifica persistencia**: Recarga la página y comprueba que los datos se mantienen
+
+Esta funcionalidad demuestra:
+- ✅ Encriptación AES-256-GCM funcionando en runtime
+- ✅ Multi-tenancy por usuario (cada usuario tiene sus propias credenciales)
+- ✅ Persistencia en PostgreSQL (Neon)
+- ✅ Seguridad enterprise con PBKDF2
+
+### Documentación de Desarrollo
+
 - **Workflow de desarrollo**: `docs/guides/development-workflow.md`
 - **API HTTP + Webhooks**: `docs/guides/api-documentation.md`
 - **Testing (unit + integration + E2E)**: `docs/guides/testing.md`
 - **Migraciones y seeds**: `docs/database/migrations.md` y `docs/database/seeds.md`
 - **Backup & restore**: `docs/database/backup-restore.md`
+- **Guía de Encriptación**: [ENCRYPTION-FIX-SUMMARY.md](./ENCRYPTION-FIX-SUMMARY.md)
 
 ## Deployment
 
@@ -147,5 +268,45 @@ Este proyecto se distribuye bajo licencia [MIT](./LICENSE). Consulta el document
 
 ---
 
-**SAGO FACTU** — Enterprise Billing Platform for Panamá  
+## Observaciones Importantes
+
+### Sobre la App en Producción
+
+La aplicación en [https://sago-factu-v0-2.vercel.app/](https://sago-factu-v0-2.vercel.app/) está **completamente funcional** y lista para demostración:
+
+- **Base de datos**: PostgreSQL en Neon (conectada y operativa)
+- **Autenticación**: NextAuth v5 con credenciales demo pre-cargadas
+- **Encriptación**: AES-256-GCM con validación en runtime (Fix Nov 2025)
+- **Integraciones**: HKA, AWS S3, Resend (configuradas)
+- **Monitoreo**: Dashboards, reportes y estadísticas en tiempo real
+
+### Próximos Pasos Recomendados
+
+Si deseas continuar con el desarrollo:
+
+1. **Testear funcionalidad de credenciales**:
+   - Accede a la app en producción
+   - Ve a Settings → HKA Credentials Configuration
+   - Guarda credenciales demo y verifica que persistan
+
+2. **Revisar documentación de arquitectura**:
+   - [ARQUITECTURA-CREDENCIALES-USUARIOS.md](./ARQUITECTURA-CREDENCIALES-USUARIOS.md)
+   - [ENCRYPTION-FIX-SUMMARY.md](./ENCRYPTION-FIX-SUMMARY.md)
+
+3. **Para cambios locales**:
+   - Clone el repo
+   - Sigue la guía de "Desarrollo Local" arriba
+   - Los cambios se sincronizarán automáticamente con Vercel via GitHub
+
+### Debugging y Troubleshooting
+
+En caso de problemas con encriptación:
+- Revisa [CONNECTIVITY-AND-DEPLOYMENT-STATUS.md](./CONNECTIVITY-AND-DEPLOYMENT-STATUS.md)
+- Verifica que `ENCRYPTION_KEY` esté configurado en Vercel
+- Consulta los logs en Vercel → Functions Analytics
+
+---
+
+**SAGO FACTU** — Enterprise Billing Platform for Panamá
+🚀 En vivo en: [https://sago-factu-v0-2.vercel.app/](https://sago-factu-v0-2.vercel.app/)
 Construido con ❤️ por el equipo de UbicSystem. Para soporte escribe a `soporte@sago-factu.com`.
