@@ -47,15 +47,22 @@ export async function storeCertificate(input: CertificateUploadInput): Promise<s
 
   const encryptedPin = encryptPin(input.pin)
 
-  if (activate) {
-    await prisma.digitalCertificate.updateMany({
-      where: {
-        organizationId: input.userId ? undefined : input.tenantId,
-        userId: input.userId ?? undefined,
-        isActive: true,
-      },
-      data: { isActive: false },
-    })
+  // 🔑 STRATEGY: Delete old certificates instead of just deactivating
+  // This prevents certificate accumulation in the database
+  const whereClause = input.userId
+    ? { userId: input.userId }
+    : { organizationId: input.tenantId, userId: null };
+
+  const oldCerts = await prisma.digitalCertificate.findMany({
+    where: whereClause,
+    select: { id: true },
+  });
+
+  if (oldCerts.length > 0) {
+    await prisma.digitalCertificate.deleteMany({
+      where: whereClause,
+    });
+    console.log(`[CERTIFICATES] Deleted ${oldCerts.length} old certificate(s) for ${input.userId ? `user ${input.userId}` : `organization ${input.tenantId}`}`);
   }
 
   const created = await prisma.digitalCertificate.create({
