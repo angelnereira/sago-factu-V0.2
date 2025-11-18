@@ -1,3 +1,13 @@
+/**
+ * DEPRECATED: This component is no longer used.
+ *
+ * Folio purchase functionality has been deprecated. Folios are now managed
+ * exclusively through HKA synchronization.
+ *
+ * This file is kept for backwards compatibility and historical reference.
+ * It can be safely deleted after migration period (after 2025-12-17).
+ */
+
 "use client"
 
 import { X } from "lucide-react"
@@ -9,6 +19,10 @@ interface FolioPurchaseModalProps {
   onClose: () => void
 }
 
+/**
+ * @deprecated This component is no longer functional.
+ * Use HKA synchronization (POST /api/folios/sincronizar) instead.
+ */
 export function FolioPurchaseModal({ isOpen, onClose }: FolioPurchaseModalProps) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(100)

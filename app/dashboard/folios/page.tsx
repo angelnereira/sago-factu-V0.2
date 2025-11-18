@@ -3,7 +3,6 @@ import { redirect } from "next/navigation"
 import { prismaServer as prisma } from "@/lib/prisma-server"
 import { FolioStats } from "@/components/folios/folio-stats"
 import { FolioList } from "@/components/folios/folio-list"
-import { FolioPurchaseButton } from "@/components/folios/folio-purchase-button"
 import { FolioSyncButton } from "@/components/folios/folio-sync-button"
 
 export default async function FoliosPage() {
@@ -89,7 +88,6 @@ export default async function FoliosPage() {
         </div>
         <div className="flex gap-3">
           <FolioSyncButton organizationId={organizationId} />
-          <FolioPurchaseButton />
         </div>
       </div>
 
