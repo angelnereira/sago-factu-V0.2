@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     }
 
     // Solo SUPER_ADMIN y ADMIN pueden probar la conexión
-    if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ADMIN") {
+    if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ORG_ADMIN") {
       return NextResponse.json(
         { error: "No tienes permisos para realizar esta acción" },
         { status: 403 }

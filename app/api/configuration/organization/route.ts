@@ -13,8 +13,8 @@ export async function PUT(request: Request) {
       )
     }
 
-    // Solo SUPER_ADMIN y ADMIN pueden actualizar
-    if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ADMIN") {
+    // Solo SUPER_ADMIN y ORG_ADMIN pueden actualizar configuración organizacional
+    if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ORG_ADMIN") {
       return NextResponse.json(
         { error: "No tienes permisos para realizar esta acción" },
         { status: 403 }
