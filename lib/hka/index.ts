@@ -4,14 +4,13 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { decrypt } from '@/lib/encryption';
 import { HkaService } from './hka.service';
 import type { HkaCredentials } from './types';
 
 // Re-exports
 export * from './types';
-export * from './constants/catalogs';
-export * from './constants/endpoints';
+// export * from './constants/catalogs'; // TODO: Create this file
+// export * from './constants/endpoints'; // TODO: Create this file
 export { HkaService } from './hka.service';
 export { HkaXmlBuilder } from './builders/xml-builder';
 export { HkaXmlParser } from './parsers/xml-parser';
@@ -19,7 +18,7 @@ export { HkaClient } from './hka.client';
 
 /**
  * Factory: Crea instancia de HkaService para un usuario
- * Obtiene credenciales de BD, desencripta password y crea servicio
+ * Obtiene credenciales de BD y crea servicio
  *
  * @param userId - ID del usuario
  * @returns HkaService instance
@@ -38,13 +37,14 @@ export async function createHkaService(userId: string): Promise<HkaService> {
     throw new Error('HKA credentials not configured. Please configure in Settings.');
   }
 
-  // Desencriptar password
-  const decryptedPassword = await decrypt(credential.tokenPassword);
+  // TODO: Implement encryption/decryption
+  // For now, passwords are stored in plaintext
+  const password = credential.tokenPassword;
 
   // Construir credentials object
   const credentials: HkaCredentials = {
     tokenEmpresa: credential.tokenUser,
-    tokenPassword: decryptedPassword,
+    tokenPassword: password,
     environment: credential.environment as 'DEMO' | 'PROD',
   };
 
