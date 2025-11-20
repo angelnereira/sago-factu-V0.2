@@ -279,7 +279,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: '/',
     error: '/',
-    signOut: 'https://sago-factu-v0-2.vercel.app/'
+    signOut: 'https://sago-factu.vercel.app/'
   },
   session: {
     strategy: 'jwt',

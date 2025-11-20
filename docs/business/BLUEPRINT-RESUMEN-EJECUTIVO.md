@@ -377,7 +377,7 @@ SAGO FACTU es una **oportunidad de negocio única** en Panamá que:
 **Proyección agresiva**: $250K MRR en Year 2 (exit target)
 
 **Call to Action**:
-- Pymes: Registrarse en https://sago-factu-v0-2.vercel.app/
+- Pymes: Registrarse en https://sago-factu.vercel.app/
 - Distribuidores: Contactar para partnership
 - Inversores: Conversar sobre Series A
 

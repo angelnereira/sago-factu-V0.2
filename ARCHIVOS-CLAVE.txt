@@ -203,7 +203,7 @@ df1b7ab - docs: Resumen completo
 ═══════════════════════════════════════════════
 
 Desarrollo:  http://localhost:3000
-Producción:  https://sago-factu-v0-2.vercel.app
+Producción:  https://sago-factu.vercel.app
 Repositorio: https://github.com/angelnereira/sago-factu-V0.2
 Test:        http://localhost:3000/test-signup
 

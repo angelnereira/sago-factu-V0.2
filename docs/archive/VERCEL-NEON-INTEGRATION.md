@@ -136,7 +136,7 @@ Role: neondb_owner
 DATABASE_URL=postgresql://neondb_owner:xxx@xxx.neon.tech/neondb?sslmode=require
 
 # ✅ Variables de NextAuth
-NEXTAUTH_URL=https://sago-factu-v0-2.vercel.app
+NEXTAUTH_URL=https://sago-factu.vercel.app
 NEXTAUTH_SECRET=xxx
 
 # ✅ Variables de App

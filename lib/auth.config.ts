@@ -119,7 +119,7 @@ export default {
   pages: {
     signIn: '/',
     error: '/',
-    signOut: 'https://sago-factu-v0-2.vercel.app/',
+    signOut: 'https://sago-factu.vercel.app/',
   },
   callbacks: {
     async jwt({ token, user }) {

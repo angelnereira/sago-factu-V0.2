@@ -16,7 +16,7 @@
 
 <div align="center">
 
-### ➡️ **[ACCEDER A SAGO FACTU EN PRODUCCIÓN](https://sago-factu-v0-2.vercel.app/)**
+### ➡️ **[ACCEDER A SAGO FACTU EN PRODUCCIÓN](https://sago-factu.vercel.app/)**
 
 </div>
 
@@ -60,7 +60,7 @@
 npm run build  # ✅ Completa sin errores
 
 # Test de Encriptación
-curl https://sago-factu-v0-2.vercel.app/api/debug/encryption-test
+curl https://sago-factu.vercel.app/api/debug/encryption-test
 # Response: { "success": true, "match": true }
 
 # Estado de la BD
@@ -113,7 +113,7 @@ Consulta la documentación ampliada en `docs/architecture/overview.md`.
 
 No necesitas instalar nada. Solo:
 
-1. **Abre** [https://sago-factu-v0-2.vercel.app/](https://sago-factu-v0-2.vercel.app/) en tu navegador
+1. **Abre** [https://sago-factu.vercel.app/](https://sago-factu.vercel.app/) en tu navegador
 2. **Inicia sesión** con las credenciales demo:
    - Super Admin: `admin@sago-factu.com` / `admin123`
    - Usuario Demo: `usuario@empresa.com` / `usuario123`
@@ -142,7 +142,7 @@ Luego accede a `http://localhost:3000` con las credenciales demo arriba menciona
 
 #### Test Rápido (5 minutos)
 
-1. **Inicia sesión** en https://sago-factu-v0-2.vercel.app/ con:
+1. **Inicia sesión** en https://sago-factu.vercel.app/ con:
    ```
    usuario@empresa.com / usuario123
    ```
@@ -268,7 +268,7 @@ Este proyecto se distribuye bajo licencia [MIT](./LICENSE). Consulta el document
 
 ### Sobre la App en Producción
 
-La aplicación en [https://sago-factu-v0-2.vercel.app/](https://sago-factu-v0-2.vercel.app/) está **completamente funcional** y lista para demostración:
+La aplicación en [https://sago-factu.vercel.app/](https://sago-factu.vercel.app/) está **completamente funcional** y lista para demostración:
 
 - **Base de datos**: PostgreSQL en Neon (conectada y operativa)
 - **Autenticación**: NextAuth v5 con credenciales demo pre-cargadas
@@ -304,7 +304,7 @@ En caso de problemas con encriptación:
 ---
 
 **SAGO FACTU** — Enterprise Billing Platform for Panamá
-🚀 En vivo en: [https://sago-factu-v0-2.vercel.app/](https://sago-factu-v0-2.vercel.app/)
+🚀 En vivo en: [https://sago-factu.vercel.app/](https://sago-factu.vercel.app/)
 Construido con ❤️ por el equipo de UbicSystem. Para soporte escribe a `soporte@sago-factu.com`.
 ---
 

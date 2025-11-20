@@ -134,7 +134,7 @@ export const metadata: Metadata = {
 ## 📱 Guía de Instalación
 
 ### **Android (Chrome/Edge)**
-1. Visita: `https://sago-factu-v0-2.vercel.app/`
+1. Visita: `https://sago-factu.vercel.app/`
 2. Aparecerá un banner: **"Instala SAGO-FACTU en tu dispositivo"**
 3. Click en **"Instalar"**
 4. Confirma en el diálogo del navegador
@@ -146,7 +146,7 @@ export const metadata: Metadata = {
 ---
 
 ### **iOS (Safari)**
-1. Visita: `https://sago-factu-v0-2.vercel.app/`
+1. Visita: `https://sago-factu.vercel.app/`
 2. Tap en el botón **Compartir** (ícono de compartir)
 3. Scroll y selecciona **"Agregar a pantalla de inicio"**
 4. Edita el nombre si lo deseas
@@ -156,7 +156,7 @@ export const metadata: Metadata = {
 ---
 
 ### **Desktop (Chrome/Edge/Brave)**
-1. Visita: `https://sago-factu-v0-2.vercel.app/`
+1. Visita: `https://sago-factu.vercel.app/`
 2. Click en el ícono **"Instalar"** en la barra de direcciones (➕ o 💻)
 3. Click en **"Instalar"** en el diálogo
 4. ✅ App instalada como aplicación de escritorio

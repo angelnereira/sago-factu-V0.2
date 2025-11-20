@@ -52,7 +52,7 @@ específicamente para el mercado panameño, con estas características:
 ✅ Firma digital W3C - XMLDSig con RSA-SHA256 (estándar internacional)
 ✅ Seguridad enterprise - AES-256-GCM para encriptación de credenciales
 
-Estamos en producción en Vercel: https://sago-factu-v0-2.vercel.app/
+Estamos en producción en Vercel: https://sago-factu.vercel.app/
 
 ═════════════════════════════════════════════════════════════════════════
 
@@ -165,7 +165,7 @@ RESULTADO ESPERADO
 
 La plataforma está en producción y lista para exploración:
 
-🔗 URL: https://sago-factu-v0-2.vercel.app/
+🔗 URL: https://sago-factu.vercel.app/
 
 📝 Credenciales Demo:
    • Admin: admin@sago-factu.com / admin123
@@ -211,7 +211,7 @@ Si encuentran atractiva esta propuesta:
 🔗 Recursos Técnicos:
    • Documentación técnica: https://github.com/angelnereira/sago-factu-V0.2/tree/main/docs
    • GitHub del Proyecto: https://github.com/angelnereira/sago-factu-V0.2
-   • Ambiente: Vercel (https://sago-factu-v0-2.vercel.app/)
+   • Ambiente: Vercel (https://sago-factu.vercel.app/)
 
 ═════════════════════════════════════════════════════════════════════════
 
@@ -244,7 +244,7 @@ CARGO: [Tu Posición - Ej: Lead Developer / Product Manager]
 ORGANIZACIÓN: SAGO FACTU
 📧 EMAIL: [Tu Email Corporativo]
 📱 TELÉFONO: [Tu Teléfono con código de país]
-🌐 WEBSITE: https://sago-factu-v0-2.vercel.app/
+🌐 WEBSITE: https://sago-factu.vercel.app/
 🐙 GITHUB: https://github.com/angelnereira/sago-factu-V0.2
 
 ---

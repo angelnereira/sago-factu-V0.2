@@ -2,7 +2,7 @@
 
 **Última actualización**: Noviembre 2025
 **Status**: ✅ Producción Operativa
-**URL**: https://sago-factu-v0-2.vercel.app/
+**URL**: https://sago-factu.vercel.app/
 
 ---
 
@@ -10,7 +10,7 @@
 
 ### 1. Acceder a la App
 
-1. Abre tu navegador en: **https://sago-factu-v0-2.vercel.app/**
+1. Abre tu navegador en: **https://sago-factu.vercel.app/**
 2. Verás la pantalla de login
 
 ### 2. Credenciales Demo
@@ -159,7 +159,7 @@ Para verificar que PostgreSQL está conectado:
 
 Para verificar el endpoint de encriptación (solo en dev o test):
 ```bash
-curl https://sago-factu-v0-2.vercel.app/api/debug/encryption-test
+curl https://sago-factu.vercel.app/api/debug/encryption-test
 ```
 
 Respuesta esperada:

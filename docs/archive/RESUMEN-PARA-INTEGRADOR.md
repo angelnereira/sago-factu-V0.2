@@ -3,7 +3,7 @@
 ## ⚡ PROBLEMA
 
 **Síntoma:** Formulario de registro falla con "Error en el servidor"  
-**Ubicación:** `http://localhost:3000/auth/signup` y `https://sago-factu-v0-2.vercel.app/auth/signup`  
+**Ubicación:** `http://localhost:3000/auth/signup` y `https://sago-factu.vercel.app/auth/signup`  
 **Impacto:** Los usuarios no pueden registrarse desde el frontend
 
 ## ✅ LO QUE SÍ FUNCIONA
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
 ## 📊 DATOS DE CONTACTO
 
 - **Repositorio:** https://github.com/angelnereira/sago-factu-V0.2
-- **Producción:** https://sago-factu-v0-2.vercel.app
+- **Producción:** https://sago-factu.vercel.app
 - **Servidor local:** http://localhost:3000
 - **Test page:** http://localhost:3000/test-signup
 

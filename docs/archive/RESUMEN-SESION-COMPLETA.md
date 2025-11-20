@@ -282,7 +282,7 @@ SSL: Habilitado
 - Commit: `37a7ca8`
 - Branch: `main`
 - Estado: Building...
-- URL: https://sago-factu-v0-2.vercel.app
+- URL: https://sago-factu.vercel.app
 
 ### **Verificar deployment:**
 1. Ve a: https://vercel.com/dashboard
@@ -291,11 +291,11 @@ SSL: Habilitado
 4. Espera estado: ✅ Ready (2-3 minutos)
 
 ### **Probar en producción:**
-1. **Registro:** https://sago-factu-v0-2.vercel.app/auth/signup
-2. **Login:** https://sago-factu-v0-2.vercel.app/auth/signin
+1. **Registro:** https://sago-factu.vercel.app/auth/signup
+2. **Login:** https://sago-factu.vercel.app/auth/signin
    - Email: `admin@sagofactu.com`
    - Password: `admin123`
-3. **Dashboard:** https://sago-factu-v0-2.vercel.app/dashboard
+3. **Dashboard:** https://sago-factu.vercel.app/dashboard
 
 ---
 
@@ -510,7 +510,7 @@ npm run build                  # Build local
 - ✅ Preparado para siguientes fases
 
 **URL de Producción:**
-https://sago-factu-v0-2.vercel.app
+https://sago-factu.vercel.app
 
 **Repositorio:**
 https://github.com/angelnereira/sago-factu-V0.2

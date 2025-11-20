@@ -30,7 +30,7 @@
 
 ### **Despliegue**
 - **Plataforma:** Vercel
-- **URL Producción:** https://sago-factu-v0-2.vercel.app
+- **URL Producción:** https://sago-factu.vercel.app
 - **Build:** Custom script (`vercel-build.sh`)
 - **CI/CD:** Auto-deploy en push a `main`
 
@@ -198,7 +198,7 @@ scripts/
      c. Ejecuta seed (si necesario)
      d. Build de Next.js
    - Deploy a producción
-   - URL: https://sago-factu-v0-2.vercel.app
+   - URL: https://sago-factu.vercel.app
 ```
 
 ---
@@ -221,7 +221,7 @@ HKA_ENV="demo"
 
 ```bash
 DATABASE_URL="postgresql://neondb_owner:YOUR_PASSWORD@YOUR_ENDPOINT.neon.tech/neondb?sslmode=require"
-NEXTAUTH_URL="https://sago-factu-v0-2.vercel.app"
+NEXTAUTH_URL="https://sago-factu.vercel.app"
 NEXTAUTH_SECRET="YOUR_NEXTAUTH_SECRET_HERE"
 # ... mismas variables que dev
 ```

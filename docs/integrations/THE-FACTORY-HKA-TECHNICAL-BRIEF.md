@@ -465,7 +465,7 @@ async function signXml(xmlContent: string, certificateP12: Buffer, pin: string):
 
 La plataforma está **100% operativa en Vercel**:
 
-**URL**: https://sago-factu-v0-2.vercel.app/
+**URL**: https://sago-factu.vercel.app/
 
 **Credenciales Demo**:
 - **Super Admin**: `admin@sago-factu.com` / `admin123`

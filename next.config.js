@@ -91,7 +91,7 @@ const withPWA = require('next-pwa')({
       }
     },
     {
-      urlPattern: /^https?:\/\/sago-factu-v0-2\.vercel\.app\/.*/i,
+      urlPattern: /^https?:\/\/sago-factu\.vercel\.app\/.*/i,
       handler: 'NetworkFirst',
       options: {
         cacheName: 'sago-factu-pages',

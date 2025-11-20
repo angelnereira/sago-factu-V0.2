@@ -436,7 +436,7 @@ Si eres DISTRIBUIDOR:
 
 Si eres USUARIO:
 └─ Registrarse en app en vivo
-   URL: https://sago-factu-v0-2.vercel.app/
+   URL: https://sago-factu.vercel.app/
 ```
 
 ---

@@ -331,12 +331,12 @@ Eliminaciones: -174
 
 1. **Esperar deployment de Vercel** (2-3 minutos)
 2. **Probar registro en producción:**
-   - https://sago-factu-v0-2.vercel.app/auth/signup
+   - https://sago-factu.vercel.app/auth/signup
    - Crear nuevo usuario
    - Verificar que no hay "error de servidor"
 
 3. **Probar login en producción:**
-   - https://sago-factu-v0-2.vercel.app/auth/signin
+   - https://sago-factu.vercel.app/auth/signin
    - Usar credenciales de Super Admin configuradas
    - Verificar redirección a dashboard
 

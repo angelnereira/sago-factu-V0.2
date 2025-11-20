@@ -1006,7 +1006,7 @@ p.\$connect().then(() => console.log('✅ Conectado')).catch(e => console.error(
 
 ### **URLs:**
 - **Desarrollo:** http://localhost:3000
-- **Producción:** https://sago-factu-v0-2.vercel.app
+- **Producción:** https://sago-factu.vercel.app
 - **Repositorio:** https://github.com/angelnereira/sago-factu-V0.2
 
 ### **Contacto del Proyecto:**

@@ -74,7 +74,7 @@ npm run dev
 
 ## 🌐 ACCESO A PRODUCCIÓN
 
-**URL:** https://sago-factu-v0-2.vercel.app
+**URL:** https://sago-factu.vercel.app
 
 ### Usuarios de Prueba:
 
@@ -271,7 +271,7 @@ tail -f /tmp/sago-dev.log
 ### Vercel:
 - Dashboard: https://vercel.com/dashboard
 - Proyecto: sago-factu-v0-2
-- URL Producción: https://sago-factu-v0-2.vercel.app
+- URL Producción: https://sago-factu.vercel.app
 
 ### Neon Database:
 - Console: https://console.neon.tech
@@ -289,7 +289,7 @@ tail -f /tmp/sago-dev.log
 
 **URLs Importantes:**
 - Repositorio: https://github.com/angelnereira/sago-factu-V0.2
-- Producción: https://sago-factu-v0-2.vercel.app
+- Producción: https://sago-factu.vercel.app
 - Test: http://localhost:3000/test-signup (local)
 
 ---

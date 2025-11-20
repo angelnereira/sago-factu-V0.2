@@ -6,7 +6,7 @@
 
 ## ⚡ Acceso Rápido (5 segundos)
 
-### 👉 **[ABRE LA APP AQUÍ](https://sago-factu-v0-2.vercel.app/)**
+### 👉 **[ABRE LA APP AQUÍ](https://sago-factu.vercel.app/)**
 
 ```
 Usuario Demo:  usuario@empresa.com
@@ -25,7 +25,7 @@ Contraseña:    admin123
 
 | Aspecto | Status | Detalles |
 |---------|--------|----------|
-| **App en Vivo** | ✅ Operativa | https://sago-factu-v0-2.vercel.app/ |
+| **App en Vivo** | ✅ Operativa | https://sago-factu.vercel.app/ |
 | **Build** | ✅ Sin Errores | Zero failing tests |
 | **Encriptación** | ✅ Funcional | AES-256-GCM + PBKDF2 |
 | **Base de Datos** | ✅ Conectada | PostgreSQL Neon |
@@ -37,7 +37,7 @@ Contraseña:    admin123
 ## 🎯 Qué Puedes Hacer Ahora
 
 ### 1️⃣ **Probar la App en Vivo** (5 min)
-- Abre https://sago-factu-v0-2.vercel.app/
+- Abre https://sago-factu.vercel.app/
 - Inicia sesión con credenciales demo
 - Explora dashboards, facturas y reportes
 
@@ -195,7 +195,7 @@ Tu app está:
 
 ### Próximos Pasos
 
-1. Prueba la app en https://sago-factu-v0-2.vercel.app/
+1. Prueba la app en https://sago-factu.vercel.app/
 2. Lee [ENCRYPTION-FIX-SUMMARY.md](./ENCRYPTION-FIX-SUMMARY.md) para entender qué se fixeó
 3. Sigue [TESTING-PRODUCTION.md](./TESTING-PRODUCTION.md) para testing completo
 4. Contacta a UbicSystem para cambios adicionales o deployment en tu infraestructura
@@ -203,4 +203,4 @@ Tu app está:
 ---
 
 **SAGO FACTU v0.7.0** | Enterprise Billing Platform for Panamá
-🚀 En vivo en: https://sago-factu-v0-2.vercel.app/
+🚀 En vivo en: https://sago-factu.vercel.app/

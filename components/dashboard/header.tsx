@@ -25,7 +25,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
     // Primero hacer signOut
     await signOut({ redirect: false })
     // Luego redirigir manualmente a la URL de producción
-    window.location.href = 'https://sago-factu-v0-2.vercel.app/'
+    window.location.href = 'https://sago-factu.vercel.app/'
   }
 
   return (
