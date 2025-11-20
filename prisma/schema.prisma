@@ -31,13 +31,14 @@ model Organization {
   hkaEnvironment   String?         @default("demo") // demo | prod
 
   // Campos para XML/HKA
-  rucType       String  @default("2") // 1=Natural, 2=Jurídica, 3=Extranjero
-  tradeName     String? // Nombre comercial
-  branchCode    String  @default("0000")
-  locationCode  String  @default("1-1-1")
-  province      String  @default("PANAMA")
-  district      String  @default("PANAMA")
-  corregimiento String  @default("SAN FELIPE")
+  rucType         String  @default("2") // 1=Natural, 2=Jurídica, 3=Extranjero
+  tradeName       String? // Nombre comercial
+  commercialName  String? // Alias de tradeName
+  branchCode      String  @default("0000")
+  locationCode    String  @default("1-1-1")
+  province        String  @default("PANAMA")
+  district        String  @default("PANAMA")
+  corregimiento   String  @default("SAN FELIPE")
 
   // Configuración de facturación automática
   autoSendToHKA        Boolean @default(true)
@@ -431,14 +432,16 @@ model Invoice {
   hkaCode         String? // Código de respuesta HKA
 
   // HKA Integration - Campos adicionales
-  hkaProtocol        String?   @unique // Número de protocolo HKA
-  hkaProtocolDate    DateTime?
-  pdfBase64          String?   @db.Text // PDF firmado en base64
-  hkaResponseCode    String? // Código numérico de respuesta HKA
-  hkaResponseMessage String?   @db.Text // Mensaje de respuesta detallado
-  hkaResponseData    Json? // Datos adicionales en JSON
-  hkaLastAttempt     DateTime?
-  hkaAttempts        Int       @default(0)
+  hkaProtocol         String?   @unique // Número de protocolo HKA (para v1)
+  protocoloSeguridad  String? // Protocolo de seguridad HKA v2
+  hkaProtocolDate     DateTime?
+  pdfBase64           String?   @db.Text // PDF firmado en base64
+  hkaResponseCode     String? // Código numérico de respuesta HKA
+  hkaResponseMessage  String?   @db.Text // Mensaje de respuesta detallado
+  hkaResponseData     Json? // Datos adicionales en JSON
+  hkaLastAttempt      DateTime?
+  hkaAttempts         Int       @default(0)
+  emittedAt           DateTime? // Fecha de emisión exitosa
   
   // Control de descarga de archivos
   pdfDescargado      Boolean   @default(false) // Indica si el PDF fue descargado
@@ -490,7 +493,8 @@ enum InvoiceStatus {
   DRAFT // Borrador
   QUEUED // En cola
   PROCESSING // Procesando en HKA
-  CERTIFIED // Certificado por DGI
+  EMITTED // Emitido exitosamente por HKA
+  CERTIFIED // Certificado por DGI (legacy)
   REJECTED // Rechazado
   CANCELLED // Anulado
   ERROR // Error
