@@ -4,11 +4,13 @@ import { prismaServer as prisma } from "@/lib/prisma-server"
 import { MetricsCard } from "@/components/dashboard/metrics-card"
 import { FolioChart } from "@/components/dashboard/folio-chart"
 import { RecentInvoices } from "@/components/dashboard/recent-invoices"
+import { FoliosWidget } from "@/app/dashboard/components/FoliosWidget"
+import { EmissionHistory } from "@/app/dashboard/components/EmissionHistory"
 import { FileText, Folder, TrendingUp, Users } from "lucide-react"
 
 export default async function DashboardPage() {
   const session = await auth()
-  
+
   if (!session) {
     redirect("/")
   }
@@ -32,8 +34,8 @@ export default async function DashboardPage() {
       consumedAmount: true,
     },
   })
-  
-  const foliosDisponibles = folioAssignments.reduce((sum, fa) => 
+
+  const foliosDisponibles = folioAssignments.reduce((sum, fa) =>
     sum + (fa.assignedAmount - fa.consumedAmount), 0
   )
 
@@ -108,6 +110,12 @@ export default async function DashboardPage() {
           trend={0}
           color="orange"
         />
+      </div>
+
+      {/* Widgets HKA v2.0 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <FoliosWidget />
+        <EmissionHistory />
       </div>
 
       {/* Gráfica y facturas recientes */}

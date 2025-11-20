@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Building2, Users, FileText, Plug, Bell, Shield, PenTool, UserCircle, Key } from "lucide-react"
+import { Building2, Users, FileText, Plug, Bell, Shield, UserCircle, Key } from "lucide-react"
 import { OrganizationSettings } from "./organization-settings"
 import { UsersManagement } from "./users-management"
 import { InvoiceSettings } from "./invoice-settings"
@@ -9,7 +9,6 @@ import { IntegrationSettings } from "./integration-settings"
 import { NotificationSettings } from "./notification-settings"
 import { SecuritySettings } from "./security-settings"
 import { ProfileSettings } from "./profile-settings"
-import { DigitalSignaturePanel } from "@/components/certificates/digital-signature-panel"
 import HKACredentialsForm from "@/components/simple/hka-credentials-form"
 
 interface Organization {
@@ -82,28 +81,6 @@ interface ConfigurationTabsProps {
     dv: string | null
   }
   isSuperAdmin?: boolean
-  initialCertificates?: {
-    id: string
-    subject: string
-    issuer: string
-    validFrom: string
-    validTo: string
-    ruc: string
-  }[]
-  initialPersonalCertificates?: {
-    id: string
-    subject: string
-    issuer: string
-    validFrom: string
-    validTo: string
-    ruc: string
-  }[]
-  signatureConfig?: {
-    signatureMode: "ORGANIZATION" | "PERSONAL"
-    digitalCertificateId: string | null
-    autoSign: boolean
-    notifyOnExpiration: boolean
-  } | null
 }
 
 type TabId =
@@ -113,7 +90,6 @@ type TabId =
   | "invoicing"
   | "integration"
   | "hkaCredentials"
-  | "digitalSignature"
   | "notifications"
   | "security"
 
@@ -160,11 +136,6 @@ const tabs: Tab[] = [
     icon: Key,
   },
   {
-    id: "digitalSignature",
-    name: "Firma digital",
-    icon: PenTool,
-  },
-  {
     id: "notifications",
     name: "Notificaciones",
     icon: Bell,
@@ -187,9 +158,6 @@ export function ConfigurationTabs({
   userId,
   currentUser,
   isSuperAdmin = false,
-  initialCertificates = [],
-  initialPersonalCertificates = [],
-  signatureConfig = null,
 }: ConfigurationTabsProps) {
   const visibleTabs = tabs.filter((tab) => {
     if (!tab.roles) return true
@@ -221,10 +189,9 @@ export function ConfigurationTabs({
                 onClick={() => setActiveTab(tab.id)}
                 className={`
                   flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                  ${
-                    isActive
-                      ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
-                      : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                  ${isActive
+                    ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                    : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
                   }
                 `}
               >
@@ -248,8 +215,8 @@ export function ConfigurationTabs({
           <OrganizationSettings organization={organization} />
         )}
         {activeTabSafe === "users" && (
-          <UsersManagement 
-            users={users} 
+          <UsersManagement
+            users={users}
             organizationId={organization.id}
             organizations={organizations}
             isSuperAdmin={isSuperAdmin}
@@ -282,13 +249,6 @@ export function ConfigurationTabs({
               <HKACredentialsForm />
             </div>
           </div>
-        )}
-        {activeTabSafe === "digitalSignature" && (
-          <DigitalSignaturePanel
-            initialCertificates={initialCertificates}
-            initialPersonalCertificates={initialPersonalCertificates}
-            initialConfig={signatureConfig}
-          />
         )}
         {activeTabSafe === "notifications" && (
           <NotificationSettings

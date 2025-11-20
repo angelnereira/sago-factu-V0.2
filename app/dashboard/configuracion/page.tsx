@@ -39,13 +39,13 @@ export default async function ConfigurationPage() {
 
   const organizations = isSuperAdmin
     ? await prisma.organization.findMany({
-        select: {
-          id: true,
-          name: true,
-          ruc: true,
-        },
-        orderBy: { name: "asc" },
-      })
+      select: {
+        id: true,
+        name: true,
+        ruc: true,
+      },
+      orderBy: { name: "asc" },
+    })
     : []
 
   let usersWithFolios: any[] = []
@@ -121,26 +121,6 @@ export default async function ConfigurationPage() {
     })
   }
 
-  const availableCertificates = canManageOrganization
-    ? await prisma.digitalCertificate.findMany({
-        where: {
-          organizationId: organization.id,
-          isActive: true,
-        },
-        orderBy: { uploadedAt: "desc" },
-      })
-    : []
-
-  const personalCertificates = await prisma.digitalCertificate.findMany({
-    where: {
-      userId: session.user.id,
-    },
-    orderBy: { uploadedAt: "desc" },
-  })
-
-  const userSignatureConfig = await prisma.userSignatureConfig.findUnique({
-    where: { userId: session.user.id },
-  })
 
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -196,32 +176,7 @@ export default async function ConfigurationPage() {
         userId={session.user.id}
         currentUser={currentUser}
         isSuperAdmin={isSuperAdmin}
-        initialCertificates={availableCertificates.map((certificate) => ({
-          id: certificate.id,
-          subject: certificate.subject,
-          issuer: certificate.issuer,
-          validFrom: certificate.validFrom.toISOString(),
-          validTo: certificate.validTo.toISOString(),
-          ruc: certificate.ruc,
-        }))}
-        initialPersonalCertificates={personalCertificates.map((certificate) => ({
-          id: certificate.id,
-          subject: certificate.subject,
-          issuer: certificate.issuer,
-          validFrom: certificate.validFrom.toISOString(),
-          validTo: certificate.validTo.toISOString(),
-          ruc: certificate.ruc,
-        }))}
-        signatureConfig={userSignatureConfig
-          ? {
-              signatureMode: userSignatureConfig.signatureMode,
-              digitalCertificateId: userSignatureConfig.digitalCertificateId,
-              autoSign: userSignatureConfig.autoSign,
-              notifyOnExpiration: userSignatureConfig.notifyOnExpiration,
-            }
-          : null}
       />
     </div>
   )
 }
-
