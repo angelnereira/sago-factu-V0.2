@@ -18,10 +18,6 @@
 
 ### ➡️ **[ACCEDER A SAGO FACTU EN PRODUCCIÓN](https://sago-factu-v0-2.vercel.app/)**
 
-🎯 **Credenciales Demo**:
-- **Super Admin**: `admin@sago-factu.com` / `admin123`
-- **Usuario Demo**: `usuario@empresa.com` / `usuario123`
-
 </div>
 
 ---
