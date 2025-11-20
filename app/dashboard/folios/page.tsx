@@ -1,13 +1,10 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { prismaServer as prisma } from "@/lib/prisma-server"
-import { FolioStats } from "@/components/folios/folio-stats"
-import { FolioList } from "@/components/folios/folio-list"
-import { FolioSyncButton } from "@/components/folios/folio-sync-button"
+import { FoliosMonitor } from "@/app/dashboard/components/FoliosMonitor"
 
 export default async function FoliosPage() {
   const session = await auth()
-  
+
   if (!session) {
     redirect("/")
   }
@@ -16,97 +13,42 @@ export default async function FoliosPage() {
 
   if (!organizationId) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-600 dark:text-red-400">Usuario sin organización asignada</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
+        <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-2xl border border-red-100 dark:border-red-800 max-w-md">
+          <h2 className="text-xl font-semibold text-red-800 dark:text-red-400 mb-2">
+            Sin Organización Asignada
+          </h2>
+          <p className="text-red-600 dark:text-red-300">
+            Tu usuario no tiene una organización configurada. Contacta al administrador del sistema.
+          </p>
+        </div>
       </div>
     )
   }
 
-  // Obtener estadísticas de folios
-  const folioAssignments = await prisma.folioAssignment.findMany({
-    where: { organizationId },
-    select: {
-      assignedAmount: true,
-      consumedAmount: true,
-    },
-  })
-
-  const totalFolios = folioAssignments.reduce((sum, fa) => sum + fa.assignedAmount, 0)
-  const foliosUsados = folioAssignments.reduce((sum, fa) => sum + fa.consumedAmount, 0)
-  const foliosDisponibles = totalFolios - foliosUsados
-  const foliosReservados = 0 // Por ahora no tenemos sistema de reservas
-
-  // Obtener pools de folios (a través de las asignaciones)
-  const folioAssignmentsWithPools = await prisma.folioAssignment.findMany({
-    where: { organizationId },
-    select: {
-      folioPool: true,
-    },
-    orderBy: { assignedAt: "desc" },
-    take: 10,
-  })
-  
-  const folioPools = folioAssignmentsWithPools.map(fa => fa.folioPool)
-
-  // Obtener asignaciones de folios con detalles
-  const folioAssignmentsDetailed = await prisma.folioAssignment.findMany({
-    where: { organizationId },
-    orderBy: { assignedAt: "desc" },
-    take: 20,
-    include: {
-      folioPool: true,
-    },
-  })
-
-  // Obtener usuarios que asignaron (si assignedBy existe)
-  const assignedByIds = folioAssignmentsDetailed
-    .map(fa => fa.assignedBy)
-    .filter((id): id is string => !!id)
-  
-  const users = assignedByIds.length > 0 ? await prisma.user.findMany({
-    where: {
-      id: { in: assignedByIds },
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-    },
-  }) : []
-
-  const usersMap = new Map(users.map(u => [u.id, u]))
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestión de Folios</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Administra y monitorea tus folios de facturación
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <FolioSyncButton organizationId={organizationId} />
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+          Monitor de Folios
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2 text-lg">
+          Estado en tiempo real de tus folios de facturación electrónica en HKA
+        </p>
       </div>
 
-      {/* Estadísticas */}
-      <FolioStats
-        total={totalFolios}
-        disponibles={foliosDisponibles}
-        usados={foliosUsados}
-        reservados={foliosReservados}
-      />
+      {/* Monitor Principal */}
+      <FoliosMonitor />
 
-      {/* Lista de folios */}
-      <FolioList
-        pools={folioPools}
-        assignments={folioAssignmentsDetailed.map(fa => ({
-          ...fa,
-          user: fa.assignedBy ? usersMap.get(fa.assignedBy) : null,
-        }))}
-      />
+      {/* Nota informativa */}
+      <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-800 dark:text-blue-300">
+        <p className="font-medium mb-1">Nota sobre la gestión de folios:</p>
+        <p>
+          Con la nueva integración HKA v2.0, los folios son gestionados centralizadamente en la nube de The Factory HKA.
+          No es necesario realizar asignaciones manuales locales. El sistema consumirá automáticamente del saldo disponible.
+        </p>
+      </div>
     </div>
   )
 }

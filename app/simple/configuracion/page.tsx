@@ -1,11 +1,10 @@
 import { auth } from '@/lib/auth';
 import { prismaServer as prisma } from '@/lib/prisma-server';
 import HKACredentialsForm from '@/components/simple/hka-credentials-form';
-import { DigitalSignaturePanel } from '@/components/certificates/digital-signature-panel';
 
 export default async function ConfiguracionPage() {
   const session = await auth();
-  
+
   if (!session?.user) {
     return null;
   }
@@ -22,28 +21,6 @@ export default async function ConfiguracionPage() {
   if (!user?.organization) {
     return null;
   }
-
-  const organization = user.organization;
-
-  const availableCertificates = await prisma.digitalCertificate.findMany({
-    where: {
-      organizationId: organization.id,
-      isActive: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  const personalCertificates = await prisma.digitalCertificate.findMany({
-    where: {
-      userId: session.user.id,
-      isActive: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  const signatureConfig = await prisma.userSignatureConfig.findUnique({
-    where: { userId: session.user.id },
-  });
 
   return (
     <div className="space-y-8">
@@ -97,44 +74,6 @@ export default async function ConfiguracionPage() {
           </p>
           <HKACredentialsForm />
         </div>
-      </section>
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Firma electrónica
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Carga el certificado digital de la organización y define cómo se firmarán las facturas que envías.
-          </p>
-        </div>
-
-        <DigitalSignaturePanel
-          initialCertificates={availableCertificates.map((certificate) => ({
-            id: certificate.id,
-            subject: certificate.subject,
-            issuer: certificate.issuer,
-            validFrom: certificate.validFrom.toISOString(),
-            validTo: certificate.validTo.toISOString(),
-            ruc: certificate.ruc,
-          }))}
-          initialPersonalCertificates={personalCertificates.map((certificate) => ({
-            id: certificate.id,
-            subject: certificate.subject,
-            issuer: certificate.issuer,
-            validFrom: certificate.validFrom.toISOString(),
-            validTo: certificate.validTo.toISOString(),
-            ruc: certificate.ruc,
-          }))}
-          initialConfig={signatureConfig
-            ? {
-                signatureMode: signatureConfig.signatureMode,
-                digitalCertificateId: signatureConfig.digitalCertificateId,
-                autoSign: signatureConfig.autoSign,
-                notifyOnExpiration: signatureConfig.notifyOnExpiration,
-              }
-            : null}
-        />
       </section>
     </div>
   );

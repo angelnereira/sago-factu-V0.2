@@ -6,6 +6,7 @@
 import { prisma } from '@/lib/prisma';
 import { HkaService } from './hka.service';
 import type { HkaCredentials } from './types';
+import { decrypt } from '@/lib/utils/encryption';
 
 // Re-exports
 export * from './types';
@@ -37,15 +38,24 @@ export async function createHkaService(userId: string): Promise<HkaService> {
     throw new Error('HKA credentials not configured. Please configure in Settings.');
   }
 
-  // TODO: Implement encryption/decryption
-  // For now, passwords are stored in plaintext
-  const password = credential.tokenPassword;
+  // Obtener credenciales
+  const tokenUser = credential.tokenUser;
+
+  // Desencriptar la contraseña
+  const rawPassword = credential.tokenPassword;
+  const tokenPassword = rawPassword ? decrypt(rawPassword) : undefined;
+
+  const environment = (credential.environment || 'DEMO') as 'DEMO' | 'PROD';
+
+  if (!tokenUser || !tokenPassword) {
+    throw new Error('Credenciales HKA incompletas (falta usuario o contraseña)');
+  }
 
   // Construir credentials object
   const credentials: HkaCredentials = {
-    tokenEmpresa: credential.tokenUser,
-    tokenPassword: password,
-    environment: credential.environment as 'DEMO' | 'PROD',
+    tokenEmpresa: tokenUser,
+    tokenPassword: tokenPassword,
+    environment: environment,
   };
 
   // Crear y retornar servicio

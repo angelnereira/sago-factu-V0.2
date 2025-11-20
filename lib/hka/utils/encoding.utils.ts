@@ -29,6 +29,11 @@ export function decodeBase64(str: string): string {
 }
 
 /**
+ * Alias para decodeBase64 (usado en algunos mappers)
+ */
+export const fromBase64 = decodeBase64;
+
+/**
  * Convierte Base64 a Buffer
  */
 export function base64ToBuffer(base64: string): Buffer {
@@ -64,4 +69,35 @@ export function unescapeXml(str: string): string {
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
         .replace(/&apos;/g, "'");
+}
+
+/**
+ * Formatea un monto numérico al formato requerido por HKA (2 decimales fijos por defecto)
+ * @param amount - El monto a formatear
+ * @param decimales - Número de decimales (default 2)
+ * @returns String con el monto formateado (ej. "100.00")
+ */
+export function formatMonto(amount: number, decimales: number = 2): string {
+    return amount.toFixed(decimales);
+}
+
+/**
+ * Formatea una cantidad numérica con decimales específicos
+ * @param cantidad - La cantidad a formatear
+ * @param decimales - Número de decimales (default 2)
+ * @returns String con la cantidad formateada
+ */
+export function formatCantidad(cantidad: number, decimales: number = 2): string {
+    return cantidad.toFixed(decimales);
+}
+
+/**
+ * Formatea el RUC según requerimientos de HKA
+ * @param ruc - El RUC original
+ * @param tipoRuc - Tipo de RUC (1, 2, 3)
+ * @returns RUC formateado
+ */
+export function formatRuc(ruc: string, tipoRuc: string): string {
+    // Eliminar espacios en blanco
+    return ruc.trim();
 }

@@ -8,7 +8,7 @@
 import { auth } from '@/lib/auth';
 import { createHkaService } from '@/lib/hka';
 import { HkaToDomainMapper } from '@/lib/hka/mappers';
-import { logger } from '@/lib/hka/utils/logger';
+import { hkaLogger as logger } from '@/lib/hka/utils/logger';
 import type { FolioBalance } from '@/lib/hka/mappers';
 
 /**
@@ -38,9 +38,9 @@ export async function checkFolios(): Promise<CheckFoliosOutput> {
     try {
       hkaService = await createHkaService(userId);
     } catch (credentialError: any) {
-      logger.error('HKA credentials error', {
-        userId,
-        error: credentialError.message,
+      logger.error('HKA_CREDENTIALS_ERROR', 'HKA credentials error', {
+        data: { userId },
+        error: credentialError instanceof Error ? credentialError : new Error(String(credentialError)),
       });
       return {
         success: false,
@@ -53,20 +53,22 @@ export async function checkFolios(): Promise<CheckFoliosOutput> {
     try {
       hkaResponse = await hkaService.foliosRestantes();
     } catch (hkaError: any) {
-      logger.error('HKA folios check failed', {
-        userId,
-        error: hkaError.message,
+      logger.error('HKA_FOLIOS_CHECK_FAILED', 'HKA folios check failed', {
+        data: { userId },
+        error: hkaError instanceof Error ? hkaError : new Error(String(hkaError)),
       });
-      return { success: false, error: `HKA error: ${hkaError.message}` };
+      return { success: false, error: `HKA error: ${hkaError instanceof Error ? hkaError.message : String(hkaError)}` };
     }
 
     // 4. Mapear respuesta
     const folioBalance = HkaToDomainMapper.mapFoliosRestantesResponse(hkaResponse);
 
-    logger.info('Folios checked successfully', {
-      userId,
-      disponibles: folioBalance.disponibles,
-      utilizados: folioBalance.utilizados,
+    logger.info('FOLIOS_CHECKED', 'Folios checked successfully', {
+      data: {
+        userId,
+        disponibles: folioBalance.disponibles,
+        utilizados: folioBalance.utilizados,
+      },
     });
 
     return {
@@ -74,9 +76,8 @@ export async function checkFolios(): Promise<CheckFoliosOutput> {
       data: folioBalance,
     };
   } catch (error: any) {
-    logger.error('Check folios action failed', {
-      error: error.message,
-      stack: error.stack,
+    logger.error('CHECK_FOLIOS_ERROR', 'Check folios action failed', {
+      error: error instanceof Error ? error : new Error(String(error)),
     });
 
     return {

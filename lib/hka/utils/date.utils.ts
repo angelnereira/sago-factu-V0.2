@@ -29,3 +29,27 @@ export function formatDateTimeHKA(date: Date): string {
 export function parseDateHKA(dateStr: string): Date {
     return new Date(dateStr);
 }
+
+/**
+ * Parsea fecha y hora desde formato HKA a Date
+ * Alias para parseDateHKA ya que el constructor de Date maneja ISO strings
+ */
+export function parseHkaDateTime(dateTimeStr: string): Date {
+    return new Date(dateTimeStr);
+}
+
+/**
+ * Convierte Date a formato HKA fecha y hora (ISO 8601 completo)
+ * Alias para formatDateTimeHKA
+ */
+export function toHkaDateTime(date: Date): string {
+    return formatDateTimeHKA(date);
+}
+
+/**
+ * Convierte Date a formato HKA fecha solamente (YYYY-MM-DD)
+ * Alias para formatDateHKA
+ */
+export function toHkaDate(date: Date): string {
+    return formatDateHKA(date);
+}

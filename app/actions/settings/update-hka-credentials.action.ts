@@ -8,8 +8,8 @@
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { encrypt } from '@/lib/encryption';
-import { logger } from '@/lib/hka/utils/logger';
+import { encrypt } from '@/lib/utils/encryption';
+import { hkaLogger as logger } from '@/lib/hka/utils/logger';
 
 /**
  * Input: Credenciales HKA
@@ -59,11 +59,10 @@ export async function updateHkaCredentials(
     // 3. Encriptar password
     let encryptedPassword: string;
     try {
-      encryptedPassword = await encrypt(input.tokenPassword);
+      encryptedPassword = encrypt(input.tokenPassword);
     } catch (encryptError: any) {
-      logger.error('Failed to encrypt HKA password', {
-        userId,
-        error: encryptError.message,
+      logger.error('ENCRYPT_PASSWORD', 'Failed to encrypt HKA password', {
+        data: { userId, error: encryptError.message }
       });
       return { success: false, error: 'Failed to encrypt password' };
     }
@@ -88,9 +87,8 @@ export async function updateHkaCredentials(
         },
       });
 
-      logger.info('HKA credentials updated', {
-        userId,
-        environment: input.environment,
+      logger.info('UPDATE_CREDENTIALS', 'HKA credentials updated', {
+        data: { userId, environment: input.environment }
       });
     } else {
       // Crear nueva
@@ -104,9 +102,8 @@ export async function updateHkaCredentials(
         },
       });
 
-      logger.info('HKA credentials created', {
-        userId,
-        environment: input.environment,
+      logger.info('CREATE_CREDENTIALS', 'HKA credentials created', {
+        data: { userId, environment: input.environment }
       });
     }
 
@@ -115,9 +112,8 @@ export async function updateHkaCredentials(
 
     return { success: true };
   } catch (error: any) {
-    logger.error('Update HKA credentials action failed', {
-      error: error.message,
-      stack: error.stack,
+    logger.error('UPDATE_CREDENTIALS_ERROR', 'Update HKA credentials action failed', {
+      error: error
     });
 
     return {
@@ -179,8 +175,8 @@ export async function getHkaCredentials(): Promise<{
       },
     };
   } catch (error: any) {
-    logger.error('Get HKA credentials action failed', {
-      error: error.message,
+    logger.error('GET_CREDENTIALS_ERROR', 'Get HKA credentials action failed', {
+      error: error
     });
 
     return {
@@ -214,14 +210,16 @@ export async function deleteHkaCredentials(): Promise<UpdateHkaCredentialsOutput
       },
     });
 
-    logger.info('HKA credentials deleted', { userId });
+    logger.info('DELETE_CREDENTIALS', 'HKA credentials deleted', {
+      data: { userId }
+    });
 
     revalidatePath('/settings');
 
     return { success: true };
   } catch (error: any) {
-    logger.error('Delete HKA credentials action failed', {
-      error: error.message,
+    logger.error('DELETE_CREDENTIALS_ERROR', 'Delete HKA credentials action failed', {
+      error: error
     });
 
     return {
