@@ -1,13 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Building2, Users, FileText, Plug, Bell, Shield, UserCircle, Key } from "lucide-react"
+import { Building2, Users, Plug, UserCircle } from "lucide-react"
 import { OrganizationSettings } from "./organization-settings"
 import { UsersManagement } from "./users-management"
-import { InvoiceSettings } from "./invoice-settings"
-import { IntegrationSettings } from "./integration-settings"
-import { NotificationSettings } from "./notification-settings"
-import { SecuritySettings } from "./security-settings"
 import { ProfileSettings } from "./profile-settings"
 import HKACredentialsForm from "@/components/simple/hka-credentials-form"
 
@@ -83,71 +79,6 @@ interface ConfigurationTabsProps {
   isSuperAdmin?: boolean
 }
 
-type TabId =
-  | "profile"
-  | "organization"
-  | "users"
-  | "invoicing"
-  | "integration"
-  | "hkaCredentials"
-  | "notifications"
-  | "security"
-
-interface Tab {
-  id: TabId
-  name: string
-  icon: React.ComponentType<{ className?: string }>
-  roles?: string[] // Si se especifica, solo visible para estos roles
-}
-
-const tabs: Tab[] = [
-  {
-    id: "profile",
-    name: "Perfil",
-    icon: UserCircle,
-  },
-  {
-    id: "organization",
-    name: "Organización",
-    icon: Building2,
-    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
-  },
-  {
-    id: "users",
-    name: "Usuarios",
-    icon: Users,
-    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
-  },
-  {
-    id: "invoicing",
-    name: "Facturación",
-    icon: FileText,
-    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
-  },
-  {
-    id: "integration",
-    name: "Integración HKA",
-    icon: Plug,
-    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
-  },
-  {
-    id: "hkaCredentials",
-    name: "Mis credenciales HKA",
-    icon: Key,
-  },
-  {
-    id: "notifications",
-    name: "Notificaciones",
-    icon: Bell,
-  },
-  {
-    id: "security",
-    name: "Seguridad",
-    icon: Shield,
-    roles: ["SUPER_ADMIN", "ORG_ADMIN"],
-  },
-]
-
 export function ConfigurationTabs({
   organization,
   users,
@@ -159,108 +90,140 @@ export function ConfigurationTabs({
   currentUser,
   isSuperAdmin = false,
 }: ConfigurationTabsProps) {
+
+  // Definir tabs simplificados
+  const tabs = [
+    {
+      id: "profile",
+      name: "Mi Perfil",
+      icon: UserCircle,
+    },
+    {
+      id: "organization",
+      name: "Organización",
+      icon: Building2,
+      roles: ["SUPER_ADMIN", "ORG_ADMIN"],
+    },
+    {
+      id: "hka",
+      name: "Facturación HKA",
+      icon: Plug,
+    },
+    {
+      id: "users",
+      name: "Usuarios",
+      icon: Users,
+      roles: ["SUPER_ADMIN", "ORG_ADMIN"],
+    },
+  ];
+
   const visibleTabs = tabs.filter((tab) => {
     if (!tab.roles) return true
     return tab.roles.includes(userRole)
-  })
+  });
 
-  const defaultTabId = (visibleTabs[0]?.id ?? "profile") as TabId
-  const [activeTab, setActiveTab] = useState<TabId>(defaultTabId)
-
-  const ensureValidTab = (current: TabId): TabId => {
-    const exists = visibleTabs.some((tab) => tab.id === current)
-    return exists ? current : defaultTabId
-  }
-
-  const activeTabSafe = ensureValidTab(activeTab)
+  const [activeTab, setActiveTab] = useState(visibleTabs[0]?.id || "profile");
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-      {/* Tab Headers */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex space-x-8 px-6" aria-label="Tabs">
-          {visibleTabs.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTabSafe === tab.id
+    <div className="space-y-6">
+      {/* Navegación de Tabs estilo "Pills" */}
+      <div className="flex flex-wrap gap-2 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl backdrop-blur-sm">
+        {visibleTabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
 
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                  flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                  ${isActive
-                    ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
-                    : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
-                  }
-                `}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{tab.name}</span>
-              </button>
-            )
-          })}
-        </nav>
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`
+                flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                ${isActive
+                  ? "bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200"
+                }
+              `}
+            >
+              <Icon className={`w-4 h-4 ${isActive ? "text-indigo-500" : "text-gray-500"}`} />
+              {tab.name}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Tab Content */}
-      <div className="p-6">
-        {activeTabSafe === "profile" && (
-          <ProfileSettings
-            user={currentUser}
-            organizationName={organization?.name}
-          />
-        )}
-        {activeTabSafe === "organization" && (
-          <OrganizationSettings organization={organization} />
-        )}
-        {activeTabSafe === "users" && (
-          <UsersManagement
-            users={users}
-            organizationId={organization.id}
-            organizations={organizations}
-            isSuperAdmin={isSuperAdmin}
-          />
-        )}
-        {activeTabSafe === "invoicing" && (
-          <InvoiceSettings
-            organizationId={organization.id}
-            folioStats={folioStats}
-          />
-        )}
-        {activeTabSafe === "integration" && (
-          <IntegrationSettings
-            organizationId={organization.id}
-            systemConfig={systemConfig}
-          />
-        )}
-        {activeTabSafe === "hkaCredentials" && (
-          <div className="space-y-6">
+      {/* Contenido del Tab */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="p-6 md:p-8">
+          {activeTab === "profile" && (
+            <div className="max-w-4xl">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mi Perfil</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Gestiona tu información personal y preferencias.</p>
+              </div>
+              <ProfileSettings
+                user={currentUser}
+                organizationName={organization?.name}
+              />
+            </div>
+          )}
+
+          {activeTab === "organization" && (
+            <div className="max-w-4xl">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Datos de la Organización</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Información legal y fiscal de tu empresa.</p>
+              </div>
+              <OrganizationSettings organization={organization} />
+            </div>
+          )}
+
+          {activeTab === "hka" && (
+            <div className="max-w-3xl">
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Plug className="w-5 h-5 text-indigo-500" />
+                  Conexión HKA (Facturación Electrónica)
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Configura tus credenciales de The Factory HKA para emitir facturas electrónicas en Panamá.
+                </p>
+              </div>
+
+              <div className="grid gap-8">
+                {/* Credenciales */}
+                <section>
+                  <HKACredentialsForm />
+                </section>
+
+                {/* Información adicional o estado */}
+                <section className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
+                  <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">Información Importante</h3>
+                  <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1 list-disc list-inside">
+                    <li>El ambiente <strong>DEMO</strong> es para pruebas y no tiene validez fiscal.</li>
+                    <li>Para emitir facturas reales, cambia al ambiente <strong>PRODUCCIÓN</strong>.</li>
+                    <li>Asegúrate de tener folios disponibles en tu cuenta de HKA.</li>
+                  </ul>
+                </section>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "users" && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Configuración personal de HKA
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Define tus credenciales de autenticación para ambiente Demo y Producción. Estas credenciales son
-                privadas y se usan al enviar documentos a HKA.
-              </p>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestión de Usuarios</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Administra el acceso de tu equipo.</p>
+              </div>
+              <UsersManagement
+                users={users}
+                organizationId={organization.id}
+                organizations={organizations}
+                isSuperAdmin={isSuperAdmin}
+              />
             </div>
-            <div className="bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
-              <HKACredentialsForm />
-            </div>
-          </div>
-        )}
-        {activeTabSafe === "notifications" && (
-          <NotificationSettings
-            organizationId={organization.id}
-            userId={userId}
-          />
-        )}
-        {activeTabSafe === "security" && (
-          <SecuritySettings organizationId={organization.id} />
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
 }
-
