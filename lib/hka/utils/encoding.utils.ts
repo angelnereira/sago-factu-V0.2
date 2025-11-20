@@ -29,6 +29,20 @@ export function decodeBase64(str: string): string {
 }
 
 /**
+ * Convierte Base64 a Buffer
+ */
+export function base64ToBuffer(base64: string): Buffer {
+    return Buffer.from(base64, 'base64');
+}
+
+/**
+ * Convierte Buffer a Base64
+ */
+export function bufferToBase64(buffer: Buffer): string {
+    return buffer.toString('base64');
+}
+
+/**
  * Escapa caracteres especiales XML
  */
 export function escapeXml(str: string): string {
