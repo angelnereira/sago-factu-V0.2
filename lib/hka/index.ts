@@ -10,7 +10,7 @@ import type { HkaCredentials } from './types';
 // Re-exports
 export * from './types';
 // export * from './constants/catalogs'; // TODO: Create this file
-// export * from './constants/endpoints'; // TODO: Create this file
+export * from './constants/endpoints';
 export { HkaService } from './hka.service';
 export { HkaXmlBuilder } from './builders/xml-builder';
 export { HkaXmlParser } from './parsers/xml-parser';
