@@ -33,8 +33,8 @@ export async function consultarDocumento(
         const credentials = hkaClient.getCredentials();
 
         // Invocar método SOAP con monitoreo y credenciales inyectadas
-        const response = await monitorHKACall('ConsultaFE', async () => {
-          return await hkaClient.invokeWithCredentials<ConsultarDocumentoResponse>('ConsultaFE', params, credentials);
+        const response = await monitorHKACall('Consulta', async () => {
+          return await hkaClient.invokeWithCredentials<ConsultarDocumentoResponse>('Consulta', params, credentials);
         });
 
         console.log(`✅ Documento consultado exitosamente`);
