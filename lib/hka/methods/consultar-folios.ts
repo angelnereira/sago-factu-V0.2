@@ -48,9 +48,32 @@ export async function consultarFolios(
         // Invocar método SOAP con monitoreo
         console.log(`🔐 Credenciales resueltas (${credentials.source}), invocando ConsultarFolios...`);
 
-        const response = await monitorHKACall('FoliosRestantes', async () => {
-          return await hkaClient.invokeWithCredentials<ConsultarFoliosResponse>('FoliosRestantes', params, credentials);
+        const rawResponse = await monitorHKACall('FoliosRestantes', async () => {
+          return await hkaClient.invokeWithCredentials<any>('FoliosRestantes', params, credentials);
         });
+
+        // DEBUG: Ver estructura real de la respuesta
+        console.log('🔍 DEBUG - Respuesta cruda de HKA:', JSON.stringify(rawResponse, null, 2));
+        console.log('🔍 DEBUG - Claves disponibles:', Object.keys(rawResponse || {}));
+
+        // Mapear respuesta de HKA a nuestra interfaz
+        // HKA puede devolver el resultado anidado en FoliosRestantesResult
+        const result = rawResponse?.FoliosRestantesResult || rawResponse;
+
+        const response: ConsultarFoliosResponse = {
+          codigo: result.codigo || result.Codigo || '',
+          mensaje: result.mensaje || result.Mensaje || '',
+          licencia: result.licencia || result.Licencia || '',
+          fechaLicencia: result.fechaLicencia || result.FechaLicencia || '',
+          ciclo: result.ciclo || result.Ciclo || '',
+          fechaCiclo: result.fechaCiclo || result.FechaCiclo || '',
+          foliosTotalesCiclo: parseInt(result.foliosTotalesCiclo || result.FoliosTotalesCiclo || '0', 10),
+          foliosUtilizadosCiclo: parseInt(result.foliosUtilizadosCiclo || result.FoliosUtilizadosCiclo || '0', 10),
+          foliosDisponibleCiclo: parseInt(result.foliosDisponibleCiclo || result.FoliosDisponibleCiclo || '0', 10),
+          foliosTotales: parseInt(result.foliosTotales || result.FoliosTotales || '0', 10),
+          foliosTotalesDisponibles: parseInt(result.foliosTotalesDisponibles || result.FoliosTotalesDisponibles || '0', 10),
+          resultado: result.resultado || result.Resultado || ''
+        };
 
         console.log(`✅ Folios consultados exitosamente`);
         console.log(`   📜 Licencia: ${response.licencia}`);
