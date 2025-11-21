@@ -6,8 +6,8 @@ export type HKAEnvironment = 'DEMO' | 'PROD';
 
 export const ENDPOINTS = {
     DEMO: {
-        SOAP: 'http://demoemision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc?wsdl',
-        // REST: 'http://demoemision.thefactoryhka.com.pa/api/v1.0', // Reservado para futuro
+        SOAP: 'https://demoemision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc?wsdl',
+        // REST: 'https://demoemision.thefactoryhka.com.pa/api/v1.0', // Reservado para futuro
     },
     PROD: {
         SOAP: 'https://emision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc?wsdl',
