@@ -94,11 +94,19 @@ export interface Folio {
   cufe?: string;          // Si está utilizado
 }
 
-export interface ConsultarFoliosResponse extends HKABaseResponse {
-  folios: Folio[];
-  totalDisponibles: number;
-  totalAsignados: number;
-  totalUtilizados: number;
+export interface ConsultarFoliosResponse {
+  codigo: string;
+  mensaje: string;
+  licencia: string;
+  fechaLicencia: string;
+  ciclo: string;
+  fechaCiclo: string;
+  foliosTotalesCiclo: number;
+  foliosUtilizadosCiclo: number;
+  foliosDisponibleCiclo: number;
+  foliosTotales: number;
+  foliosTotalesDisponibles: number;
+  resultado: string;
 }
 
 // ============================================

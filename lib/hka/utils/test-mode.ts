@@ -72,12 +72,18 @@ export function simularConsultarDocumento(
  */
 export function simularConsultarFolios(): ConsultarFoliosResponse {
   return {
-    dCodRes: '0200',
-    dMsgRes: 'Folios consultados exitosamente (modo prueba)',
-    dFoliosDisponibles: 1000,
-    dFoliosUsados: 500,
-    dFoliosTotal: 1500,
-    dFechaHora: new Date().toISOString()
+    codigo: '200',
+    mensaje: 'Se retorna Licencia y Disponibilidad (modo prueba)',
+    licencia: 'TEST-LIC-12345',
+    fechaLicencia: '2024-01-01 / 2025-12-31',
+    ciclo: '1',
+    fechaCiclo: '2025-01-01 / 2025-01-31',
+    foliosTotalesCiclo: 100,
+    foliosUtilizadosCiclo: 50,
+    foliosDisponibleCiclo: 50,
+    foliosTotales: 1500,
+    foliosTotalesDisponibles: 1000,
+    resultado: 'procesado'
   };
 }
 

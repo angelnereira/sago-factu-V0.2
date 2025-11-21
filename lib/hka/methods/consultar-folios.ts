@@ -1,5 +1,5 @@
 import { getHKAClient } from '../soap/client';
-import { ConsultarFoliosParams, ConsultarFoliosResponse, Folio } from '../soap/types';
+import { ConsultarFoliosParams, ConsultarFoliosResponse } from '../soap/types';
 import { sql } from '@/lib/db';
 import { monitorHKACall } from '@/lib/monitoring/hka-monitor-wrapper';
 import { executeWithCredentials } from '../credentials-manager';
@@ -49,32 +49,18 @@ export async function consultarFolios(
         console.log(`🔐 Credenciales resueltas (${credentials.source}), invocando ConsultarFolios...`);
 
         const response = await monitorHKACall('FoliosRestantes', async () => {
-          return await hkaClient.invokeWithCredentials<any>('FoliosRestantes', params, credentials);
+          return await hkaClient.invokeWithCredentials<ConsultarFoliosResponse>('FoliosRestantes', params, credentials);
         });
 
-        // Procesar respuesta
-        const folios: Folio[] = response.folios || [];
+        console.log(`✅ Folios consultados exitosamente`);
+        console.log(`   📜 Licencia: ${response.licencia}`);
+        console.log(`   📅 Vigencia: ${response.fechaLicencia}`);
+        console.log(`   🔢 Ciclo: ${response.ciclo} (${response.fechaCiclo})`);
+        console.log(`   📊 Folios totales: ${response.foliosTotales}`);
+        console.log(`   ✅ Folios disponibles: ${response.foliosTotalesDisponibles}`);
+        console.log(`   📈 Folios del ciclo: ${response.foliosTotalesCiclo} (${response.foliosUtilizadosCiclo} utilizados, ${response.foliosDisponibleCiclo} disponibles)`);
 
-        // Contar estados
-        const totalDisponibles = folios.filter(f => f.estado === 'DISPONIBLE').length;
-        const totalAsignados = folios.filter(f => f.estado === 'ASIGNADO').length;
-        const totalUtilizados = folios.filter(f => f.estado === 'UTILIZADO').length;
-
-        console.log(`✅ Folios consultados: ${folios.length} total`);
-        console.log(`   📦 Disponibles: ${totalDisponibles}`);
-        console.log(`   📝 Asignados: ${totalAsignados}`);
-        console.log(`   ✔️  Utilizados: ${totalUtilizados}`);
-
-        return {
-          dCodRes: response.dCodRes,
-          dMsgRes: response.dMsgRes,
-          dVerApl: response.dVerApl,
-          dFecProc: response.dFecProc,
-          folios,
-          totalDisponibles,
-          totalAsignados,
-          totalUtilizados,
-        };
+        return response;
       },
       options
     );
@@ -89,7 +75,7 @@ export async function consultarFolios(
  * Sincroniza los folios de HKA con la base de datos local (usando Neon)
  *
  * ✅ ARQUITECTURA: Usa consultarFolios() que internamente usa executeWithCredentials
- * - Obtiene folios actuales de HKA
+ * - Obtiene estadísticas de folios actuales de HKA
  * - Sincroniza estado en tabla folio_pools
  * - Mantiene historial de disponibilidad por organización
  */
@@ -105,52 +91,50 @@ export async function sincronizarFolios(
     // Consultar folios en HKA usando credenciales resueltas
     const response = await consultarFolios(ruc, dv, organizationId, options);
 
-    if (!response.folios || response.folios.length === 0) {
-      console.log('⚠️  No hay folios para sincronizar en HKA');
+    if (!response || response.codigo !== '200') {
+      console.log('⚠️  No se pudo obtener información de folios de HKA');
       return;
     }
 
     // Actualizar en base de datos usando Neon Data API
-    // Los folios se insertan o actualizan con su estado actual
-    let syncedCount = 0;
-    for (const folio of response.folios) {
-      try {
-        await sql`
-          INSERT INTO "folio_pools" (
-            id,
-            "organizationId",
-            "folioStart",
-            "folioEnd",
-            "totalFolios",
-            "availableFolios",
-            "isActive",
-            "createdAt",
-            "updatedAt"
-          ) VALUES (
-            gen_random_uuid(),
-            ${organizationId},
-            ${folio.numeroFolio},
-            ${folio.numeroFolio},
-            1,
-            ${folio.estado === 'DISPONIBLE' ? 1 : 0},
-            ${folio.estado !== 'ANULADO'},
-            NOW(),
-            NOW()
-          )
-          ON CONFLICT ("organizationId", "folioStart", "folioEnd")
-          DO UPDATE SET
-            "availableFolios" = ${folio.estado === 'DISPONIBLE' ? 1 : 0},
-            "isActive" = ${folio.estado !== 'ANULADO'},
-            "updatedAt" = NOW()
-        `;
-        syncedCount++;
-      } catch (folioError) {
-        console.warn(`⚠️  Error sincronizando folio ${folio.numeroFolio}:`, folioError);
-        // Continuar con otros folios
-      }
-    }
+    // Guardamos las estadísticas agregadas de folios
+    try {
+      await sql`
+        INSERT INTO "folio_pools" (
+          id,
+          "organizationId",
+          "folioStart",
+          "folioEnd",
+          "totalFolios",
+          "availableFolios",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ) VALUES (
+          gen_random_uuid(),
+          ${organizationId},
+          '1',
+          ${response.foliosTotales.toString()},
+          ${response.foliosTotales},
+          ${response.foliosTotalesDisponibles},
+          true,
+          NOW(),
+          NOW()
+        )
+        ON CONFLICT ("organizationId", "folioStart", "folioEnd")
+        DO UPDATE SET
+          "totalFolios" = ${response.foliosTotales},
+          "availableFolios" = ${response.foliosTotalesDisponibles},
+          "isActive" = true,
+          "updatedAt" = NOW()
+      `;
 
-    console.log(`✅ Sincronizados ${syncedCount} folios para organización ${organizationId}`);
+      console.log(`✅ Sincronizados datos de folios para organización ${organizationId}`);
+      console.log(`   Total: ${response.foliosTotales}, Disponibles: ${response.foliosTotalesDisponibles}`);
+    } catch (dbError) {
+      console.error('⚠️  Error actualizando base de datos:', dbError);
+      throw dbError;
+    }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
     console.error(`❌ Error al sincronizar folios: ${errorMsg}`, error);
