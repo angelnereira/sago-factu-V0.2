@@ -92,17 +92,75 @@ export class HkaXmlParser {
         break;
 
       case 'FoliosRestantes':
-        if (result.foliosDisponibles !== undefined) {
-          fields.foliosDisponibles = parseInt(String(result.foliosDisponibles), 10);
+        // Información de licencia
+        if (result.licencia || result.Licencia) {
+          fields.licencia = result.licencia || result.Licencia;
         }
-        if (result.foliosUsados !== undefined) {
-          fields.foliosUsados = parseInt(String(result.foliosUsados), 10);
+        if (result.fechaLicencia || result.FechaLicencia) {
+          fields.fechaLicencia = result.fechaLicencia || result.FechaLicencia;
         }
-        if (result.foliosTotales !== undefined) {
-          fields.foliosTotales = parseInt(String(result.foliosTotales), 10);
+
+        // Información de ciclo
+        if (result.ciclo || result.Ciclo) {
+          fields.ciclo = result.ciclo || result.Ciclo;
         }
-        if (result.ultimoFolioUsado) fields.ultimoFolioUsado = result.ultimoFolioUsado;
-        if (result.proximoFolio) fields.proximoFolio = result.proximoFolio;
+        if (result.fechaCiclo || result.FechaCiclo) {
+          fields.fechaCiclo = result.fechaCiclo || result.FechaCiclo;
+        }
+
+        // Folios del ciclo actual
+        if (result.foliosTotalesCiclo !== undefined || result.FoliosTotalesCiclo !== undefined) {
+          fields.foliosTotalesCiclo = parseInt(
+            String(result.foliosTotalesCiclo || result.FoliosTotalesCiclo || '0'),
+            10
+          );
+        }
+        if (result.foliosUtilizadosCiclo !== undefined || result.FoliosUtilizadosCiclo !== undefined) {
+          fields.foliosUtilizadosCiclo = parseInt(
+            String(result.foliosUtilizadosCiclo || result.FoliosUtilizadosCiclo || '0'),
+            10
+          );
+        }
+        if (result.foliosDisponibleCiclo !== undefined || result.FoliosDisponibleCiclo !== undefined) {
+          fields.foliosDisponibleCiclo = parseInt(
+            String(result.foliosDisponibleCiclo || result.FoliosDisponibleCiclo || '0'),
+            10
+          );
+        }
+
+        // Folios totales (históricos)
+        if (result.foliosTotales !== undefined || result.FoliosTotales !== undefined) {
+          fields.foliosTotales = parseInt(
+            String(result.foliosTotales || result.FoliosTotales || '0'),
+            10
+          );
+        }
+        if (result.foliosTotalesDisponibles !== undefined || result.FoliosTotalesDisponibles !== undefined) {
+          fields.foliosTotalesDisponibles = parseInt(
+            String(result.foliosTotalesDisponibles || result.FoliosTotalesDisponibles || '0'),
+            10
+          );
+        }
+
+        // Campos legacy (compatibilidad)
+        if (result.foliosDisponibles !== undefined || result.FoliosDisponibles !== undefined) {
+          fields.foliosDisponibles = parseInt(
+            String(result.foliosDisponibles || result.FoliosDisponibles || '0'),
+            10
+          );
+        }
+        if (result.foliosUsados !== undefined || result.FoliosUsados !== undefined) {
+          fields.foliosUsados = parseInt(
+            String(result.foliosUsados || result.FoliosUsados || '0'),
+            10
+          );
+        }
+        if (result.ultimoFolioUsado || result.UltimoFolioUsado) {
+          fields.ultimoFolioUsado = result.ultimoFolioUsado || result.UltimoFolioUsado;
+        }
+        if (result.proximoFolio || result.ProximoFolio) {
+          fields.proximoFolio = result.proximoFolio || result.ProximoFolio;
+        }
         break;
 
       case 'DescargaXML':

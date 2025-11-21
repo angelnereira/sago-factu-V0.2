@@ -16,9 +16,27 @@ export interface TestHkaConnectionOutput {
   success: boolean;
   message: string;
   details?: {
-    foliosDisponibles?: number;
+    // Información de licencia
+    licencia?: string;
+    fechaLicencia?: string;
+
+    // Información de ciclo
+    ciclo?: string;
+    fechaCiclo?: string;
+
+    // Folios del ciclo actual
+    foliosTotalesCiclo?: number;
+    foliosUtilizadosCiclo?: number;
+    foliosDisponibleCiclo?: number;
+
+    // Folios totales (históricos)
+    foliosTotales?: number;
+    foliosTotalesDisponibles?: number;
+
+    // Metadatos de la prueba
     environment?: 'DEMO' | 'PROD';
     responseTime?: number;
+    codigoRespuesta?: string;
   };
   error?: string;
 }
@@ -79,24 +97,31 @@ export async function testHkaConnection(): Promise<TestHkaConnectionOutput> {
     // 4. Verificar respuesta
     const responseTime = Date.now() - startTime;
 
+    // HKA retorna código '200' para éxito
     if (foliosResponse.codigo !== '200') {
       return {
         success: false,
-        message: 'Authentication failed',
-        error: foliosResponse.mensaje || 'Invalid credentials',
+        message: 'HKA returned non-success code',
+        error: foliosResponse.mensaje || 'Invalid credentials or HKA error',
         details: {
+          codigoRespuesta: foliosResponse.codigo,
           responseTime,
         },
       };
     }
 
-    const foliosDisponibles = parseInt(String(foliosResponse.foliosDisponibles || '0'), 10);
+    // Extraer datos con fallback entre nombres nuevos y legacy
+    const foliosTotalesDisponibles =
+      foliosResponse.foliosTotalesDisponibles ??
+      foliosResponse.foliosDisponibles ??
+      0;
 
     await hkaLogger.info('TEST_CONNECTION', 'HKA connection test successful', {
       data: {
         userId,
-        foliosDisponibles,
+        foliosTotalesDisponibles,
         responseTime,
+        licencia: foliosResponse.licencia,
       }
     });
 
@@ -104,9 +129,27 @@ export async function testHkaConnection(): Promise<TestHkaConnectionOutput> {
       success: true,
       message: 'Connection successful',
       details: {
-        foliosDisponibles,
+        // Información de licencia
+        licencia: foliosResponse.licencia,
+        fechaLicencia: foliosResponse.fechaLicencia,
+
+        // Información de ciclo
+        ciclo: foliosResponse.ciclo,
+        fechaCiclo: foliosResponse.fechaCiclo,
+
+        // Folios del ciclo actual
+        foliosTotalesCiclo: foliosResponse.foliosTotalesCiclo,
+        foliosUtilizadosCiclo: foliosResponse.foliosUtilizadosCiclo,
+        foliosDisponibleCiclo: foliosResponse.foliosDisponibleCiclo,
+
+        // Folios totales (históricos)
+        foliosTotales: foliosResponse.foliosTotales,
+        foliosTotalesDisponibles,
+
+        // Metadatos
         environment: hkaService.getClient().getEnvironment(),
         responseTime,
+        codigoRespuesta: foliosResponse.codigo,
       },
     };
   } catch (error: any) {

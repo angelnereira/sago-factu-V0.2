@@ -187,19 +187,64 @@ export function HkaCredentialsForm({ initialData }: HkaCredentialsFormProps) {
               <XCircle className="h-4 w-4" />
             )}
             <AlertDescription>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <p className="font-medium">{testResult.message}</p>
                 {testResult.details && (
-                  <div className="text-sm text-muted-foreground">
-                    {testResult.details.foliosDisponibles !== undefined && (
-                      <p>Available Folios: {testResult.details.foliosDisponibles}</p>
+                  <div className="text-sm space-y-2">
+                    {/* Información de Licencia */}
+                    {testResult.details.licencia && (
+                      <div className="border-l-2 border-primary pl-3 space-y-1">
+                        <p className="font-semibold">Licencia</p>
+                        <p>Código: {testResult.details.licencia}</p>
+                        {testResult.details.fechaLicencia && (
+                          <p>Vigencia: {testResult.details.fechaLicencia}</p>
+                        )}
+                      </div>
                     )}
-                    {testResult.details.environment && (
-                      <p>Environment: {testResult.details.environment}</p>
+
+                    {/* Información de Ciclo */}
+                    {testResult.details.ciclo && (
+                      <div className="border-l-2 border-primary pl-3 space-y-1">
+                        <p className="font-semibold">Ciclo Actual</p>
+                        <p>Ciclo: {testResult.details.ciclo}</p>
+                        {testResult.details.fechaCiclo && (
+                          <p>Periodo: {testResult.details.fechaCiclo}</p>
+                        )}
+                        {testResult.details.foliosTotalesCiclo !== undefined && (
+                          <>
+                            <p>Total ciclo: {testResult.details.foliosTotalesCiclo}</p>
+                            <p>Utilizados: {testResult.details.foliosUtilizadosCiclo || 0}</p>
+                            <p>Disponibles: {testResult.details.foliosDisponibleCiclo || 0}</p>
+                          </>
+                        )}
+                      </div>
                     )}
-                    {testResult.details.responseTime && (
-                      <p>Response Time: {testResult.details.responseTime}ms</p>
+
+                    {/* Estadísticas Totales */}
+                    {testResult.details.foliosTotalesDisponibles !== undefined && (
+                      <div className="border-l-2 border-primary pl-3 space-y-1">
+                        <p className="font-semibold">Estadísticas Totales</p>
+                        <p className="text-lg font-bold text-green-600">
+                          {testResult.details.foliosTotalesDisponibles} folios disponibles
+                        </p>
+                        {testResult.details.foliosTotales !== undefined && (
+                          <p>Total asignados: {testResult.details.foliosTotales}</p>
+                        )}
+                      </div>
                     )}
+
+                    {/* Metadatos */}
+                    <div className="text-muted-foreground space-y-1 pt-2 border-t">
+                      {testResult.details.environment && (
+                        <p>Ambiente: {testResult.details.environment}</p>
+                      )}
+                      {testResult.details.responseTime && (
+                        <p>Tiempo de respuesta: {testResult.details.responseTime}ms</p>
+                      )}
+                      {testResult.details.codigoRespuesta && (
+                        <p>Código HKA: {testResult.details.codigoRespuesta}</p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
