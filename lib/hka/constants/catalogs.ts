@@ -39,9 +39,15 @@ export const NATURALEZA_OPERACION = {
 
 /**
  * Códigos de Respuesta HKA
+ * Nota: HKA puede retornar diferentes códigos según el método:
+ * - '200' para FoliosRestantes y otros métodos REST-style
+ * - '00' para métodos legacy
+ * - '100' para procesamiento en curso
  */
 export const HKA_RESPONSE_CODES = {
     SUCCESS: '00',
+    SUCCESS_200: '200',        // Usado por FoliosRestantes
+    PROCESSING: '100',          // Procesamiento en curso
     ERROR_AUTENTICACION: '01',
     ERROR_VALIDACION: '02',
     ERROR_SISTEMA: '03',

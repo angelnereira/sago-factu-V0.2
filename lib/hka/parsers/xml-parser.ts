@@ -50,8 +50,15 @@ export class HkaXmlParser {
       const resultado = methodResult.resultado || methodResult.Resultado || '';
       const mensaje = methodResult.mensaje || methodResult.Mensaje || '';
 
-      // Si código !== 200 y !== 100, es error de negocio
-      if (codigo !== HKA_RESPONSE_CODES.SUCCESS && codigo !== HKA_RESPONSE_CODES.PROCESSING) {
+      // Validar códigos de éxito: '00', '200', '100'
+      // HKA puede retornar diferentes códigos según el método
+      const successCodes = [
+        HKA_RESPONSE_CODES.SUCCESS,       // '00' - legacy
+        HKA_RESPONSE_CODES.SUCCESS_200,   // '200' - FoliosRestantes y REST-style
+        HKA_RESPONSE_CODES.PROCESSING,    // '100' - procesamiento en curso
+      ];
+
+      if (!successCodes.includes(codigo as any)) {
         throw new HkaBusinessError(codigo, mensaje);
       }
 
