@@ -16,15 +16,16 @@ import { HKACredentials } from '../soap/types';
  * - Las credenciales se pasan explícitamente a la función
  * - No modifica process.env (más seguro en contextos concurrentes)
  * - Mejor para testing (sin side-effects globales)
+ *
+ * NOTA: FoliosRestantes solo requiere credenciales (tokenEmpresa, tokenPassword)
+ * NO requiere RUC ni DV según blueprint SOAP de HKA
  */
 export async function consultarFolios(
-  ruc: string,
-  dv: string,
   organizationId: string,
   options: { userId?: string } = {}
 ): Promise<ConsultarFoliosResponse> {
   try {
-    console.log(`📊 Consultando folios para RUC: ${ruc}-${dv}`);
+    console.log(`📊 Consultando folios disponibles en HKA`);
     console.log(`   Organización: ${organizationId}`);
     console.log(`   Desde: ${options.userId ? `usuario ${options.userId}` : 'organización'}`);
 
@@ -33,12 +34,10 @@ export async function consultarFolios(
     return await executeWithCredentials(
       organizationId,
       async (credentials: HKACredentials) => {
-        // Parámetros para la consulta
+        // Parámetros para la consulta - SOLO credenciales según blueprint SOAP
         const params: ConsultarFoliosParams = {
           tokenEmpresa: credentials.tokenEmpresa,
           tokenPassword: credentials.tokenPassword,
-          ruc,
-          dv,
         };
 
         // Inicializar cliente SOAP
@@ -104,15 +103,13 @@ export async function consultarFolios(
  */
 export async function sincronizarFolios(
   organizationId: string,
-  ruc: string,
-  dv: string,
   options: { userId?: string } = {}
 ): Promise<void> {
   try {
     console.log(`🔄 Iniciando sincronización de folios para organización: ${organizationId}`);
 
     // Consultar folios en HKA usando credenciales resueltas
-    const response = await consultarFolios(ruc, dv, organizationId, options);
+    const response = await consultarFolios(organizationId, options);
 
     if (!response || response.codigo !== '200') {
       console.log('⚠️  No se pudo obtener información de folios de HKA');

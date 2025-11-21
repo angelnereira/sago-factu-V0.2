@@ -37,17 +37,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Consultar folios en tiempo real desde HKA
+    // Consultar folios en tiempo real desde HKA - Solo requiere organizationId
     const foliosResponse = await consultarFolios(
-      organization.ruc,
-      organization.dv,
       organizationId,
       { userId: session.user.id }
     );
 
     // Obtener últimos folios usados desde la base de datos
     const ultimosUsados = await sql`
-      SELECT 
+      SELECT
         "invoiceNumber",
         cufe,
         "createdAt"
@@ -67,12 +65,18 @@ export async function GET(request: NextRequest) {
         ruc: organization.ruc,
       },
       estadisticas: {
-        disponibles: foliosResponse.totalDisponibles,
-        asignados: foliosResponse.totalAsignados,
-        utilizados: foliosResponse.totalUtilizados,
-        total: foliosResponse.folios.length,
+        foliosTotales: foliosResponse.foliosTotales,
+        foliosDisponibles: foliosResponse.foliosTotalesDisponibles,
+        foliosCicloTotal: foliosResponse.foliosTotalesCiclo,
+        foliosCicloUtilizados: foliosResponse.foliosUtilizadosCiclo,
+        foliosCicloDisponibles: foliosResponse.foliosDisponibleCiclo,
       },
-      folios: foliosResponse.folios,
+      licencia: {
+        codigo: foliosResponse.licencia,
+        vigencia: foliosResponse.fechaLicencia,
+        ciclo: foliosResponse.ciclo,
+        fechaCiclo: foliosResponse.fechaCiclo,
+      },
       ultimosUsados,
       timestamp: new Date().toISOString(),
     });

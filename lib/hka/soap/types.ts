@@ -81,8 +81,7 @@ export interface ConsultarDocumentoResponse extends HKABaseResponse {
 export interface ConsultarFoliosParams {
   tokenEmpresa: string;
   tokenPassword: string;
-  ruc: string;            // RUC de la empresa
-  dv: string;             // Dígito verificador
+  // Nota: FoliosRestantes NO requiere ruc ni dv según blueprint SOAP de HKA
 }
 
 export interface Folio {

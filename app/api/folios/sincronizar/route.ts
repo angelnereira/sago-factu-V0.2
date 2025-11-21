@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sincronizar folios
-    await sincronizarFolios(organizationId, organization.ruc, organization.dv);
+    // Sincronizar folios - Solo requiere organizationId según blueprint SOAP
+    await sincronizarFolios(organizationId);
 
     return NextResponse.json({
       success: true,
