@@ -53,6 +53,7 @@ export class HkaXmlParser {
       // Validar códigos de éxito según Blueprint HKA Panamá
       // Diferentes métodos retornan diferentes códigos de éxito:
       // - '0260' = Recepción de FE autorizada
+      // - '0422' = Consulta FE exitosa
       // - '0600' = Evento de anulación registrado
       // - '200'  = FoliosRestantes
       // - '00'   = Legacy
@@ -61,6 +62,7 @@ export class HkaXmlParser {
         HKA_RESPONSE_CODES.SUCCESS,           // '00' - legacy
         HKA_RESPONSE_CODES.SUCCESS_200,       // '200' - FoliosRestantes
         HKA_RESPONSE_CODES.FE_AUTORIZADA,     // '0260' - "Autorizado el uso de la FE"
+        HKA_RESPONSE_CODES.CONSULTA_EXITOSA,  // '0422' - "Exito en la consulta"
         HKA_RESPONSE_CODES.EVENTO_REGISTRADO, // '0600' - "Evento registrado con éxito"
         HKA_RESPONSE_CODES.PROCESSING,        // '100' - procesamiento en curso
       ];

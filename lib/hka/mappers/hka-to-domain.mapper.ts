@@ -416,6 +416,7 @@ export class HkaToDomainMapper {
       HKA_RESPONSE_CODES.SUCCESS,           // '00'
       HKA_RESPONSE_CODES.SUCCESS_200,       // '200'
       HKA_RESPONSE_CODES.FE_AUTORIZADA,     // '0260'
+      HKA_RESPONSE_CODES.CONSULTA_EXITOSA,  // '0422'
       HKA_RESPONSE_CODES.EVENTO_REGISTRADO, // '0600'
       HKA_RESPONSE_CODES.PROCESSING,        // '100'
     ];
@@ -436,6 +437,7 @@ export class HkaToDomainMapper {
     const messages: Record<string, string> = {
       // Códigos de éxito (según Blueprint HKA)
       '0260': '✅ Factura electrónica autorizada exitosamente',
+      '0422': '✅ Consulta de factura electrónica exitosa',
       '0600': '✅ Evento de anulación registrado con éxito',
       '200': '✅ Consulta exitosa',
       '00': '✅ Operación exitosa',

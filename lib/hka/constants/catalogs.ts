@@ -41,6 +41,7 @@ export const NATURALEZA_OPERACION = {
  * Códigos de Respuesta HKA
  * Basado en Blueprint oficial de HKA Panamá:
  * - '0260' = "Autorizado el uso de la FE" (Recepción de FE exitosa)
+ * - '0422' = "Exito en la consulta" (Consulta FE exitosa)
  * - '0600' = "Evento registrado con éxito" (Anulación exitosa)
  * - '200'  = FoliosRestantes y métodos REST-style
  * - '00'   = Métodos legacy
@@ -51,6 +52,7 @@ export const HKA_RESPONSE_CODES = {
     SUCCESS: '00',                    // Legacy success
     SUCCESS_200: '200',               // FoliosRestantes y REST-style
     FE_AUTORIZADA: '0260',            // "Autorizado el uso de la FE"
+    CONSULTA_EXITOSA: '0422',         // "Exito en la consulta" (Consulta FE)
     EVENTO_REGISTRADO: '0600',        // "Evento registrado con éxito" (Anulación)
     PROCESSING: '100',                // Procesamiento en curso
 
