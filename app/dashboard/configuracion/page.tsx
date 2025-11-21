@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { HkaCredentialsForm } from "@/app/settings/components/HkaCredentialsForm"
+import { ENDPOINTS } from "@/lib/hka/constants/endpoints"
+import { getHkaCredentials } from "@/app/actions/settings/get-hka-credentials.action"
 
 export default async function ConfigurationPage() {
   const session = await auth()
@@ -8,6 +10,12 @@ export default async function ConfigurationPage() {
   if (!session || !session.user || !session.user.id) {
     redirect("/")
   }
+
+  // Cargar credenciales guardadas
+  const credentialsResult = await getHkaCredentials()
+  const initialData = credentialsResult.success && credentialsResult.data
+    ? credentialsResult.data
+    : undefined
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -33,7 +41,7 @@ export default async function ConfigurationPage() {
           </p>
         </div>
 
-        <HkaCredentialsForm />
+        <HkaCredentialsForm initialData={initialData} />
       </div>
 
       {/* Información sobre los endpoints */}
@@ -42,9 +50,12 @@ export default async function ConfigurationPage() {
           Endpoints Configurados
         </h3>
         <div className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
-          <p><strong>Demo:</strong> https://demows.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc</p>
-          <p><strong>Producción:</strong> https://ws.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc</p>
+          <p><strong>Demo:</strong> {ENDPOINTS.DEMO.SOAP.replace('?wsdl', '')}</p>
+          <p><strong>Producción:</strong> {ENDPOINTS.PROD.SOAP.replace('?wsdl', '')}</p>
         </div>
+        <p className="text-xs text-blue-600 dark:text-blue-400 mt-3">
+          Los endpoints se actualizan automáticamente desde la configuración central del sistema.
+        </p>
       </div>
     </div>
   )
