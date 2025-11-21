@@ -50,12 +50,19 @@ export class HkaXmlParser {
       const resultado = methodResult.resultado || methodResult.Resultado || '';
       const mensaje = methodResult.mensaje || methodResult.Mensaje || '';
 
-      // Validar códigos de éxito: '00', '200', '100'
-      // HKA puede retornar diferentes códigos según el método
+      // Validar códigos de éxito según Blueprint HKA Panamá
+      // Diferentes métodos retornan diferentes códigos de éxito:
+      // - '0260' = Recepción de FE autorizada
+      // - '0600' = Evento de anulación registrado
+      // - '200'  = FoliosRestantes
+      // - '00'   = Legacy
+      // - '100'  = Procesamiento en curso
       const successCodes = [
-        HKA_RESPONSE_CODES.SUCCESS,       // '00' - legacy
-        HKA_RESPONSE_CODES.SUCCESS_200,   // '200' - FoliosRestantes y REST-style
-        HKA_RESPONSE_CODES.PROCESSING,    // '100' - procesamiento en curso
+        HKA_RESPONSE_CODES.SUCCESS,           // '00' - legacy
+        HKA_RESPONSE_CODES.SUCCESS_200,       // '200' - FoliosRestantes
+        HKA_RESPONSE_CODES.FE_AUTORIZADA,     // '0260' - "Autorizado el uso de la FE"
+        HKA_RESPONSE_CODES.EVENTO_REGISTRADO, // '0600' - "Evento registrado con éxito"
+        HKA_RESPONSE_CODES.PROCESSING,        // '100' - procesamiento en curso
       ];
 
       if (!successCodes.includes(codigo as any)) {

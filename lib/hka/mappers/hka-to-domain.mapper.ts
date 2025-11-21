@@ -409,9 +409,17 @@ export class HkaToDomainMapper {
 
   /**
    * Determina si un código de respuesta indica éxito
+   * Basado en Blueprint HKA Panamá
    */
   static isSuccessCode(codigo: string): boolean {
-    return codigo === HKA_RESPONSE_CODES.SUCCESS || codigo === HKA_RESPONSE_CODES.PENDING;
+    const successCodes = [
+      HKA_RESPONSE_CODES.SUCCESS,           // '00'
+      HKA_RESPONSE_CODES.SUCCESS_200,       // '200'
+      HKA_RESPONSE_CODES.FE_AUTORIZADA,     // '0260'
+      HKA_RESPONSE_CODES.EVENTO_REGISTRADO, // '0600'
+      HKA_RESPONSE_CODES.PROCESSING,        // '100'
+    ];
+    return successCodes.includes(codigo as any);
   }
 
   /**
@@ -422,10 +430,18 @@ export class HkaToDomainMapper {
   }
 
   /**
-   * Obtiene mensaje de error amigable según código
+   * Obtiene mensaje amigable según código (éxito o error)
    */
   static getFriendlyErrorMessage(codigo: string, mensaje: string): string {
-    const errorMessages: Record<string, string> = {
+    const messages: Record<string, string> = {
+      // Códigos de éxito (según Blueprint HKA)
+      '0260': '✅ Factura electrónica autorizada exitosamente',
+      '0600': '✅ Evento de anulación registrado con éxito',
+      '200': '✅ Consulta exitosa',
+      '00': '✅ Operación exitosa',
+      '100': '⏳ Procesamiento en curso',
+
+      // Códigos de error
       '300': 'Error de autenticación. Verifica tus credenciales HKA.',
       '301': 'Token inválido o expirado.',
       '400': 'Error en los datos enviados. Verifica la información.',
@@ -434,6 +450,6 @@ export class HkaToDomainMapper {
       '503': 'Servicio HKA temporalmente no disponible.',
     };
 
-    return errorMessages[codigo] || mensaje || 'Error desconocido';
+    return messages[codigo] || mensaje || 'Error desconocido';
   }
 }

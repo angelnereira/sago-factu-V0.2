@@ -39,15 +39,22 @@ export const NATURALEZA_OPERACION = {
 
 /**
  * Códigos de Respuesta HKA
- * Nota: HKA puede retornar diferentes códigos según el método:
- * - '200' para FoliosRestantes y otros métodos REST-style
- * - '00' para métodos legacy
- * - '100' para procesamiento en curso
+ * Basado en Blueprint oficial de HKA Panamá:
+ * - '0260' = "Autorizado el uso de la FE" (Recepción de FE exitosa)
+ * - '0600' = "Evento registrado con éxito" (Anulación exitosa)
+ * - '200'  = FoliosRestantes y métodos REST-style
+ * - '00'   = Métodos legacy
+ * - '100'  = Procesamiento en curso
  */
 export const HKA_RESPONSE_CODES = {
-    SUCCESS: '00',
-    SUCCESS_200: '200',        // Usado por FoliosRestantes
-    PROCESSING: '100',          // Procesamiento en curso
+    // Códigos de éxito
+    SUCCESS: '00',                    // Legacy success
+    SUCCESS_200: '200',               // FoliosRestantes y REST-style
+    FE_AUTORIZADA: '0260',            // "Autorizado el uso de la FE"
+    EVENTO_REGISTRADO: '0600',        // "Evento registrado con éxito" (Anulación)
+    PROCESSING: '100',                // Procesamiento en curso
+
+    // Códigos de error
     ERROR_AUTENTICACION: '01',
     ERROR_VALIDACION: '02',
     ERROR_SISTEMA: '03',
