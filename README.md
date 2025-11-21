@@ -103,6 +103,16 @@ SAGO FACTU es una plataforma multi-tenant que centraliza la administración de f
 
 Consulta la documentación ampliada en `docs/architecture/overview.md`.
 
+## Endpoints HKA (Panamá)
+
+Para la integración con The Factory HKA Panamá, se utilizan los siguientes endpoints SOAP:
+
+### Ambiente Demo (Pruebas)
+- **URL**: `http://demoemision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc?wsdl`
+
+### Ambiente Productivo
+- **URL**: `http://emision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc?wsdl`
+
 ## Demo y Capturas
 
 > Añade tus capturas oficiales en `public/screenshots/` y enlázalas aquí para personalizar la demo visual del proyecto.
