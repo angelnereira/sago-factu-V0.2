@@ -8,7 +8,8 @@ import {
   Building2,
   ShieldCheck,
   Activity,
-  Monitor
+  Monitor,
+  FileText
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
