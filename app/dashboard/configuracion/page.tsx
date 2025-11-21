@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { ConfigurationTabs } from "@/components/configuration/configuration-tabs"
-import { prismaServer as prisma } from "@/lib/prisma-server"
+import { HkaCredentialsForm } from "@/app/settings/components/HkaCredentialsForm"
 
 export default async function ConfigurationPage() {
   const session = await auth()
@@ -10,173 +9,43 @@ export default async function ConfigurationPage() {
     redirect("/")
   }
 
-  const organizationId = session.user.organizationId
-  const userRole = session.user.role as string
-
-  const isSuperAdmin = userRole === "SUPER_ADMIN"
-  const isOrgAdmin = userRole === "ORG_ADMIN"
-  const canManageOrganization = isSuperAdmin || isOrgAdmin
-
-  // Obtener datos de la organización (o la primera si es SUPER_ADMIN sin org)
-  let organization = null
-  if (organizationId) {
-    organization = await prisma.organization.findUnique({
-      where: { id: organizationId },
-    })
-  } else if (isSuperAdmin) {
-    organization = await prisma.organization.findFirst({
-      orderBy: { createdAt: "desc" },
-    })
-  }
-
-  if (!organization) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-600">Organización no encontrada</p>
-      </div>
-    )
-  }
-
-  const organizations = isSuperAdmin
-    ? await prisma.organization.findMany({
-      select: {
-        id: true,
-        name: true,
-        ruc: true,
-      },
-      orderBy: { name: "asc" },
-    })
-    : []
-
-  let usersWithFolios: any[] = []
-  let folioStats = {
-    _sum: {
-      assignedAmount: 0,
-      consumedAmount: 0,
-    },
-  }
-  let systemConfig: Awaited<ReturnType<typeof prisma.systemConfig.findFirst>> = null
-
-  if (canManageOrganization) {
-    const users = await prisma.user.findMany({
-      where: isSuperAdmin ? {} : { organizationId: organization.id },
-      include: {
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            ruc: true,
-          },
-        },
-        invoices: {
-          select: {
-            id: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    })
-
-    const folioAssignmentsByUser = await prisma.folioAssignment.groupBy({
-      by: ["organizationId"],
-      where: {
-        organizationId: {
-          in: users.map((user) => user.organizationId).filter(Boolean) as string[],
-        },
-      },
-      _sum: {
-        assignedAmount: true,
-        consumedAmount: true,
-      },
-    })
-
-    const foliosByOrg = new Map(
-      folioAssignmentsByUser.map((item) => [
-        item.organizationId,
-        {
-          assigned: item._sum.assignedAmount || 0,
-          consumed: item._sum.consumedAmount || 0,
-        },
-      ]),
-    )
-
-    usersWithFolios = users.map((user) => ({
-      ...user,
-      folioStats: user.organizationId
-        ? foliosByOrg.get(user.organizationId) || { assigned: 0, consumed: 0 }
-        : { assigned: 0, consumed: 0 },
-      invoiceCount: user.invoices.length,
-    }))
-
-    systemConfig = await prisma.systemConfig.findFirst({
-      where: { organizationId: organization.id },
-    })
-
-    folioStats = await prisma.folioAssignment.aggregate({
-      where: { organizationId: organization.id },
-      _sum: {
-        assignedAmount: true,
-        consumedAmount: true,
-      },
-    })
-  }
-
-
-  const currentUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      language: true,
-      timezone: true,
-      emailNotifications: true,
-      ruc: true,
-      dv: true,
-    },
-  })
-
-  if (!currentUser) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-600">No se pudo cargar tu perfil de usuario</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Configuración</h1>
-          <p className="text-gray-600 mt-1">
-            Gestiona tu organización, usuarios y preferencias del sistema
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Configuración HKA</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Configura tus credenciales para conectar con la API de HKA
           </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
-            {session.user.role}
-          </span>
         </div>
       </div>
 
-      {/* Tabs de Configuración */}
-      <ConfigurationTabs
-        organization={organization}
-        users={usersWithFolios}
-        organizations={organizations}
-        systemConfig={systemConfig}
-        folioStats={{
-          totalAssigned: folioStats._sum.assignedAmount || 0,
-          totalConsumed: folioStats._sum.consumedAmount || 0,
-        }}
-        userRole={session.user.role as string}
-        userId={session.user.id}
-        currentUser={currentUser}
-        isSuperAdmin={isSuperAdmin}
-      />
+      {/* Credenciales HKA */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Credenciales de Autenticación
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Estas credenciales se envían en cada llamada SOAP a los métodos de HKA.
+            Obtén tus tokens desde el portal de The Factory HKA.
+          </p>
+        </div>
+
+        <HkaCredentialsForm />
+      </div>
+
+      {/* Información sobre los endpoints */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
+        <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-3">
+          Endpoints Configurados
+        </h3>
+        <div className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
+          <p><strong>Demo:</strong> https://demows.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc</p>
+          <p><strong>Producción:</strong> https://ws.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc</p>
+        </div>
+      </div>
     </div>
   )
 }

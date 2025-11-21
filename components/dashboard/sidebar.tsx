@@ -2,12 +2,9 @@
 
 import {
   LayoutDashboard,
-  FileText,
-  Receipt,
   Users,
   Settings,
   BarChart3,
-  Folder,
   Building2,
   ShieldCheck,
   Activity,
@@ -26,11 +23,8 @@ interface SidebarItem {
 
 // Menú para usuarios estándar/enterprise
 const defaultSidebarItems: SidebarItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Folios", href: "/dashboard/folios", icon: Folder },
-  { name: "Facturas", href: "/dashboard/facturas", icon: FileText },
-  { name: "Clientes", href: "/dashboard/clientes", icon: Users },
-  { name: "Reportes", href: "/dashboard/reportes", icon: BarChart3 },
+  { name: "Inicio", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Métodos HKA", href: "/dashboard/metodos-hka", icon: Activity },
   { name: "Configuración", href: "/dashboard/configuracion", icon: Settings },
 ]
 
