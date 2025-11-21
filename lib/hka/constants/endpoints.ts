@@ -10,8 +10,8 @@ export const ENDPOINTS = {
         // REST: 'http://demoemision.thefactoryhka.com.pa/api/v1.0', // Reservado para futuro
     },
     PROD: {
-        SOAP: 'http://emision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc?wsdl',
-        // REST: 'http://emision.thefactoryhka.com.pa/api/v1.0', // Reservado para futuro
+        SOAP: 'https://emision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc?wsdl',
+        // REST: 'https://emision.thefactoryhka.com.pa/api/v1.0', // Reservado para futuro
     },
 } as const;
 
