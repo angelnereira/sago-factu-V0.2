@@ -7,7 +7,7 @@
 
 import { auth } from '@/lib/auth';
 import { createHkaService } from '@/lib/hka';
-import { logger } from '@/lib/hka/utils/logger';
+import { hkaLogger } from '@/lib/hka/utils/logger';
 
 /**
  * Output: Resultado de test de conexión
@@ -47,9 +47,9 @@ export async function testHkaConnection(): Promise<TestHkaConnectionOutput> {
     try {
       hkaService = await createHkaService(userId);
     } catch (credentialError: any) {
-      logger.error('HKA credentials error during test', {
-        userId,
-        error: credentialError.message,
+      await hkaLogger.error('TEST_CONNECTION', 'HKA credentials error during test', {
+        data: { userId },
+        error: credentialError,
       });
 
       return {
@@ -64,9 +64,9 @@ export async function testHkaConnection(): Promise<TestHkaConnectionOutput> {
     try {
       foliosResponse = await hkaService.foliosRestantes();
     } catch (hkaError: any) {
-      logger.error('HKA connection test failed', {
-        userId,
-        error: hkaError.message,
+      await hkaLogger.error('TEST_CONNECTION', 'HKA connection test failed', {
+        data: { userId },
+        error: hkaError,
       });
 
       return {
@@ -90,12 +90,14 @@ export async function testHkaConnection(): Promise<TestHkaConnectionOutput> {
       };
     }
 
-    const foliosDisponibles = parseInt(foliosResponse.foliosDisponibles || '0', 10);
+    const foliosDisponibles = parseInt(String(foliosResponse.foliosDisponibles || '0'), 10);
 
-    logger.info('HKA connection test successful', {
-      userId,
-      foliosDisponibles,
-      responseTime,
+    await hkaLogger.info('TEST_CONNECTION', 'HKA connection test successful', {
+      data: {
+        userId,
+        foliosDisponibles,
+        responseTime,
+      }
     });
 
     return {
@@ -110,10 +112,9 @@ export async function testHkaConnection(): Promise<TestHkaConnectionOutput> {
   } catch (error: any) {
     const responseTime = Date.now() - startTime;
 
-    logger.error('Test HKA connection action failed', {
-      error: error.message,
-      stack: error.stack,
-      responseTime,
+    await hkaLogger.error('TEST_CONNECTION', 'Test HKA connection action failed', {
+      error: error,
+      data: { responseTime }
     });
 
     return {
@@ -150,8 +151,8 @@ export async function hasHkaCredentialsConfigured(): Promise<{
       return { configured: false };
     }
   } catch (error: any) {
-    logger.error('Has HKA credentials check failed', {
-      error: error.message,
+    await hkaLogger.error('CHECK_CREDENTIALS', 'Has HKA credentials check failed', {
+      error: error,
     });
     return { configured: false };
   }
