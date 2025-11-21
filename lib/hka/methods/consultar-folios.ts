@@ -48,8 +48,8 @@ export async function consultarFolios(
         // Invocar método SOAP con monitoreo
         console.log(`🔐 Credenciales resueltas (${credentials.source}), invocando ConsultarFolios...`);
 
-        const response = await monitorHKACall('Folios', async () => {
-          return await hkaClient.invokeWithCredentials<any>('Folios', params, credentials);
+        const response = await monitorHKACall('FoliosRestantes', async () => {
+          return await hkaClient.invokeWithCredentials<any>('FoliosRestantes', params, credentials);
         });
 
         // Procesar respuesta

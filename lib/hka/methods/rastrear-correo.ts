@@ -37,9 +37,9 @@ export async function rastrearCorreoHKA(trackingId: string): Promise<RastreoCorr
       TokenPassword: credentials.tokenPassword,
     };
 
-    // Invocar método SOAP "CorreoEvento" con monitoreo y credenciales inyectadas
-    const response = await monitorHKACall('CorreoEvento', async () => {
-      return await hkaClient.invokeWithCredentials<RastreoCorreoResponse>('CorreoEvento', params, credentials);
+    // Invocar método SOAP "RastreoCorreo" con monitoreo y credenciales inyectadas
+    const response = await monitorHKACall('RastreoCorreo', async () => {
+      return await hkaClient.invokeWithCredentials<RastreoCorreoResponse>('RastreoCorreo', params, credentials);
     });
 
     // Validar respuesta
