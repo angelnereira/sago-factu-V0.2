@@ -194,9 +194,18 @@ export class HkaToDomainMapper {
    * Mapea respuesta de FoliosRestantes a FolioBalance
    */
   static mapFoliosRestantesResponse(response: FoliosRestantesResponse): FolioBalance {
-    const disponibles = parseInt(response.foliosDisponibles || '0', 10);
-    const utilizados = parseInt(response.foliosUtilizados || '0', 10);
-    const total = disponibles + utilizados;
+    // Usar nombres nuevos con fallback a legacy
+    const disponibles = response.foliosTotalesDisponibles ??
+                       response.foliosDisponibles ??
+                       0;
+
+    const utilizados = response.foliosUtilizadosCiclo ??
+                      response.foliosUsados ??
+                      0;
+
+    const total = response.foliosTotales ??
+                 (disponibles + utilizados);
+
     const porcentajeUso = total > 0 ? (utilizados / total) * 100 : 0;
     const alertaBajo = disponibles < 100; // Alerta si quedan menos de 100
 
