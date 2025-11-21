@@ -37,6 +37,7 @@ export interface ProcessInvoiceResult {
   sentToHKA: boolean;
   emailSent: boolean;
   error?: string;
+  pdfBase64?: string;
 }
 
 // ============================================
@@ -128,7 +129,7 @@ export async function processInvoice(
     } as any;
 
     let resultGenerate: { xml: string; cufe: string; errores: string[] };
-    
+
     try {
       resultGenerate = await generateXMLFromInvoice(
         invoiceWithCustomer as any,
@@ -194,7 +195,7 @@ export async function processInvoice(
     // ============================================
     // PASO 5: Enviar a HKA (si está habilitado)
     // ============================================
-      if (sendToHKA) {
+    if (sendToHKA) {
       console.log('\n📤 PASO 5: Enviar a HKA...');
 
       try {
@@ -221,6 +222,7 @@ export async function processInvoice(
         if (hkaResponse.dCodRes === '0200') {
           console.log(`   🎉 ¡Factura CERTIFICADA por HKA!`);
           result.success = true;
+          result.pdfBase64 = hkaResponse.PDF || hkaResponse.xContPDF;
 
           // Envío automático de correo si está habilitado
           // Usar CAFE de la respuesta (si disponible), o CUFE como fallback
@@ -290,7 +292,7 @@ export async function processInvoice(
         if (invoice.organization.hkaEnvironment === 'DEMO') {
           console.log(`   ⚠️  Ambiente DEMO: Error de conexión detectado - ${errorMsg}`);
           console.log(`   💡 Esto es útil para probar credenciales y conexión antes de producción`);
-          
+
           await prisma.invoice.update({
             where: { id: invoiceId },
             data: {
@@ -323,7 +325,7 @@ export async function processInvoice(
       }
     } else {
       console.log('\n⏭️  PASO 5: Envío a HKA deshabilitado');
-      
+
       const isDemo = invoice.organization.hkaEnvironment === 'DEMO';
       const mensaje = isDemo
         ? 'XML generado correctamente. En ambiente DEMO, configure credenciales HKA para probar la conexión real.'

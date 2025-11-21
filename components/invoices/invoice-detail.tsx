@@ -1,6 +1,6 @@
 "use client"
 
-import { Download, Send, XCircle, CheckCircle, Clock, FileText, ArrowLeft, FileCode } from "lucide-react"
+import { Download, Send, XCircle, CheckCircle, Clock, FileText, ArrowLeft, FileCode, Copy, Printer, Mail } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { SendEmailButton } from "./send-email-button"
@@ -8,6 +8,7 @@ import { EmailHistory } from "./email-history"
 import { InvoiceSuccessResponse } from "./invoice-success-response"
 import { useRouter } from "next/navigation"
 import { formatPanamaDateReadable, formatPanamaDateShort } from "@/lib/utils/date-timezone"
+import { QRCodeSVG } from "qrcode.react"
 
 interface InvoiceDetailProps {
   invoice: any
@@ -20,8 +21,8 @@ const statusConfig = {
     color: "bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300",
     icon: FileText,
   },
-  PENDING: {
-    label: "Pendiente",
+  QUEUED: {
+    label: "En Cola",
     color: "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400",
     icon: Clock,
   },
@@ -30,13 +31,13 @@ const statusConfig = {
     color: "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400",
     icon: Clock,
   },
-  CERTIFIED: {
-    label: "Certificada",
+  EMITTED: {
+    label: "Emitida",
     color: "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400",
     icon: CheckCircle,
   },
-  APPROVED: {
-    label: "Aprobada",
+  CERTIFIED: {
+    label: "Certificada",
     color: "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400",
     icon: CheckCircle,
   },
@@ -46,21 +47,18 @@ const statusConfig = {
     icon: XCircle,
   },
   CANCELLED: {
-    label: "Cancelada",
+    label: "Anulada",
     color: "bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300",
+    icon: XCircle,
+  },
+  ERROR: {
+    label: "Error",
+    color: "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400",
     icon: XCircle,
   },
 }
 
 export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
-  // LOG SÍNCRONO - Se ejecuta SIEMPRE al renderizar el componente
-  console.log('🚨 [InvoiceDetail] Componente renderizado!', {
-    invoiceId: invoice?.id,
-    status: invoice?.status,
-    hasCufe: !!invoice?.cufe,
-    timestamp: new Date().toISOString(),
-  })
-  
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
@@ -69,8 +67,7 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
   const StatusIcon = status.icon
 
   // Preparar datos para mostrar InvoiceSuccessResponse si la factura está certificada
-  // IMPORTANTE: Mostrar siempre si está certificada, incluso sin CUFE/CAFE (para mostrar datos parciales)
-  const certifiedData = invoice.status === "CERTIFIED" ? {
+  const certifiedData = invoice.status === "CERTIFIED" || invoice.status === "EMITTED" ? {
     invoiceId: invoice.id,
     cufe: invoice.cufe || undefined,
     cafe: invoice.cafe || undefined,
@@ -79,9 +76,9 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
     qrCode: invoice.qrCode || undefined,
     protocoloAutorizacion: invoice.hkaProtocol || undefined,
     fechaRecepcionDGI: invoice.hkaProtocolDate ? new Date(invoice.hkaProtocolDate).toISOString() : null,
+    pdfBase64: invoice.pdfBase64 || undefined,
   } : null
 
-  // Mostrar successData si existe (después de enviar) o certifiedData si la factura ya está certificada
   const displayData = successData || certifiedData
 
   const handleSendToHKA = async () => {
@@ -100,15 +97,12 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
         throw new Error(result.error || result.message || 'Error al procesar factura')
       }
 
-      // Si hay datos de respuesta exitosa, mostrarlos
       if (result.data) {
         setSuccessData(result.data)
-        // Scroll al inicio para mostrar el componente
         setTimeout(() => {
           window.scrollTo({ top: 0, behavior: 'smooth' })
         }, 100)
       } else {
-        // Recargar la página para mostrar el nuevo estado y CUFE
         router.refresh()
       }
     } catch (error) {
@@ -121,8 +115,19 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
   const handleDownloadPDF = async () => {
     setDownloadError(null)
     try {
+      // Si tenemos el PDF en base64, descargarlo directamente
+      if (invoice.pdfBase64) {
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${invoice.pdfBase64}`;
+        link.download = `Factura_${invoice.numeroDocumentoFiscal || invoice.id}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
+
       const response = await fetch(`/api/invoices/${invoice.id}/pdf`)
-      
+
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Error al obtener PDF' }))
         throw new Error(error.error || 'Error al descargar PDF')
@@ -132,14 +137,11 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      
-      // Usar número fiscal si está disponible, sino CUFE o ID
-      const fileName = invoice.numeroDocumentoFiscal 
+
+      const fileName = invoice.numeroDocumentoFiscal
         ? `Factura_${invoice.numeroDocumentoFiscal.replace(/\//g, '-')}.pdf`
-        : invoice.cufe 
-        ? `Factura_${invoice.cufe.substring(0, 20)}.pdf`
         : `Factura_${invoice.id}.pdf`
-      
+
       a.download = fileName
       document.body.appendChild(a)
       a.click()
@@ -155,7 +157,7 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
     setDownloadError(null)
     try {
       const response = await fetch(`/api/invoices/${invoice.id}/xml`)
-      
+
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Error al obtener XML' }))
         throw new Error(error.error || 'Error al descargar XML')
@@ -165,14 +167,11 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      
-      // Usar número fiscal si está disponible, sino CUFE o ID
-      const fileName = invoice.numeroDocumentoFiscal 
+
+      const fileName = invoice.numeroDocumentoFiscal
         ? `Factura_${invoice.numeroDocumentoFiscal.replace(/\//g, '-')}.xml`
-        : invoice.cufe 
-        ? `Factura_${invoice.cufe.substring(0, 20)}.xml`
         : `Factura_${invoice.id}.xml`
-      
+
       a.download = fileName
       document.body.appendChild(a)
       a.click()
@@ -184,56 +183,13 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
     }
   }
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    // Podríamos mostrar un toast aquí
+  }
+
   return (
     <div className="space-y-6">
-      {/* Mostrar componente de respuesta exitosa si hay datos de éxito O si la factura ya está certificada */}
-      {displayData ? (
-        <div className="mb-6 border-4 border-green-500 dark:border-green-600 rounded-lg p-4 bg-green-50 dark:bg-green-900/20">
-          <div className="mb-2">
-            <p className="text-sm font-bold text-green-700 dark:text-green-300">
-              ✅ Componente InvoiceSuccessResponse Visible
-            </p>
-            <p className="text-xs text-green-600 dark:text-green-400 font-mono">
-              displayData tiene valor - Renderizando componente
-            </p>
-          </div>
-          <InvoiceSuccessResponse data={displayData} />
-          {/* Solo mostrar botón "Continuar" si es successData (recién enviado) */}
-          {successData && (
-            <div className="mt-4 flex justify-center">
-              <button
-                onClick={() => {
-                  setSuccessData(null)
-                  router.refresh()
-                }}
-                className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-              >
-                Continuar
-              </button>
-            </div>
-          )}
-        </div>
-      ) : invoice.status === "CERTIFIED" ? (
-        // Fallback: Si está certificada pero no tiene displayData, mostrar mensaje
-        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg">
-          <p className="text-sm font-bold text-yellow-800 dark:text-yellow-200">
-            ⚠️ Factura certificada pero faltan datos de respuesta HKA
-          </p>
-          <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-2">
-            Recarga la página o contacta soporte.
-          </p>
-          <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded text-xs font-mono">
-            <div>Status: <code>{invoice.status}</code></div>
-            <div>Has CUFE: <code>{invoice.cufe ? '✅ sí' : '❌ no'}</code></div>
-            <div>Has CAFE: <code>{invoice.cafe ? '✅ sí' : '❌ no'}</code></div>
-            <div>Has QR URL: <code>{invoice.qrUrl ? '✅ sí' : '❌ no'}</code></div>
-            <div>certifiedData: <code>{certifiedData ? '✅ EXISTE' : '❌ NULL'}</code></div>
-            <div>successData: <code>{successData ? '✅ EXISTE' : '❌ NULL'}</code></div>
-            <div>displayData: <code>{displayData ? '✅ EXISTE' : '❌ NULL'}</code></div>
-          </div>
-        </div>
-      ) : null}
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -244,289 +200,243 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               Factura {invoice.invoiceNumber || "Sin número"}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Creada el {formatPanamaDateReadable(invoice.createdAt, false)}
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {invoice.customer?.name || invoice.receiverName} • {formatPanamaDateReadable(invoice.createdAt, false)}
             </p>
           </div>
         </div>
 
         <div className="flex items-center space-x-3">
-          {invoice.status === "CERTIFIED" && !displayData && (
-            <>
-              <button
-                onClick={handleDownloadPDF}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
-                title="Descargar PDF certificado"
-              >
-                <Download className="h-5 w-5" />
-                <span>PDF</span>
-              </button>
-              <button
-                onClick={handleDownloadXML}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                title="Descargar XML firmado"
-              >
-                <FileCode className="h-5 w-5" />
-                <span>XML</span>
-              </button>
-              <SendEmailButton 
-                invoiceId={invoice.id} 
-                defaultEmail={invoice.receiverEmail || undefined}
-              />
-            </>
-          )}
-          {(invoice.status === "PENDING" || invoice.status === "DRAFT") && (
+          {(invoice.status === "QUEUED" || invoice.status === "DRAFT") && (
             <button
               onClick={handleSendToHKA}
               disabled={isProcessing}
-              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50"
+              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50 shadow-sm"
             >
-              <Send className="h-5 w-5" />
-              <span>{isProcessing ? "Enviando..." : "Enviar a HKA"}</span>
+              {isProcessing ? <Clock className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              <span>{isProcessing ? "Enviando..." : "Emitir Factura"}</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Error message */}
-      {downloadError && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <p className="text-sm text-red-600 dark:text-red-400">
-            {downloadError}
-          </p>
+      {/* Success Modal/Banner */}
+      {successData && (
+        <div className="mb-6">
+          <InvoiceSuccessResponse data={successData} />
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => {
+                setSuccessData(null)
+                router.refresh()
+              }}
+              className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+            >
+              Cerrar y ver detalles
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Estado */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <StatusIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Estado</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{status.label}</p>
-            </div>
-          </div>
-          <span className={`px-4 py-2 rounded-full text-sm font-medium ${status.color}`}>
-            {status.label}
-          </span>
+      {/* Error Banner */}
+      {downloadError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
+          <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
+          <p className="text-sm text-red-600 dark:text-red-400">{downloadError}</p>
         </div>
+      )}
 
-        {/* Información de Certificación */}
-        {invoice.status === "CERTIFIED" && (invoice.cufe || invoice.cafe || invoice.numeroDocumentoFiscal || invoice.hkaResponseMessage) && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Certificación DGI</p>
-              {invoice.cufe && (
-                <div className="mb-2">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">CUFE</p>
-                  <p className="text-xs font-mono text-gray-900 dark:text-gray-100 break-all bg-gray-50 dark:bg-gray-900/30 p-2 rounded">
-                    {invoice.cufe}
-                  </p>
-                </div>
-              )}
-              {invoice.cafe && (
-                <div className="mb-2">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">CAFE</p>
-                  <p className="text-xs font-mono text-gray-900 dark:text-gray-100 break-all bg-gray-50 dark:bg-gray-900/30 p-2 rounded">
-                    {invoice.cafe}
-                  </p>
-                </div>
-              )}
-              {invoice.numeroDocumentoFiscal && (
-                <div className="mb-2">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Número Fiscal</p>
-                  <p className="text-xs font-mono text-gray-900 dark:text-gray-100 break-all bg-gray-50 dark:bg-gray-900/30 p-2 rounded">
-                    {invoice.numeroDocumentoFiscal}
-                  </p>
-                </div>
-              )}
-              {invoice.hkaResponseMessage && (
-                <div className="mb-2">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Mensaje HKA</p>
-                  <p className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-2 rounded">
-                    {invoice.hkaResponseMessage}
-                  </p>
-                </div>
-              )}
-              {invoice.certifiedAt && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Certificada el</p>
-                  <p className="text-xs text-gray-900 dark:text-gray-100">
-                    {formatPanamaDateReadable(invoice.certifiedAt, true)}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Datos del Emisor */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Emisor</h2>
-          <div className="space-y-2 text-sm">
-            <div>
-              <span className="text-gray-600 dark:text-gray-400">Nombre:</span>
-              <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{invoice.issuerName}</span>
+          {/* Items */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Detalle de la Factura</h2>
             </div>
-            <div>
-              <span className="text-gray-600 dark:text-gray-400">RUC:</span>
-              <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{invoice.issuerRuc}-{invoice.issuerDv}</span>
-            </div>
-            <div>
-              <span className="text-gray-600 dark:text-gray-400">Dirección:</span>
-              <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{invoice.issuerAddress}</span>
-            </div>
-            <div>
-              <span className="text-gray-600 dark:text-gray-400">Email:</span>
-              <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{invoice.issuerEmail}</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Datos del Receptor */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Receptor (Cliente)</h2>
-          <div className="space-y-2 text-sm">
-            <div>
-              <span className="text-gray-600 dark:text-gray-400">Nombre:</span>
-              <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{invoice.receiverName}</span>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900/30">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Desc</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cant</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Precio</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {invoice.items.map((item: any) => (
+                    <tr key={item.id}>
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                        <div className="font-medium">{item.description}</div>
+                        {item.code && <div className="text-xs text-gray-500">{item.code}</div>}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-gray-100">
+                        {parseFloat(item.quantity.toString()).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-gray-100">
+                        ${parseFloat(item.unitPrice.toString()).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
+                        ${parseFloat(item.total.toString()).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div>
-              <span className="text-gray-600 dark:text-gray-400">RUC:</span>
-              <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
-                {invoice.receiverRuc}{invoice.receiverDv && `-${invoice.receiverDv}`}
-              </span>
-            </div>
-            {invoice.receiverAddress && (
-              <div>
-                <span className="text-gray-600 dark:text-gray-400">Dirección:</span>
-                <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{invoice.receiverAddress}</span>
+
+            {/* Totals Section */}
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/30 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col gap-2 items-end">
+                <div className="flex justify-between w-full sm:w-64 text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">${parseFloat(invoice.subtotal.toString()).toFixed(2)}</span>
+                </div>
+                {parseFloat(invoice.discount.toString()) > 0 && (
+                  <div className="flex justify-between w-full sm:w-64 text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Descuento:</span>
+                    <span className="font-medium text-red-600 dark:text-red-400">-${parseFloat(invoice.discount.toString()).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between w-full sm:w-64 text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">ITBMS (7%):</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">${parseFloat(invoice.itbms.toString()).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between w-full sm:w-64 text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700 mt-1">
+                  <span className="text-gray-900 dark:text-gray-100">Total:</span>
+                  <span className="text-indigo-600 dark:text-indigo-400">${parseFloat(invoice.total.toString()).toFixed(2)}</span>
+                </div>
               </div>
-            )}
-            {invoice.receiverEmail && (
-              <div>
-                <span className="text-gray-600 dark:text-gray-400">Email:</span>
-                <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{invoice.receiverEmail}</span>
+            </div>
+          </div>
+
+          {/* Client & Issuer Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Cliente</h3>
+              <div className="space-y-2">
+                <p className="font-medium text-gray-900 dark:text-gray-100">{invoice.receiverName}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">RUC: {invoice.receiverRuc}-{invoice.receiverDv}</p>
+                {invoice.receiverEmail && <p className="text-sm text-gray-600 dark:text-gray-400">{invoice.receiverEmail}</p>}
+                {invoice.receiverAddress && <p className="text-sm text-gray-600 dark:text-gray-400">{invoice.receiverAddress}</p>}
               </div>
-            )}
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Emisor</h3>
+              <div className="space-y-2">
+                <p className="font-medium text-gray-900 dark:text-gray-100">{invoice.issuerName}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">RUC: {invoice.issuerRuc}-{invoice.issuerDv}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{invoice.issuerEmail}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{invoice.issuerAddress}</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Items de la Factura */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Detalle de Items</h2>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900/30">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">#</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Descripción</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cantidad</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Precio Unit.</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">IVA</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {invoice.items.map((item: any) => (
-                <tr key={item.id}>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{item.lineNumber}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{item.description}</td>
-                  <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">
-                    {parseFloat(item.quantity.toString()).toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">
-                    ${parseFloat(item.unitPrice.toString()).toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">
-                    ${parseFloat(item.taxAmount.toString()).toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-gray-100">
-                    ${parseFloat(item.total.toString()).toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Totales */}
-      <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Totales</h2>
-        
-        <div className="space-y-2">
-          <div className="flex justify-between text-gray-700 dark:text-gray-300">
-            <span>Subtotal:</span>
-            <span className="font-medium">${parseFloat(invoice.subtotal.toString()).toFixed(2)}</span>
-          </div>
-          {parseFloat(invoice.discount.toString()) > 0 && (
-            <div className="flex justify-between text-gray-700 dark:text-gray-300">
-              <span>Descuento:</span>
-              <span className="font-medium text-red-600 dark:text-red-400">
-                -${parseFloat(invoice.discount.toString()).toFixed(2)}
-              </span>
+          {/* Notes */}
+          {invoice.notes && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Notas</h3>
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{invoice.notes}</p>
             </div>
           )}
-          <div className="flex justify-between text-gray-700 dark:text-gray-300">
-            <span>ITBMS (IVA 7%):</span>
-            <span className="font-medium">${parseFloat(invoice.itbms.toString()).toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-xl font-bold text-gray-900 dark:text-gray-100 pt-2 border-t border-indigo-300 dark:border-indigo-700">
-            <span>Total:</span>
-            <span className="text-indigo-600 dark:text-indigo-400">${parseFloat(invoice.total.toString()).toFixed(2)}</span>
-          </div>
         </div>
-      </div>
 
-      {/* Notas */}
-      {invoice.notes && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Notas / Observaciones</h2>
-          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{invoice.notes}</p>
-        </div>
-      )}
+        {/* Sidebar - Fiscal Panel */}
+        <div className="space-y-6">
+          {/* Status Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Estado Fiscal</h3>
+              <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${status.color}`}>
+                <StatusIcon className="w-3 h-3" />
+                {status.label}
+              </span>
+            </div>
 
-      {/* Historial de Correos (solo si está certificada) */}
-      {invoice.status === "CERTIFIED" && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Historial de Correos Enviados
-          </h2>
-          <EmailHistory invoiceId={invoice.id} />
-        </div>
-      )}
+            {(invoice.status === "CERTIFIED" || invoice.status === "EMITTED") && (
+              <div className="space-y-4">
+                {/* QR Code */}
+                <div className="flex justify-center py-4 bg-white rounded-lg border border-gray-100">
+                  {invoice.qrCode ? (
+                    // Si tenemos el QR en base64 (imagen), lo mostramos
+                    <img src={`data:image/png;base64,${invoice.qrCode}`} alt="QR Factura" className="w-32 h-32 object-contain" />
+                  ) : invoice.qrUrl ? (
+                    // Si tenemos URL, generamos el QR
+                    <QRCodeSVG value={invoice.qrUrl} size={128} />
+                  ) : (
+                    <div className="w-32 h-32 bg-gray-100 flex items-center justify-center text-xs text-gray-400">Sin QR</div>
+                  )}
+                </div>
 
-      {/* Información Adicional */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Información Adicional</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-gray-600 dark:text-gray-400">Creado por:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{invoice.user.name}</span>
+                {/* CUFE */}
+                {invoice.cufe && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">CUFE</label>
+                    <div className="flex gap-2">
+                      <code className="flex-1 text-xs bg-gray-50 dark:bg-gray-900/50 p-2 rounded border border-gray-200 dark:border-gray-700 break-all font-mono text-gray-600 dark:text-gray-300">
+                        {invoice.cufe}
+                      </code>
+                      <button
+                        onClick={() => copyToClipboard(invoice.cufe)}
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                        title="Copiar CUFE"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="space-y-2 pt-2">
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+                  >
+                    <Download className="w-4 h-4" />
+                    Descargar PDF
+                  </button>
+                  <button
+                    onClick={handleDownloadXML}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+                  >
+                    <FileCode className="w-4 h-4" />
+                    Descargar XML
+                  </button>
+                  <SendEmailButton
+                    invoiceId={invoice.id}
+                    defaultEmail={invoice.receiverEmail || undefined}
+                    variant="outline"
+                    className="w-full justify-center"
+                  />
+                </div>
+              </div>
+            )}
+
+            {invoice.status === "ERROR" && (
+              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800">
+                <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Error de Emisión</p>
+                <p className="text-xs text-red-500 dark:text-red-300">{invoice.hkaResponseMessage || "Ocurrió un error desconocido."}</p>
+              </div>
+            )}
           </div>
-          <div>
-            <span className="text-gray-600 dark:text-gray-400">Fecha de emisión:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
-              {formatPanamaDateShort(invoice.issueDate)}
-            </span>
-          </div>
-          <div>
-            <span className="text-gray-600 dark:text-gray-400">Moneda:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{invoice.currency || "PAB"}</span>
-          </div>
-          <div>
-            <span className="text-gray-600 dark:text-gray-400">ID de Referencia:</span>
-            <span className="ml-2 font-mono text-xs text-gray-900 dark:text-gray-100">{invoice.clientReferenceId}</span>
-          </div>
+
+          {/* Email History */}
+          {(invoice.status === "CERTIFIED" || invoice.status === "EMITTED") && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                Historial de Envíos
+              </h3>
+              <EmailHistory invoiceId={invoice.id} />
+            </div>
+          )}
         </div>
       </div>
     </div>

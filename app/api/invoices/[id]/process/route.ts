@@ -87,7 +87,7 @@ export async function POST(
     // FUNCIONALIDAD GLOBAL: Todos los usuarios usan la misma lógica de envío
     // Las credenciales se obtienen automáticamente: primero de BD, luego de .env
     const env = (invoice.organization.hkaEnvironment || 'demo').toLowerCase();
-    
+
     // Verificar si hay credenciales disponibles (BD o .env)
     // getHKACredentialsForInvoice maneja esto automáticamente, pero verificamos aquí para evitar errores
     const hasOrgCreds = Boolean(invoice.organization.hkaTokenUser && invoice.organization.hkaTokenPassword);
@@ -99,12 +99,12 @@ export async function POST(
     const hasEnvCreds = Boolean(
       process.env.HKA_DEMO_TOKEN_USER || process.env.HKA_PROD_TOKEN_USER
     );
-    
+
     // Determinar si debe enviar a HKA
     // - Si autoSendToHKA está habilitado Y hay credenciales (BD o .env)
     // - Funciona igual para todos los usuarios (SIMPLE, DASHBOARD, ENTERPRISE)
     const shouldSendToHKA = autoSendToHKA && (hasOrgCreds || hasUserCreds || hasEnvCreds);
-    
+
     if (!shouldSendToHKA && autoSendToHKA) {
       console.warn(
         `⚠️  Envío a HKA deshabilitado: autoSendToHKA=${autoSendToHKA}, hasOrgCreds=${hasOrgCreds}, hasUserCreds=${hasUserCreds}, hasEnvCreds=${hasEnvCreds}`
@@ -134,6 +134,7 @@ export async function POST(
           hkaProtocolDate: true,
           status: true,
           certifiedAt: true,
+          pdfBase64: true,
         },
       });
 
@@ -149,11 +150,7 @@ export async function POST(
         hasNumeroFiscal: !!invoiceUpdated?.numeroDocumentoFiscal,
         hasProtocol: !!invoiceUpdated?.hkaProtocol,
         hasProtocolDate: !!invoiceUpdated?.hkaProtocolDate,
-      });
-      console.log('📦 Result from worker:', {
-        success: result.success,
-        sentToHKA: result.sentToHKA,
-        cufe: result.cufe,
+        hasPdf: !!invoiceUpdated?.pdfBase64,
       });
       console.groupEnd();
 
@@ -166,10 +163,11 @@ export async function POST(
         qrUrl: invoiceUpdated?.qrUrl || undefined,
         qrCode: invoiceUpdated?.qrCode || undefined,
         protocoloAutorizacion: invoiceUpdated?.hkaProtocol || undefined,
-        fechaRecepcionDGI: invoiceUpdated?.hkaProtocolDate 
-          ? invoiceUpdated.hkaProtocolDate.toISOString() 
+        fechaRecepcionDGI: invoiceUpdated?.hkaProtocolDate
+          ? invoiceUpdated.hkaProtocolDate.toISOString()
           : null,
         status: invoiceUpdated?.status || (result.sentToHKA ? 'PROCESSING' : 'CERTIFIED'),
+        pdfBase64: invoiceUpdated?.pdfBase64 || result.pdfBase64 || undefined,
       };
 
       // 🔍 DEBUG: Validar que responseData tiene campos mínimos
@@ -186,8 +184,8 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        message: result.sentToHKA 
-          ? 'Factura procesada y enviada a HKA exitosamente' 
+        message: result.sentToHKA
+          ? 'Factura procesada y enviada a HKA exitosamente'
           : 'Factura procesada correctamente',
         data: responseData,
       });

@@ -1,11 +1,11 @@
 import { prismaServer as prisma } from '@/lib/prisma-server';
 import { auth } from '@/lib/auth';
 import Link from 'next/link';
-import { Plus, Settings, FileText, Search } from 'lucide-react';
+import { Plus, Settings, FileText, Search, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
 export default async function SimpleDashboard() {
   const session = await auth();
-  
+
   if (!session?.user) {
     return null;
   }
@@ -96,38 +96,62 @@ export default async function SimpleDashboard() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {recentInvoices.map((invoice) => (
-              <Link 
-                key={invoice.id} 
-                href={`/dashboard/facturas/${invoice.id}`}
-                className="flex justify-between items-center p-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              <div
+                key={invoice.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors gap-4"
               >
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 dark:text-gray-100">
-                    {invoice.invoiceNumber || `#${invoice.id.slice(0, 8)}`}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-1">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                      {invoice.invoiceNumber || `#${invoice.id.slice(0, 8)}`}
+                    </p>
+                    {invoice.status === 'CERTIFIED' && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
+                        <CheckCircle className="w-3 h-3 mr-1" /> Emitida
+                      </span>
+                    )}
+                    {invoice.status === 'ERROR' && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">
+                        <AlertCircle className="w-3 h-3 mr-1" /> Error
+                      </span>
+                    )}
+                    {(invoice.status === 'DRAFT' || invoice.status === 'QUEUED') && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                        <Clock className="w-3 h-3 mr-1" /> Borrador
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                    {invoice.customer?.name || 'Cliente General'}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {invoice.customer?.name || 'Sin cliente'}
-                  </p>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 ${
-                    invoice.status === 'CERTIFIED' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
-                    invoice.status === 'ERROR' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
-                    invoice.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
-                    'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                  }`}>
-                    {invoice.status}
-                  </span>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-gray-900 dark:text-gray-100">
-                    ${Number(invoice.total).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(invoice.createdAt).toLocaleDateString('es-PA')}
-                  </p>
+
+                <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6">
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900 dark:text-white">
+                      ${Number(invoice.total).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(invoice.createdAt).toLocaleDateString('es-PA')}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {invoice.status === 'CERTIFIED' && (
+                      <button className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" title="Descargar PDF">
+                        <FileText className="w-4 h-4" />
+                      </button>
+                    )}
+                    <Link href={`/simple/facturas/${invoice.id}`}>
+                      <button className="px-3 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors border border-indigo-200 dark:border-indigo-900">
+                        Ver Detalles
+                      </button>
+                    </Link>
+                  </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}

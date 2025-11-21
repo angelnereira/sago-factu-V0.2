@@ -8,9 +8,11 @@ interface SendEmailButtonProps {
   invoiceId: string
   defaultEmail?: string
   disabled?: boolean
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+  className?: string
 }
 
-export function SendEmailButton({ invoiceId, defaultEmail, disabled }: SendEmailButtonProps) {
+export function SendEmailButton({ invoiceId, defaultEmail, disabled, variant = "outline", className }: SendEmailButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [email, setEmail] = useState(defaultEmail || '')
   const [message, setMessage] = useState('')
@@ -65,10 +67,11 @@ export function SendEmailButton({ invoiceId, defaultEmail, disabled }: SendEmail
   return (
     <>
       <Button
-        variant="outline"
+        variant={variant}
         size="sm"
         onClick={() => setIsOpen(true)}
         disabled={disabled}
+        className={className}
       >
         <Mail className="mr-2 h-4 w-4" />
         Enviar por Correo
@@ -97,106 +100,106 @@ export function SendEmailButton({ invoiceId, defaultEmail, disabled }: SendEmail
 
             {/* Form */}
             <div className="space-y-4">
-            {/* Email */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Correo del Destinatario *
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-                placeholder="cliente@empresa.com"
-              />
-            </div>
-
-            {/* Message */}
-            <div>
-              <label
-                htmlFor="message"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Mensaje Personalizado (Opcional)
-              </label>
-              <textarea
-                id="message"
-                rows={4}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                disabled={loading}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Estimado cliente, adjunto encontrará su factura electrónica..."
-              />
-            </div>
-
-            {/* Options */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Archivos Adjuntos
-              </label>
-              <div className="flex items-center space-x-4">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={includePDF}
-                    onChange={(e) => setIncludePDF(e.target.checked)}
-                    disabled={loading}
-                    className="mr-2"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Incluir PDF</span>
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Correo del Destinatario *
                 </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={includeXML}
-                    onChange={(e) => setIncludeXML(e.target.checked)}
-                    disabled={loading}
-                    className="mr-2"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Incluir XML</span>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="cliente@empresa.com"
+                />
+              </div>
+
+              {/* Message */}
+              <div>
+                <label
+                  htmlFor="message"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Mensaje Personalizado (Opcional)
                 </label>
+                <textarea
+                  id="message"
+                  rows={4}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Estimado cliente, adjunto encontrará su factura electrónica..."
+                />
               </div>
-            </div>
 
-            {/* Messages */}
-            {error && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+              {/* Options */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Archivos Adjuntos
+                </label>
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={includePDF}
+                      onChange={(e) => setIncludePDF(e.target.checked)}
+                      disabled={loading}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Incluir PDF</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={includeXML}
+                      onChange={(e) => setIncludeXML(e.target.checked)}
+                      disabled={loading}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Incluir XML</span>
+                  </label>
+                </div>
               </div>
-            )}
-            {success && (
-              <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-                <p className="text-sm text-green-800 dark:text-green-200">{success}</p>
-              </div>
-            )}
 
-            {/* Actions */}
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsOpen(false)
-                  setError('')
-                  setSuccess('')
-                }}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-              <Button onClick={handleSend} disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Enviar Correo
-              </Button>
+              {/* Messages */}
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+                  <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+                </div>
+              )}
+              {success && (
+                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+                  <p className="text-sm text-green-800 dark:text-green-200">{success}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsOpen(false)
+                    setError('')
+                    setSuccess('')
+                  }}
+                  disabled={loading}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handleSend} disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Enviar Correo
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       )}
     </>
   )

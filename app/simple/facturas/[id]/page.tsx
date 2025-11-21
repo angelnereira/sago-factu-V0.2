@@ -13,7 +13,7 @@ export default async function SimpleInvoiceDetailPage({
   params: Promise<{ id: string }>
 }) {
   const session = await auth()
-  
+
   if (!session) {
     redirect("/")
   }
@@ -48,6 +48,7 @@ export default async function SimpleInvoiceDetailPage({
       hkaProtocol: true,
       hkaProtocolDate: true,
       hkaResponseMessage: true,
+      pdfBase64: true,
       certifiedAt: true,
       createdAt: true,
       issueDate: true,
