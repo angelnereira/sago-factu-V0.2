@@ -9,7 +9,8 @@ import {
   ShieldCheck,
   Activity,
   Monitor,
-  FileText
+  FileText,
+  Plus
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -33,6 +34,7 @@ const defaultSidebarItems: SidebarItem[] = [
 const simpleSidebarItems: SidebarItem[] = [
   { name: "Home", href: "/simple", icon: LayoutDashboard },
   { name: "Facturas", href: "/simple/facturas", icon: FileText },
+  { name: "Crear Factura", href: "/simple/facturas/crear", icon: Plus },
   { name: "Configuración", href: "/simple/configuracion", icon: Settings },
 ]
 

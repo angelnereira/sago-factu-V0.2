@@ -50,8 +50,8 @@ export default async function SimpleDashboard() {
 
       {/* Acciones Rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link href="/simple/facturas/nueva" className="group">
-          <div className="p-6 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-indigo-500 dark:hover:border-indigo-600 transition-colors">
+        <Link href="/simple/facturas/crear" className="group">
+          <div className="p-6 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-indigo-500 dark:hover:border-indigo-600 transition-colors cursor-pointer">
             <Plus className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform" />
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
               Nueva Factura
@@ -88,7 +88,7 @@ export default async function SimpleDashboard() {
             <p className="text-gray-500 dark:text-gray-400 mb-4">
               No has creado ninguna factura aún
             </p>
-            <Link href="/simple/facturas/nueva">
+            <Link href="/simple/facturas/crear">
               <button className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 <Plus className="h-4 w-4 mr-2" />
                 Crear mi primera factura
