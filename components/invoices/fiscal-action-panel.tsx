@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
   Download,
@@ -254,7 +254,7 @@ export function FiscalActionPanel({
       {error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <div className="font-semibold mb-1">Error</div>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -263,7 +263,7 @@ export function FiscalActionPanel({
       {success && (
         <Alert className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
           <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertTitle className="text-green-800 dark:text-green-300">Éxito</AlertTitle>
+          <div className="font-semibold mb-1 text-green-800 dark:text-green-300">Éxito</div>
           <AlertDescription className="text-green-700 dark:text-green-300">
             {success}
           </AlertDescription>
@@ -398,7 +398,7 @@ export function FiscalActionPanel({
                   <CardContent className="space-y-4">
                     <Alert variant="destructive">
                       <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Acción Irreversible</AlertTitle>
+                      <div className="font-semibold mb-1">Acción Irreversible</div>
                       <AlertDescription>
                         Esta acción no puede deshacerse. La factura será marcada como anulada
                         en el sistema fiscal.
