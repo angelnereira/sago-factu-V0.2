@@ -10,7 +10,11 @@ import {
   Activity,
   Monitor,
   FileText,
-  Plus
+  Plus,
+  Send,
+  List,
+  Zap,
+  HelpCircle
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -20,7 +24,13 @@ interface SidebarItem {
   name: string
   href: string
   icon: React.ComponentType<{ className?: string }>
-  roles?: string[] // Si se especifica, solo visible para estos roles
+  roles?: string[]
+  badge?: string // Badge opcional
+}
+
+interface SidebarSection {
+  title?: string
+  items: SidebarItem[]
 }
 
 // Menú para usuarios estándar/enterprise
@@ -30,11 +40,36 @@ const defaultSidebarItems: SidebarItem[] = [
   { name: "Configuración", href: "/dashboard/configuracion", icon: Settings },
 ]
 
-// Menú minimalista para SIMPLE_USER
+// Menú organizado para SIMPLE_USER
+const simpleSidebarSections: SidebarSection[] = [
+  {
+    title: "NAVEGACIÓN",
+    items: [
+      { name: "Dashboard", href: "/simple", icon: LayoutDashboard },
+    ]
+  },
+  {
+    title: "FACTURAS",
+    items: [
+      { name: "Mis Facturas", href: "/simple/facturas", icon: List },
+      { name: "Crear Factura", href: "/simple/facturas/crear", icon: Plus, badge: "NUEVO" },
+      { name: "Métodos HKA", href: "/dashboard/metodos-hka", icon: Zap },
+    ]
+  },
+  {
+    title: "CUENTA",
+    items: [
+      { name: "Configuración", href: "/simple/configuracion", icon: Settings },
+    ]
+  },
+]
+
+// Versión plana para compatibilidad (legacy)
 const simpleSidebarItems: SidebarItem[] = [
-  { name: "Home", href: "/simple", icon: LayoutDashboard },
-  { name: "Facturas", href: "/simple/facturas", icon: FileText },
+  { name: "Dashboard", href: "/simple", icon: LayoutDashboard },
+  { name: "Mis Facturas", href: "/simple/facturas", icon: FileText },
   { name: "Crear Factura", href: "/simple/facturas/crear", icon: Plus },
+  { name: "Métodos HKA", href: "/dashboard/metodos-hka", icon: Zap },
   { name: "Configuración", href: "/simple/configuracion", icon: Settings },
 ]
 
@@ -89,9 +124,10 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
   const pathname = usePathname()
+  const isSimpleUser = userRole === 'SIMPLE_USER'
 
   // Elegir items según rol
-  const baseItems = userRole === 'SIMPLE_USER' ? simpleSidebarItems : defaultSidebarItems
+  const baseItems = isSimpleUser ? simpleSidebarItems : defaultSidebarItems
 
   // Filtrar items según rol declarado (para default)
   const visibleItems = baseItems.filter(item => {
@@ -99,37 +135,83 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
     return item.roles.includes(userRole)
   })
 
-  const visibleAdminItems = userRole === 'SIMPLE_USER' ? [] : adminItems.filter(item => {
+  const visibleAdminItems = isSimpleUser ? [] : adminItems.filter(item => {
     if (!item.roles) return true
     return item.roles.includes(userRole)
   })
 
   return (
     <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 overflow-y-auto transition-colors">
-      <nav className="p-4 space-y-2">
-        {visibleItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-                isActive
-                  ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium"
-                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+      <nav className="p-4 space-y-1">
+        {/* Para SIMPLE_USER, mostrar con secciones */}
+        {isSimpleUser ? (
+          simpleSidebarSections.map((section) => (
+            <div key={section.title} className="mb-6">
+              {section.title && (
+                <p className="px-4 py-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                  {section.title}
+                </p>
               )}
-            >
-              <Icon className={cn(
-                "h-5 w-5",
-                isActive ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400"
-              )} />
-              <span>{item.name}</span>
-            </Link>
-          )
-        })}
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const Icon = item.icon
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center justify-between px-4 py-3 rounded-lg transition-colors relative group",
+                        isActive
+                          ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium"
+                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      )}
+                    >
+                      <div className="flex items-center space-x-3 flex-1">
+                        <Icon className={cn(
+                          "h-5 w-5 flex-shrink-0",
+                          isActive ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"
+                        )} />
+                        <span className="truncate">{item.name}</span>
+                      </div>
+                      {item.badge && (
+                        <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-indigo-600 text-white rounded-full flex-shrink-0">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ))
+        ) : (
+          // Para usuarios estándar/enterprise
+          visibleItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+                  isActive
+                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                )}
+              >
+                <Icon className={cn(
+                  "h-5 w-5",
+                  isActive ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400"
+                )} />
+                <span>{item.name}</span>
+              </Link>
+            )
+          })
+        )}
 
         {/* Sección de Administración (Solo SUPER_ADMIN) */}
         {visibleAdminItems.length > 0 && (
