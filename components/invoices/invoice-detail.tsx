@@ -1,11 +1,12 @@
 "use client"
 
-import { Download, Send, XCircle, CheckCircle, Clock, FileText, ArrowLeft, FileCode, Copy, Printer, Mail } from "lucide-react"
+import { Download, Send, XCircle, CheckCircle, Clock, FileText, ArrowLeft, FileCode, Copy, Printer, Mail, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { SendEmailButton } from "./send-email-button"
 import { EmailHistory } from "./email-history"
 import { InvoiceSuccessResponse } from "./invoice-success-response"
+import { FiscalActionPanel } from "./fiscal-action-panel"
 import { useRouter } from "next/navigation"
 import { formatPanamaDateReadable, formatPanamaDateShort } from "@/lib/utils/date-timezone"
 import { QRCodeSVG } from "qrcode.react"
@@ -61,7 +62,6 @@ const statusConfig = {
 export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
-  const [downloadError, setDownloadError] = useState<string | null>(null)
   const [successData, setSuccessData] = useState<any>(null)
   const status = statusConfig[invoice.status as keyof typeof statusConfig] || statusConfig.DRAFT
   const StatusIcon = status.icon
@@ -83,7 +83,6 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
   const handleSendToHKA = async () => {
     setIsProcessing(true)
-    setDownloadError(null)
     setSuccessData(null)
     try {
       const response = await fetch(`/api/invoices/${invoice.id}/process`, {
@@ -106,82 +105,13 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
         router.refresh()
       }
     } catch (error) {
-      setDownloadError(error instanceof Error ? error.message : 'Error al enviar factura')
+      // Error is handled by API response
+      console.error(error)
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const handleDownloadPDF = async () => {
-    setDownloadError(null)
-    try {
-      // Si tenemos el PDF en base64, descargarlo directamente
-      if (invoice.pdfBase64) {
-        const link = document.createElement('a');
-        link.href = `data:application/pdf;base64,${invoice.pdfBase64}`;
-        link.download = `Factura_${invoice.numeroDocumentoFiscal || invoice.id}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        return;
-      }
-
-      const response = await fetch(`/api/invoices/${invoice.id}/pdf`)
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Error al obtener PDF' }))
-        throw new Error(error.error || 'Error al descargar PDF')
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-
-      const fileName = invoice.numeroDocumentoFiscal
-        ? `Factura_${invoice.numeroDocumentoFiscal.replace(/\//g, '-')}.pdf`
-        : `Factura_${invoice.id}.pdf`
-
-      a.download = fileName
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch (error) {
-      console.error("Error al descargar PDF:", error)
-      setDownloadError(error instanceof Error ? error.message : 'Error al descargar PDF')
-    }
-  }
-
-  const handleDownloadXML = async () => {
-    setDownloadError(null)
-    try {
-      const response = await fetch(`/api/invoices/${invoice.id}/xml`)
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Error al obtener XML' }))
-        throw new Error(error.error || 'Error al descargar XML')
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-
-      const fileName = invoice.numeroDocumentoFiscal
-        ? `Factura_${invoice.numeroDocumentoFiscal.replace(/\//g, '-')}.xml`
-        : `Factura_${invoice.id}.xml`
-
-      a.download = fileName
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch (error) {
-      console.error("Error al descargar XML:", error)
-      setDownloadError(error instanceof Error ? error.message : 'Error al descargar XML')
-    }
-  }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -241,13 +171,6 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
         </div>
       )}
 
-      {/* Error Banner */}
-      {downloadError && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
-          <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
-          <p className="text-sm text-red-600 dark:text-red-400">{downloadError}</p>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
@@ -349,83 +272,55 @@ export function InvoiceDetail({ invoice, organizationId }: InvoiceDetailProps) {
 
         {/* Sidebar - Fiscal Panel */}
         <div className="space-y-6">
-          {/* Status Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Estado Fiscal</h3>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${status.color}`}>
-                <StatusIcon className="w-3 h-3" />
-                {status.label}
-              </span>
-            </div>
-
-            {(invoice.status === "CERTIFIED" || invoice.status === "EMITTED") && (
-              <div className="space-y-4">
-                {/* QR Code */}
-                <div className="flex justify-center py-4 bg-white rounded-lg border border-gray-100">
-                  {invoice.qrCode ? (
-                    // Si tenemos el QR en base64 (imagen), lo mostramos
-                    <img src={`data:image/png;base64,${invoice.qrCode}`} alt="QR Factura" className="w-32 h-32 object-contain" />
-                  ) : invoice.qrUrl ? (
-                    // Si tenemos URL, generamos el QR
-                    <QRCodeSVG value={invoice.qrUrl} size={128} />
-                  ) : (
-                    <div className="w-32 h-32 bg-gray-100 flex items-center justify-center text-xs text-gray-400">Sin QR</div>
-                  )}
-                </div>
-
-                {/* CUFE */}
-                {invoice.cufe && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">CUFE</label>
-                    <div className="flex gap-2">
-                      <code className="flex-1 text-xs bg-gray-50 dark:bg-gray-900/50 p-2 rounded border border-gray-200 dark:border-gray-700 break-all font-mono text-gray-600 dark:text-gray-300">
-                        {invoice.cufe}
-                      </code>
-                      <button
-                        onClick={() => copyToClipboard(invoice.cufe)}
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-                        title="Copiar CUFE"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+          {/* QR Code - Only for emitted/certified */}
+          {(invoice.status === "CERTIFIED" || invoice.status === "EMITTED") && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Código QR</h3>
+              <div className="flex justify-center py-4 bg-white rounded-lg border border-gray-100">
+                {invoice.qrCode ? (
+                  <img src={`data:image/png;base64,${invoice.qrCode}`} alt="QR Factura" className="w-32 h-32 object-contain" />
+                ) : invoice.qrUrl ? (
+                  <QRCodeSVG value={invoice.qrUrl} size={128} />
+                ) : (
+                  <div className="w-32 h-32 bg-gray-100 flex items-center justify-center text-xs text-gray-400">Sin QR</div>
                 )}
-
-                {/* Actions */}
-                <div className="space-y-2 pt-2">
-                  <button
-                    onClick={handleDownloadPDF}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-                  >
-                    <Download className="w-4 h-4" />
-                    Descargar PDF
-                  </button>
-                  <button
-                    onClick={handleDownloadXML}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-                  >
-                    <FileCode className="w-4 h-4" />
-                    Descargar XML
-                  </button>
-                  <SendEmailButton
-                    invoiceId={invoice.id}
-                    defaultEmail={invoice.receiverEmail || undefined}
-                    variant="outline"
-                    className="w-full justify-center"
-                  />
+              </div>
+              {invoice.cufe && (
+                <div className="mt-4 space-y-1">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">CUFE</label>
+                  <div className="flex gap-2">
+                    <code className="flex-1 text-xs bg-gray-50 dark:bg-gray-900/50 p-2 rounded border border-gray-200 dark:border-gray-700 break-all font-mono text-gray-600 dark:text-gray-300">
+                      {invoice.cufe}
+                    </code>
+                    <button
+                      onClick={() => copyToClipboard(invoice.cufe)}
+                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                      title="Copiar CUFE"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+          )}
 
-            {invoice.status === "ERROR" && (
-              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800">
-                <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Error de Emisión</p>
-                <p className="text-xs text-red-500 dark:text-red-300">{invoice.hkaResponseMessage || "Ocurrió un error desconocido."}</p>
-              </div>
-            )}
-          </div>
+          {/* Fiscal Action Panel */}
+          <FiscalActionPanel
+            invoiceId={invoice.id}
+            cufe={invoice.cufe}
+            status={invoice.status}
+            customerEmail={invoice.receiverEmail}
+            onStatusChange={() => router.refresh()}
+          />
+
+          {/* Error Banner */}
+          {invoice.status === "ERROR" && (
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 p-6 shadow-sm">
+              <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-2">Error de Emisión</p>
+              <p className="text-sm text-red-500 dark:text-red-300">{invoice.hkaResponseMessage || "Ocurrió un error desconocido."}</p>
+            </div>
+          )}
 
           {/* Email History */}
           {(invoice.status === "CERTIFIED" || invoice.status === "EMITTED") && (

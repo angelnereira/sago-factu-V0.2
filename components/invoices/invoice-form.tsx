@@ -3,13 +3,14 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2, Save, Send, FileUp } from "lucide-react"
-import { 
-  type InvoiceItem, 
+import {
+  type InvoiceItem,
   type Client,
   calculateItemTotals,
-  calculateInvoiceTotals 
+  calculateInvoiceTotals
 } from "@/lib/validations/invoice"
 import { XMLUploader } from "./xml-uploader"
+import { RucValidationField } from "./ruc-validation-field"
 import type { ParsedInvoiceData } from "@/lib/utils/xml-parser"
 
 interface InvoiceFormProps {
@@ -196,14 +197,18 @@ export function InvoiceForm({ organizationId, userId }: InvoiceFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              RUC / Cédula *
-            </label>
-            <input
-              type="text"
+            <RucValidationField
               value={client.taxId}
-              onChange={(e) => setClient({ ...client, taxId: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              onRucChange={(ruc) => setClient({ ...client, taxId: ruc })}
+              onDataFound={(dv, razonSocial) => {
+                // Auto-populate name and DV if not already set
+                if (!client.name || client.name.trim() === "") {
+                  setClient({
+                    ...client,
+                    name: razonSocial,
+                  })
+                }
+              }}
               required
             />
           </div>

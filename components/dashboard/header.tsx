@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { NotificationsCenter } from "./notifications-center"
+import { FoliosStatusWidget } from "./folios-status-widget"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { InstallPWAButton } from "@/components/install-pwa"
 import { config } from "@/lib/config"
@@ -48,12 +49,15 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           <div className="flex items-center space-x-4">
             {/* Botón de instalación PWA */}
             <InstallPWAButton />
-            
+
             {/* Toggle de tema */}
             <ThemeToggle />
-            
+
             {/* Notificaciones */}
             <NotificationsCenter />
+
+            {/* Indicador de Folios */}
+            <FoliosStatusWidget />
 
             {/* Usuario */}
             <div className="relative">
